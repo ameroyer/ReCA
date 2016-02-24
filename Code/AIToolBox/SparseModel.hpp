@@ -370,7 +370,7 @@ namespace AIToolbox {
 	  }
 	  // otherwise use kahan sum for more precision
 	  else {
-	    std:: cerr << "Building SparseModel with Kahan summation\n";
+	    std:: cerr << "    > Building SparseModel with Kahan summation\n";
             for ( size_t s = 0; s < S; ++s )
 	      for ( size_t a = 0; a < A; ++a ) {
 	        double kahan_sum = 0.0, kahan_correction = 0.0;
