@@ -56,7 +56,7 @@ namespace AIToolbox {
       MEMCP(const M& m, size_t n_environments, size_t beliefSize, unsigned iterations, double exp);
 
       /**
-       * @brief This function resets the internal graph and samples 
+       * @brief This function resets the internal graph and samples
        * for the provided belief and horizon.
        *
        *
@@ -279,7 +279,7 @@ namespace AIToolbox {
 
       /**
        * @brief This function updates the full graph with the current state of the simulation.
-       * More precisely, the last branch/actionNode corresponding to the current history is 
+       * More precisely, the last branch/actionNode corresponding to the current history is
        * replaced by the currently build tree.
        *
        * @param current The subtree computed for action a.
@@ -299,7 +299,7 @@ namespace AIToolbox {
 	graph_ = BeliefNode(A);
 	graph_.children.resize(A);
 	reset_belief = false;
-      } 
+      }
       // Reset with the stored information
       else {
 	graph_ = fullgraph_;
@@ -308,13 +308,13 @@ namespace AIToolbox {
       if (start_session && history.size() == 0) {
 	fullgraph_ = BeliefNode(A);
 	fullgraph_.children.resize(A);
-      } 
+      }
       // Clear history if beginning
       if (start_session) {
 	history.clear();
       }
 
-      // Init the belief	    
+      // Init the belief
       auto b = Belief(S); b.fill(0);
       for (int u = 0; u < E; u++) {
 	b(u * O + o) = be(u);
@@ -374,7 +374,7 @@ namespace AIToolbox {
       // Modify
       current_branch.children.resize(A);
       current_branch.children[a] = current;
-      
+
     }
 
 

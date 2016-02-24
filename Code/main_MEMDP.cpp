@@ -282,7 +282,7 @@ int main(int argc, char* argv[]) {
 
   // Load model parameters
   auto start = std::chrono::high_resolution_clock::now();
-  std::cout << "\n" << current_time_str() << "- Loading model parameters\n";
+  std::cout << "\n" << current_time_str() << " - Loading model parameters\n";
   assert(("Usage: ./main Param_basename [Discount] [solver steps]", argc >= 2));
   std::string datafile_base = std::string(argv[1]);
   init_pows();
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
   // Init Sparse Model in AIToolbox
   start = std::chrono::high_resolution_clock::now();
   RecoMEMDP world;
-  std::cout << "\n" << current_time_str() << "- Copying model [sparse]...!\n";
+  std::cout << "\n" << current_time_str() << " - Copying model [sparse]...!\n";
   AIToolbox::POMDP::SparseModel<decltype(world)> model(world);
 
   // Training
@@ -321,7 +321,7 @@ int main(int argc, char* argv[]) {
     AIToolbox::POMDP::POMCP<decltype(model)> solver(model, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
-    std::cout << current_time_str() << "- Starting evaluation!\n";
+    std::cout << current_time_str() << " - Starting evaluation!\n";
     evaluate_pomcp(datafile_base + ".test", solver, discount, horizon, rewards);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
@@ -330,7 +330,7 @@ int main(int argc, char* argv[]) {
     AIToolbox::POMDP::MEMCP<decltype(model)> solver(model, n_environments, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
-    std::cout << current_time_str() << "- Starting evaluation!\n";
+    std::cout << current_time_str() << " - Starting evaluation!\n";
     evaluate_memcp(datafile_base + ".test", solver, discount, horizon, rewards);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }

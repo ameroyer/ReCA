@@ -22,7 +22,8 @@
 #include <AIToolbox/MDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Algorithms/POMCP.hpp>
-#include <AIToolbox/POMDP/Algorithms/MEMCP.hpp>
+#include "AIToolBox/MEMCP.hpp"
+//#include <AIToolbox/POMDP/Algorithms/MEMCP.hpp>
 #include <AIToolbox/POMDP/Types.hpp>
 #include <AIToolbox/Types.hpp>
 

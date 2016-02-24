@@ -31,8 +31,8 @@ def init_output_dir(plevel, hlength):
      * ``output_base`` (*str*): base name for output files.
     """
     import shutil
-    output_base = "random_u%d_k%d_pl%d" % (plevel, hlength, plevel)
-    output_dir = os.path.join(args.output, "Random%d%d%d" % (plevel, hlength, plevel))
+    output_base = "synth_u%d_k%d_pl%d" % (plevel, hlength, plevel)
+    output_dir = os.path.join(args.output, "Synth%d%d%d" % (plevel, hlength, plevel))
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
