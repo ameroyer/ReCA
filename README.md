@@ -46,7 +46,7 @@ ctest -V
 
      ``./prepare_synth.py -n [1] -k [2] -t [3] -o [4] --norm --help``
 
-     * ``[1]`` Number of items to user (Defaults to 3).
+     * ``[1]`` Number of items/actions (Defaults to 3).
      * ``[2]`` History length (Defaults to 2). Must be strictly greater than 1.
      * ``[3]`` Number of test sessions to generate according to the synthetic distribution (Defaults to 2000).
      * ``[4]`` Path to the output directory (Defaults to ``../Code/Models``).
