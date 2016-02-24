@@ -1,4 +1,4 @@
-# [memcp] r e a d   m e :panda_face:
+# [ m e m c p ] :panda_face: r e a d   m e 
 
 #### Installing AIToolbox (AITB)
 
