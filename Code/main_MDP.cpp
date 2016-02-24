@@ -243,7 +243,9 @@ int main(int argc, char* argv[]) {
   assert(("Unvalid discount parameter", discount > 0 && discount < 1));
   int steps = ((argc > 3) ? std::atoi(argv[3]) : 1000000);
   assert(("Unvalid steps parameter", steps > 0));
-  int precision = ((argc > 4) ? std::atoi(argv[4]) : 10);
+  float epsilon = ((argc > 4) ? std::atof(argv[4]) : 0.01);
+  assert(("Unvalid epsilon parameter", epsilon >= 0));
+  int precision = ((argc > 5) ? std::atoi(argv[5]) : 10);
   assert(("Unvalid precision parameter", precision >= 0));
 
   // Load model parameters
@@ -275,10 +277,10 @@ int main(int argc, char* argv[]) {
 
   // Solve
   std::cout << current_time_str() << " - Init solver...!\n";
-  AIToolbox::MDP::ValueIteration<decltype(model)> solver(steps);
+  AIToolbox::MDP::ValueIteration<decltype(model)> solver(steps, epsilon);
   std::cout << current_time_str() << " - Starting solver!\n";
   auto solution = solver(model);
-  std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
+  std::cout << current_time_str() << " - Convergence criterion e = " << epsilon << " reached ? " << std::boolalpha << std::get<0>(solution) << "\n";
   elapsed = std::chrono::high_resolution_clock::now() - start;
   double training_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 

@@ -275,10 +275,17 @@ int main(int argc, char* argv[]) {
   assert(("Unvalid discount parameter", discount > 0 && discount < 1));
   int steps = ((argc > 4) ? std::atoi(argv[4]) : 1000000);
   assert(("Unvalid steps parameter", steps > 0));
-  int precision = ((argc > 5) ? std::atoi(argv[5]) : 10);
+  unsigned int horizon = ((argc > 5) ? std::atoi(argv[5]) : 1);
+  assert(("Unvalid horizon parameter", horizon > 0));
+  double epsilon = ((argc > 6) ? std::atof(argv[6]) : 0.01);
+  assert(("Unvalid convergence criterion", epsilon >= 0));
+  double exp = ((argc > 7) ? std::atof(argv[7]) : 10000);
+  assert(("Unvalid exploration parameter", exp >= 0));
+  unsigned int beliefSize = ((argc > 8) ? std::atoi(argv[8]) : 100);
+  assert(("Unvalid belief size", beliefSize >= 0));
+  int precision = ((argc > 9) ? std::atoi(argv[9]) : 10);
   assert(("Unvalid precision parameter", precision >= 0));
-  unsigned int horizon = ((argc > 6) ? std::atoi(argv[6]) : 90);
-  assert(("Unvalid horizon parameter", horizon >= 0));
+
 
   // Load model parameters
   auto start = std::chrono::high_resolution_clock::now();
@@ -312,10 +319,6 @@ int main(int argc, char* argv[]) {
   std::cout << current_time_str() << " - Init " << algo << " solver...!\n";
 
   // Evaluation
-  float exp = 10000;
-  size_t beliefSize = 100;
-  float epsilon = 0.1;
-
   // POMCP
   if (!algo.compare("pomcp")) {
     AIToolbox::POMDP::POMCP<decltype(model)> solver(model, beliefSize, steps, exp);

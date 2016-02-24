@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PATHES
+# PATHES (if local installation)
 AIBUILD="/home/amelie/Libs/AI-Toolbox/build"
 AIINCLUDE="/home/amelie/Libs/AI-Toolbox/include"
 EIGEN="/usr/local/include/eigen3/"
@@ -15,12 +15,15 @@ PLEVEL="4"
 HIST="2"
 DISCOUNT="0.95"
 STEPS="1500"
+EPSILON="0.01"
 PRECISION="0"
+BELIEFSIZE="100"
+EXPLORATION="10000"
 HORIZON="1"
 COMPILE=false
 
 # SET  ARGUMENTS FROM CMD LINE
-while getopts "m:d:n:k:g:s:p:h:c" opt; do
+while getopts "m:d:n:k:g:s:p:h:e:x:b:c" opt; do
   case $opt in
     m)
       MODE=$OPTARG
@@ -46,6 +49,15 @@ while getopts "m:d:n:k:g:s:p:h:c" opt; do
     h)
       HORIZON=$OPTARG
       ;;
+    e)
+      EPSILON=$OPTARG
+      ;;
+    b)
+      BELIEFSIZE=$OPTARG
+      ;;
+    x)
+      EXPLORATION=$OPTARG
+      ;;
     c)
       COMPILE=true
       ;;
@@ -60,7 +72,6 @@ while getopts "m:d:n:k:g:s:p:h:c" opt; do
   esac
 done
 
-echo $COMPILE
 # SET CORRECT DATA PATHS
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ $DATA = "fm" ]; then 
@@ -99,7 +110,7 @@ if [ $MODE = "mdp" ]; then
 # RUN
     echo
     echo "Running mainMDP on $BASE"
-    ./mainMDP $BASE $DISCOUNT $STEPS $PRECISION
+    ./mainMDP $BASE $DISCOUNT $STEPS $EPSILON $PRECISION
     echo
 # POMDPs
 else
@@ -119,6 +130,6 @@ else
 # RUN
     echo
     echo "Running mainMEMDP on $BASE with $MODE solver"
-    ./mainMEMDP $BASE $MODE $DISCOUNT $STEPS $PRECISION $HORIZON
+    ./mainMEMDP $BASE $MODE $DISCOUNT $STEPS $HORIZON $EPSILON $EXPLORATION $BELIEFSIZE $PRECISION
     echo
 fi
