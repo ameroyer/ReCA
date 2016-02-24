@@ -367,7 +367,7 @@ namespace AIToolbox {
     void MEMCP<M>::update_fullgraph(ActionNode current, size_t a) {
       auto & current_branch = fullgraph_;
       // Browse history
-      for (auto it = history.begin(); it != history.end(); it++) {
+      for (auto it = history.begin(); it != history.end(); ++it) {
 	auto  an = current_branch.children[std::get<0>(*it)];
 	current_branch = an.children[std::get<1>(*it)];
       }

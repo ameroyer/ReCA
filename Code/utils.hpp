@@ -68,8 +68,6 @@ const size_t n_observations = (pow(NITEMS, HIST + 1) - 1) / (NITEMS - 1); /*!< N
 const size_t n_states = NPROFILES * n_observations; /*!< Number of states in the MEMDP */
 
 
-int ndigits(int n);
-
 /*! \brief Asserts that the information contained in the summary file match the
  * parameters given at compilation time.
  *
@@ -296,7 +294,7 @@ void pomcp_tree_to_string(AIToolbox::POMDP::POMCP< M > pomcp) {
     auto anode = tree.children[a];
     std::cout <<  " - " << a << "-> (" << anode.V << ")\n" ;
     std::cout << "      obs: ";
-    for (auto b = anode.children.begin(); b != anode.children.end(); b++) {
+    for (auto b = anode.children.begin(); b != anode.children.end(); ++b) {
       std::cout << b->first << " ";;
     }
     std::cout << "\n";
