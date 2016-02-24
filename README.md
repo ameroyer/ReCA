@@ -58,7 +58,7 @@ ctest -V
 
 
 
-#### Running the experiments (``Code/`` folder)
+#### Running the code (``Code/`` folder)
 If needed, first set the correct library pathes in ``run.sh``. The script can then be used as follow:
 
 ``./run.sh -m [1] -d [2] -n [3] -k [4] -g [5] -s [6] -h [7] -e [8] -x [9] -b [10] -c --help``
