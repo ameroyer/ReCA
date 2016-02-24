@@ -26,6 +26,7 @@
 //#include <AIToolbox/POMDP/Algorithms/MEMCP.hpp>
 #include <AIToolbox/POMDP/Types.hpp>
 #include <AIToolbox/Types.hpp>
+#include <AIToolbox/Utils.hpp>
 
 
 /*!
@@ -52,6 +53,9 @@ static const int NPROFILES =
 #else
 6;
 #endif       /*!< Number of environments in the MEMDP */
+
+
+
 
 
 /*!

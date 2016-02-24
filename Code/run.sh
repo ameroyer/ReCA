@@ -23,7 +23,7 @@ HORIZON="1"
 COMPILE=false
 
 # SET  ARGUMENTS FROM CMD LINE
-while getopts "m:d:n:k:g:s:p:h:e:x:b:c" opt; do
+while getopts "m:d:n:k:g:s:h:e:x:b:cp" opt; do
   case $opt in
     m)
       MODE=$OPTARG
@@ -44,7 +44,7 @@ while getopts "m:d:n:k:g:s:p:h:e:x:b:c" opt; do
       STEPS=$OPTARG
       ;;
     p)
-      PRECISION=$OPTARG
+      PRECISION=1
       ;;
     h)
       HORIZON=$OPTARG
