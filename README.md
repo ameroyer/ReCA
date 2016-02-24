@@ -9,7 +9,7 @@ Pre-requisites for AI-Toolbox installation  are:
    * [Eigen 3.2+](http://eigen.tuxfamily.org/index.php?title=Main_Page) library
    * [lp_solve](http://lpsolve.sourceforge.net/5.5/) library [``lp-solve`` package]
 
-Once installed, clone the [AITB repository](https://github.com/Svalorzen/AI-Toolbox), then build it and test the installation with the following commands:
+Once the pre-requisites installed, clone the [AITB repository](https://github.com/Svalorzen/AI-Toolbox), then build it and test the installation with the following commands:
 
 ```bash
 cd AIToolBox_root
