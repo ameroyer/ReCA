@@ -34,22 +34,18 @@ class Logger:
         return self.logfile.getvalue()
 
 
-def line_count(filename):
+def line_count(f):
     """
     Returns the number of lines in the given file f.
 
     Args:
-     * ``filename`` (*str*): path to file.
+     * ``f`` (*File*): file.
 
     Returns:
      * ``nlines`` (*int*): number of lines in f.
     """
-    with open(filename, "r+") as f:
-        buf = mmap.mmap(f.fileno(), 0)
-        nlines = 0
-        readline = buf.readline
-        while readline():
-            nlines += 1
+    nlines= len(f.readlines())
+    f.close()
     return nlines
 
 
@@ -110,7 +106,7 @@ def get_n_customer_cluster(ulevel):
     if ulevel == 0:
         return 6
     else:
-        print >> sys.stderr, "Unknown ulevel = %s option. Exit." %ulevel
+        print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
         raise SystemExit
 
 

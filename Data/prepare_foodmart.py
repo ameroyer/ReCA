@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Preprocess Foodmart data to extract the POMDP model
+Preprocess Foodmart data to extract the POMDP model.
 """
 __author__ = "Amelie Royer"
 __email__ = "amelie.royer@ist.ac.at"
@@ -15,7 +15,7 @@ import numpy as np
 from collections import defaultdict
 from random import random
 from utils import *
-
+import tarfile as tar
 
 
 def init_output_dir(plevel, ulevel, hlength, alpha):
@@ -38,6 +38,26 @@ def init_output_dir(plevel, ulevel, hlength, alpha):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
     return os.path.join(output_dir, output_base)
+
+
+def load_datafile(base_name, target):
+    """
+    Load the given ``target`` file from the given input (data folder or archive).
+    """
+    try:
+        if tar.is_tarfile(base_name):
+            t = tar.open(base_name)
+            res = t.extractfile(os.path.join("Foodmart", "data", target))
+            if res is not None:
+                return t.extractfile(os.path.join("Foodmart", "data", target))
+            else:
+                raise IOError
+    except IOError:
+        try:
+            return open(os.path.join(base_name, target), "r")
+        except IOError:
+            print >> sys.stderr, "File %s not found" % base_name
+            raise SystemExit
 
 
 def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
@@ -64,43 +84,46 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     #########################################################################
 
     print "\n\033[92m-----> Load and Cluster products\033[0m"
-    product_to_cluster = np.zeros(line_count(os.path.join(base_name, "product.csv")) + 1, dtype=int)      # Product ID -> Cluster ID
+    product_to_cluster = np.zeros(line_count(load_datafile(base_name, "product.csv")) + 1, dtype=int)      # Product ID -> Cluster ID
     tmp_index = {}                          # Cluster name -> Cluster ID
     tmp_clusters = defaultdict(lambda: [])  # Cluster name -> Product ID list
 
     # Load product list
     if plevel == 0:
-        with open(os.path.join(base_name, "product.csv"), 'r') as f:
-            r = csv.reader(f)
-            r.next()
-            for product in r:
-                tmp_clusters[product[3]].append(int(product[1]))
-                try:
-                    product_to_cluster[int(product[1])] = tmp_index[product[3]]
-                except KeyError:
-                    tmp_index[product[3]] = len(tmp_index) + 1
-                    product_to_cluster[int(product[1])] = tmp_index[product[3]]
+        f = load_datafile(base_name, "product.csv")
+        r = csv.reader(f)
+        r.next()
+        for product in r:
+            tmp_clusters[product[3]].append(int(product[1]))
+            try:
+                product_to_cluster[int(product[1])] = tmp_index[product[3]]
+            except KeyError:
+                tmp_index[product[3]] = len(tmp_index) + 1
+                product_to_cluster[int(product[1])] = tmp_index[product[3]]
+        f.close()
 
     else:
         # Load product categories
         product_classes = {}
-        with open(os.path.join(base_name, "product_class.csv"), 'r') as f:
-            r = csv.reader(f)
-            r.next()
-            for categories in r:
-                product_classes[int(categories[0])] = categories[plevel]
+        f = load_datafile(base_name, "product_class.csv")
+        r = csv.reader(f)
+        r.next()
+        for categories in r:
+            product_classes[int(categories[0])] = categories[plevel]
+        f.close()
 
         # Cluster products
-        with open(os.path.join(base_name, "product.csv"), 'r') as f:
-            r = csv.reader(f)
-            r.next()
-            for product in r:
-                try:
-                    product_to_cluster[int(product[1])] = tmp_index[product_classes[int(product[0])]]
-                except KeyError:
-                    tmp_index[product_classes[int(product[0])]] = len(tmp_index) + 1
-                    product_to_cluster[int(product[1])] = tmp_index[product_classes[int(product[0])]]
-                tmp_clusters[product_classes[int(product[0])]].append(int(product[1]))
+        f = load_datafile(base_name, "product.csv")
+        r = csv.reader(f)
+        r.next()
+        for product in r:
+            try:
+                product_to_cluster[int(product[1])] = tmp_index[product_classes[int(product[0])]]
+            except KeyError:
+                tmp_index[product_classes[int(product[0])]] = len(tmp_index) + 1
+                product_to_cluster[int(product[1])] = tmp_index[product_classes[int(product[0])]]
+            tmp_clusters[product_classes[int(product[0])]].append(int(product[1]))
+        f.close()
 
     # Print summary
     print "   %d product profiles (%d products)" % (len(tmp_index), (len(product_to_cluster) - 1))
@@ -121,19 +144,20 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     ######  Load and Cluster users by profile
     #########################################################################
 
-    customer_to_cluster = np.zeros(line_count(os.path.join(base_name, "customer.csv")), dtype="int")  - 1                                  # Customer ID -> Cluster ID
+    customer_to_cluster = np.zeros(line_count(load_datafile(base_name, "customer.csv")), dtype="int")  - 1                                  # Customer ID -> Cluster ID
     tmp_index_u = {}                          # Cluster name -> Cluster ID
-    with open(os.path.join(base_name, "customer.csv"), 'r') as f:
-        r = csv.reader(f)
-        r.next()
-        for user in r:
-            customerID = int(user[0])
-            try:
-                clusterID = tmp_index_u[assign_customer_cluster(user)]
-            except KeyError:
-                clusterID = len(tmp_index_u)
-                tmp_index_u[assign_customer_cluster(user)] = clusterID
-            customer_to_cluster[customerID] = clusterID
+    f = load_datafile(base_name, "customer.csv")
+    r = csv.reader(f)
+    r.next()
+    for user in r:
+        customerID = int(user[0])
+        try:
+            clusterID = tmp_index_u[assign_customer_cluster(user)]
+        except KeyError:
+            clusterID = len(tmp_index_u)
+            tmp_index_u[assign_customer_cluster(user)] = clusterID
+        customer_to_cluster[customerID] = clusterID
+    f.close()
 
 
     ###### Load and Store user sessions
@@ -145,15 +169,16 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     user_sessions = {k: defaultdict(lambda: [0] * hlength) for k in tmp_index_u.itervalues()}  # Customer ID -> Session (product list)
 
     # Load session
-    with open(os.path.join(base_name, "sales.csv"), 'r') as f:
-        r = csv.reader(f)
-        r.next()
-        for sale in r:
-            product_clusterID = product_to_cluster[int(sale[0])]
-            product_profit[product_clusterID] += float(sale[5]) - float(sale[6])
-            product_profit_nrm[product_clusterID] += 1
-            for _ in xrange(int(sale[7])):
-                user_sessions[customer_to_cluster[int(sale[2])]][int(sale[2])].append(product_clusterID)
+    f = load_datafile(base_name, "sales.csv")
+    r = csv.reader(f)
+    r.next()
+    for sale in r:
+        product_clusterID = product_to_cluster[int(sale[0])]
+        product_profit[product_clusterID] += float(sale[5]) - float(sale[6])
+        product_profit_nrm[product_clusterID] += 1
+        for _ in xrange(int(sale[7])):
+            user_sessions[customer_to_cluster[int(sale[2])]][int(sale[2])].append(product_clusterID)
+    f.close()
 
     # Summary profit
     product_profit[1:] /= product_profit_nrm[1:]
@@ -187,26 +212,25 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
 if __name__ == "__main__":
 
     ###### 0. Set Parameters
-
+    base_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser = argparse.ArgumentParser(description='Extract POMDP transition probabilities from the Foodmart dataset.')
-    parser.add_argument('-d', '--data', type=str, default="/home/amelie/Rotations/ChatterjeeRotation/Data/Foodmart/data", help="Path to data directory.")
-    parser.add_argument('-o', '--output', type=str, default="/home/amelie/Rotations/ChatterjeeRotation/Code/Models", help="Path to output directory.")
+    parser.add_argument('-d', '--data', type=str, default=os.path.join(base_folder, "Data", "Foodmart", "data"), help="Path to data directory or archive.")
+    parser.add_argument('-o', '--output', type=str, default=os.path.join(base_folder, "Code", "Models"), help="Path to output directory.")
     parser.add_argument('-pl', '--plevel', type=int, default=4, help="Clustering level for product categorization (0: no lumping to 4:lumping by family). See product classes hierarchy.")
     parser.add_argument('-ul', '--ulevel', type=int, default=0, help="Clustering level for user categorization.")
     parser.add_argument('-k', '--history', type=int, default=2, help="Length of the history to consider for one state of the MEMDP.")
     parser.add_argument('-t', '--train', type=float, default=0.8, help="Fraction of training data to extract from the database.")
     parser.add_argument('-a', '--alpha', type=float, default=1.1, help="Positive rescaling of transition probabilities matching the recommendation.")
-    parser.add_argument('--ordered', action='store_true', help="If present, the states of the MEMDP are ordered product sequences. TODO.")
-    parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities.")
+    #parser.add_argument('--ordered', action='store_true', help="If present, the states of the MEMDP are ordered product sequences. TODO.")
+    parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities. ")
     parser.add_argument('--draw', action='store_true', help="If present, draw the first user MDP model.")
     args = parser.parse_args()
 
 
-    ###### 1. Check assertions
-
+    ###### 0-bis. Check assertions
     assert(args.train >= 0 and args.train <= 1), "Training fraction must be between 0 and 1 (included)"
     assert(args.plevel in [0, 1, 2, 3, 4]), "plevel argument must be in [0, 1, 2, 3, 4]"
-    assert(args.ulevel == 0), "ulevel  must be in 0"
+    assert(args.ulevel == 0), "only ulevel 0 implemented"
     assert(args.alpha >= 1), "alpha argument must be greater than 1"
     assert(args.history > 1), "history length must be strictly greater than 1"
     logger = Logger(sys.stdout)
@@ -286,7 +310,7 @@ if __name__ == "__main__":
                 sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
                 sys.stderr.flush()
                 nrm = np.sum(s1_counts)
-                
+
                 # For fixed a
                 for a in actions:
                     # Positive (s1, a, s1.a)
@@ -298,8 +322,8 @@ if __name__ == "__main__":
                     beta = float(nrm - new_count) / (nrm - count)
                     assert(beta > 0 and beta <= 1), "AssertionError: Beta out of range"
                     for b, count in enumerate(s1_counts):
-                        if a - 1 != b:          
-                            s2 = get_next_state_id(s1, b + 1)       
+                        if a - 1 != b:
+                            s2 = get_next_state_id(s1, b + 1)
                             f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / nrm))
             f.write("\n")
 
@@ -309,4 +333,5 @@ if __name__ == "__main__":
     with open("%s.summary" % output_base, 'w') as f:
         f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%f alpha\n%d product clustering level\n\n%s" % (n_states, n_items, len(user_sessions), args.history, args.alpha, args.plevel, logger.to_string()))
     print
+
     # End

@@ -87,7 +87,6 @@ void load_model_parameters(std::string tfile, std::string rfile,
   infile.open(tfile, std::ios::in);
   assert((".transitions file not found", infile.is_open()));
   int n_profile = 0;
-  double normalization[n_observations][n_actions] = {0};
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
     // Profile change
@@ -103,25 +102,33 @@ void load_model_parameters(std::string tfile, std::string rfile,
       }
     }
     // Accumulate
-    v *= profiles_prop.at(n_profile);
     if (precision > 1) { v = std::trunc(v * precision); }
     link = is_connected(s1, s2);
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     transition_matrix[s1][a - 1][link] += v;
-    normalization[s1][a - 1] += v;
     transitions_found++;
   }
   infile.close();
 
   // Normalize transition matrix
+  double nrm;
   for (s1 = 0; s1 < n_observations; s1++) {
     for (a = 0; a < n_actions; a++) {
-      double nrm =  normalization[s1][a];
+      //double nrm =  normalization[s1][a];
+      nrm = std::accumulate(transition_matrix[s1][a],
+			    transition_matrix[s1][a] + n_actions, 0.0);
+
       std::transform(transition_matrix[s1][a],
 		     transition_matrix[s1][a] + n_actions,
 		     transition_matrix[s1][a],
 		     [nrm](const double t){ return t / nrm; }
 		     );
+      //double test = 0;
+      //for (size_t s2 = 0; s2 < n_actions; s2++) {
+      //	test  += transition_matrix[s1][a][s2];
+      //	assert(("Im seriously crying", transition_matrix[s1][a][s2] >= 0 && transition_matrix[s1][a][s2] <= 1));
+      //}
+      //std::cout << "compare " << test << " " << nrm << "\n";
     }
   }
 

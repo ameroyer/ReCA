@@ -63,6 +63,8 @@ const size_t n_observations = (pow(NITEMS, HIST + 1) - 1) / (NITEMS - 1); /*!< N
 const size_t n_states = NPROFILES * n_observations; /*!< Number of states in the MEMDP */
 
 
+int ndigits(int n);
+
 /*! \brief Asserts that the information contained in the summary file match the
  * parameters given at compilation time.
  *

@@ -35,9 +35,9 @@ static std::default_random_engine generator(time(NULL));
 
 
 //T(s1, a, s2) = T(s1, a, connected[s1][s2]) if linked else 0
-double transition_matrix [n_environments][n_observations][n_actions][n_actions] = {0};
+static double transition_matrix [n_environments][n_observations][n_actions][n_actions];
 //R(s1, a, s2) = R(s1, connected[s1][s2]) if a == connected[s1][s2] else 0
-double rewards [n_observations][n_actions];
+static double rewards [n_observations][n_actions];
 
 
 /*! \brief Loads the Model parameters from the precomputed data files.
@@ -61,6 +61,7 @@ void load_model_parameters(std::string tfile, std::string rfile,
   // Check summary file
   check_summary_file(sfile, true);
 
+  
   // Load rewards
   infile.open(rfile, std::ios::in);
   assert((".rewards file not found", infile.is_open()));
@@ -74,11 +75,11 @@ void load_model_parameters(std::string tfile, std::string rfile,
   assert(("Missing links while parsing .rewards file",
 	  links_found == n_observations * n_actions));
   infile.close();
-
+  
   // Load transitions
   infile.open(tfile, std::ios::in);
   assert((".transitions file not found", infile.is_open()));
-  double normalization [n_environments][n_observations][n_actions] = {0};
+  //double normalization [n_environments][n_observations][n_actions] = {0};
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
     // Change profile
@@ -96,18 +97,20 @@ void load_model_parameters(std::string tfile, std::string rfile,
     link = is_connected(s1, s2);
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     transition_matrix[profiles_found][s1][a - 1][link] = v;
-    normalization[profiles_found][s1][a - 1] += v;
+    //normalization[profiles_found][s1][a - 1] += v;
     transitions_found++;
   }
   assert(("Missing profiles in .transitions file", profiles_found == n_environments));
   infile.close();
-
-  // Normalize transition matrix
+  
+  // Normalize transition matrix [sparing memory]
   double nrm;
   for (p = 0; p < n_environments; p++) {
     for (s1 = 0; s1 < n_observations; s1++) {
       for (a = 0; a < n_actions; a++) {
-	nrm = normalization[p][s1][a];
+	nrm = std::accumulate(transition_matrix[p][s1][a],
+			      transition_matrix[p][s1][a] + n_actions, 0);
+	//nrm = normalization[p][s1][a];
 	std::transform(transition_matrix[p][s1][a],
 		       transition_matrix[p][s1][a] + n_actions,
 		       transition_matrix[p][s1][a],
@@ -116,7 +119,6 @@ void load_model_parameters(std::string tfile, std::string rfile,
       }
     }
   }
-
 }
 
 
@@ -289,7 +291,7 @@ int main(int argc, char* argv[]) {
 			datafile_base + ".summary",
 			std::pow(10, precision));
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-
+  //return 0;
   // Assert correct sizes
   assert(("Error in TRANSITION_MATRIX initialization",
 	  sizeof(transition_matrix)/sizeof(****transition_matrix) ==
