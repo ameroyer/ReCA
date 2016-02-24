@@ -122,7 +122,7 @@ void load_model_parameters(std::string tfile, std::string rfile,
 	  kahan_correction = (aux - nrm) - val;
 	  nrm = aux;
 	}
-      } 
+      }
       // Else basic sum
       else {
 	nrm = std::accumulate(transition_matrix[s1][a],
@@ -133,65 +133,7 @@ void load_model_parameters(std::string tfile, std::string rfile,
 		     transition_matrix[s1][a] + n_actions,
 		     transition_matrix[s1][a],
 		     [nrm](const double t){ return t / nrm; }
-		     ); 
-      
-      //double kahan_sum = 0
-      
-      //KahanAccumulation init = {0.0};
-      //nrm = (std::accumulate(transition_matrix[s1][a],
-      //		    transition_matrix[s1][a] + n_actions, init, KahanSum)).sum;
-      //std::transform(transition_matrix[s1][a],
-      //		     transition_matrix[s1][a] + n_actions,
-      //		     transition_matrix[s1][a],
-      //		     [nrm](const double t){ return ((t/nrm < 0.0001) ? 0 : t / nrm); }
-      //		     ); 
-      //double nrm =  normalization[s1][a];
-      //nrm = std::accumulate(numbers.begin(), numbers.end(), init, KahanSum);
-      //   KahanAccumulation init = {0.0};
-      //   nrm = (std::accumulate(transition_matrix[s1][a],
-      //			    transition_matrix[s1][a] + n_actions, init, KahanSum)).sum;
-      //  std::transform(transition_matrix[s1][a],
-      //		     transition_matrix[s1][a] + n_actions,
-      //		     transition_matrix[s1][a],
-      //		     [nrm](const double t){ return ((t/nrm < 0.0001) ? 0 : t / nrm); }
-      //		     ); 
-
-      //   init = {0.0};
-      //   nrm = (std::accumulate(transition_matrix[s1][a],
-      //	    transition_matrix[s1][a] + n_actions, init, KahanSum)).sum;
-      //nrm = std::accumulate(transition_matrix[s1][a],
-      //transition_matrix[s1][a] + n_actions, 0.0);
-      //  std::transform(transition_matrix[s1][a],
-      //		     transition_matrix[s1][a] + n_actions,
-      //		     transition_matrix[s1][a],
-      //		     [nrm](const double t){ return t / nrm; }
-      //		     ); 
-      //     nrm = std::accumulate(transition_matrix[s1][a],
-      //			     transition_matrix[s1][a] + n_actions, 0.0);
-      ///     if (AIToolbox::checkDifferentSmall(1.0, nrm)) {
-      //	 std::cout << "it is working though";
-      //	 std::cout << std::setprecision(15) << nrm << "wtf";
-      //     }
-      /*std::transform(transition_matrix[s1][a],
-	transition_matrix[s1][a] + n_actions,
-	transition_matrix[s1][a],
-	[nrm](const double t){ return ((AIToolbox::checkDifferentSmall(t / nrm, 0.0)) ? t / nrm : 0.0); }
-	); 
-
-	nrm = std::accumulate(transition_matrix[s1][a],
-	transition_matrix[s1][a] + n_actions, 0.0);
-
-	std::transform(transition_matrix[s1][a],
-	transition_matrix[s1][a] + n_actions,
-	transition_matrix[s1][a],
-	[nrm](const double t){ return t / nrm; }*
-	);*/
-      //double test = 0;
-      //for (size_t s2 = 0; s2 < n_actions; s2++) {
-      //	test  += transition_matrix[s1][a][s2];
-      //	assert(("Im seriously crying", transition_matrix[s1][a][s2] >= 0 && transition_matrix[s1][a][s2] <= 1));
-      //}
-      //std::cout << "compare " << test << " " << nrm << "\n";
+		     );
     }
   }
 
@@ -320,7 +262,7 @@ int main(int argc, char* argv[]) {
   load_model_parameters(datafile_base + ".transitions",
 			datafile_base + ".rewards",
 			datafile_base + ".profiles",
-			datafile_base + ".summary", std::pow(10, precision)); 
+			datafile_base + ".summary", std::pow(10, precision));
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 

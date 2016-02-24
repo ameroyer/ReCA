@@ -85,7 +85,7 @@ If needed, first set the correct library pathes in ``run.sh``. The script can th
    * ``[8]`` Convergence criterion for mdp and ip. Defaults to 0.01.
    * ``[9]`` Exploration parameter for pomcp and memcp. Defaults to 10000 (high exploration).
    * ``[10]`` Number of particles for the belief approximation in pomcp and memcp. Defaults to  100.
-   * ``[-p]`` If present, use Kahan summation for more precision while handling small probabilities. Use this option if AIToolbox throws an ``Input transition table does not contain valid probabilities`` error when creating the SparseModel object. (*Note*: this requires to use the ``SparseModel.hpp`` file given in ``Code/AiToolBox`` instead of the default AIToolBox one, as described in the first section).
+   * ``[-p]`` If present, use Kahan summation for more precision while handling small probabilities. Use this option if AIToolbox throws an ``Input transition table does not contain valid probabilities`` error when creating the SparseModel object. (*Note*: this requires to use the ``SparseModel.hpp`` file given in ``Code/AiToolBox`` instead of the default AIToolbox one, as described in the first section).
    * ``[-c]`` If present, recompile the code before running (*Note*: this should be used whenever using a dataset with different parameters as the number of items, environments etc are determined at compilation time).
 
 **Example** *(foodmart, 6 environments, 3 actions, 13 states)* :
