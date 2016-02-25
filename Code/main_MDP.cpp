@@ -274,10 +274,9 @@ int main(int argc, char* argv[]) {
 
   // Solve
   start = std::chrono::high_resolution_clock::now();
-  std::cout << current_time_str() << " - Init solver...!\n";
+  std::cout << "\n" << current_time_str() << " - Starting MDP ValueIteration solver\n";
   RecoMDP model;
   AIToolbox::MDP::ValueIteration<decltype(model)> solver(steps, epsilon);
-  std::cout << current_time_str() << " - Starting solver!\n";
   auto solution = solver(model);
   std::cout << current_time_str() << " - Convergence criterion e = " << epsilon << " reached ? " << std::boolalpha << std::get<0>(solution) << "\n";
   elapsed = std::chrono::high_resolution_clock::now() - start;

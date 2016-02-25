@@ -5,7 +5,7 @@
 ##### 1. Pre-requisites
    * GCC 4.9 +
    * cmake [``cmake`` package]
-   * Boost version 1.53+ [``libbost-dev`` package]
+   * Boost version 1.53+ [``libboost-dev`` package]
    * [Eigen 3.2+](http://eigen.tuxfamily.org/index.php?title=Main_Page) library
    * [lp_solve](http://lpsolve.sourceforge.net/5.5/) library [``lp-solve`` package]
 
@@ -64,7 +64,7 @@ If needed, first set the correct library pathes in ``run.sh``. The script can th
 
 ``./run.sh -m [1] -d [2] -n [3] -k [4] -g [5] -s [6] -h [7] -e [8] -x [9] -b [10] -c -p --help``
 
-   * ``[1]`` Model to use (Defaults to mdp). Available options are *mdp* (MDP model obtained by a weighted average of all the environments' transition probabilities and solved by Value iteration), *ip* (incremental pruning on the MEMDP), *pomcp* and *memcp*.
+   * ``[1]`` Model to use (Defaults to mdp). Available options are *mdp* (MDP model obtained by a weighted average of all the environments' transition probabilities and solved by Value iteration), *pbvi* (point-based value iteration optimized for the MEMDP structure), *pomcp* and *memcp* (Monte-carlo solver, respectively without and with optimization for the MEMDP structure).
    * ``[2]`` Dataset to use (Defaults to fm). Available options are *fm* (foodmart) and *rd* (synthetic data).
    * ``[3]`` Product discretization level if foodmart dataset, or the number of items if synthetic data.
    * ``[4]`` History length (Defaults to 2). Must be strictly greater than 1.

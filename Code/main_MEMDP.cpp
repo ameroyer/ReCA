@@ -13,7 +13,7 @@
 #include "utils.hpp"
 
 #include <AIToolbox/POMDP/IO.hpp>
-#include <AIToolbox/POMDP/Algorithms/IncrementalPruning.hpp>
+#include "AIToolBox/PBVI.hpp"
 
 
 /*
@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
   assert(("Usage: ./main files_basename [solver] [discount] [nsteps] [precision]", argc >= 2));
   std::string algo = ((argc > 2) ? argv[2] : "pbvi");
   std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
-  assert(("Unvalid POMDP solver parameter", !(algo.compare("ip") && algo.compare("pomcp") && algo.compare("memcp"))));
+  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("memcp"))));
   discount = ((argc > 3) ? std::atof(argv[3]) : 0.95);
   assert(("Unvalid discount parameter", discount > 0 && discount < 1));
   int steps = ((argc > 4) ? std::atoi(argv[4]) : 1000000);
@@ -321,7 +321,7 @@ int main(int argc, char* argv[]) {
   // Training
   double training_time, testing_time;
   start = std::chrono::high_resolution_clock::now();
-  std::cout << current_time_str() << " - Init " << algo << " solver...!\n";
+  std::cout << "\n" << current_time_str() << " - Starting " << algo << " solver...!\n";
   RecoMEMDP model;
 
   // Evaluation
@@ -344,8 +344,9 @@ int main(int argc, char* argv[]) {
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // Incremental Pruning
-  else if (!algo.compare("ip")) {
-    AIToolbox::POMDP::IncrementalPruning solver(horizon, epsilon);
+  else if (!algo.compare("pbvi")) {
+    // DEBUG PBVI //nBelef = n observations ?
+    AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);
     auto solution = solver(model);
     std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
     std::chrono::high_resolution_clock::now() - start;
