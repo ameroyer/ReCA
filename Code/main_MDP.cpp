@@ -14,8 +14,6 @@
 
 #include <AIToolbox/MDP/IO.hpp>
 #include <AIToolbox/MDP/Algorithms/ValueIteration.hpp>
-#include <AIToolbox/MDP/SparseModel.hpp>
-#include <AIToolbox/MDP/Model.hpp>
 
 /*
  * Global variables
@@ -274,14 +272,10 @@ int main(int argc, char* argv[]) {
   assert(("Out of range discount parameter", discount > 0 && discount <= 1));
 
 
-  // Init Sparse Model in AIToolbox
-  start = std::chrono::high_resolution_clock::now();
-  RecoMDP world;
-  std::cout << "\n" << current_time_str() << " - Copying model [sparse]...!\n";
-  AIToolbox::MDP::SparseModel model(world, precision);
-
   // Solve
+  start = std::chrono::high_resolution_clock::now();
   std::cout << current_time_str() << " - Init solver...!\n";
+  RecoMDP model;
   AIToolbox::MDP::ValueIteration<decltype(model)> solver(steps, epsilon);
   std::cout << current_time_str() << " - Starting solver!\n";
   auto solution = solver(model);
@@ -292,7 +286,7 @@ int main(int argc, char* argv[]) {
   // Build and Evaluate Policy
   start = std::chrono::high_resolution_clock::now();
   std::cout << "\n" << current_time_str() << " - Evaluation results\n";
-  AIToolbox::MDP::Policy policy(world.getS(), world.getA(), std::get<1>(solution));
+  AIToolbox::MDP::Policy policy(n_observations, n_actions, std::get<1>(solution));
   evaluate_policyMDP(datafile_base + ".test", policy, discount, rewards);
   elapsed = std::chrono::high_resolution_clock::now() - start;
   double testing_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;

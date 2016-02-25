@@ -13,9 +13,6 @@
 #include "utils.hpp"
 
 #include <AIToolbox/POMDP/IO.hpp>
-#include <AIToolbox/MDP/SparseModel.hpp>
-#include <AIToolbox/MDP/Model.hpp>
-#include <AIToolbox/POMDP/SparseModel.hpp>
 #include <AIToolbox/POMDP/Algorithms/IncrementalPruning.hpp>
 
 
@@ -321,24 +318,11 @@ int main(int argc, char* argv[]) {
 	  sizeof(rewards) / sizeof(**rewards) == n_observations * n_actions));
   assert(("Out of range discount parameter", discount > 0 && discount <= 1));
 
-  // Init Sparse Model in AIToolbox
-    start = std::chrono::high_resolution_clock::now();
-    RecoMEMDP world;
-    std::cout << "\n" << current_time_str() << " - Copying model [sparse]...!\n";
-    /*
-       auto obfunc = new double[n_states][n_actions][n_observations]();
-      for (size_t s1 = 0; s1 < n_states; s1++) {
-      for (size_t a = 0; a < n_actions; a++) {
-      obfunc[s1][a][get_rep(s1)] = 1.;
-      }
-      }
-      AIToolbox::POMDP::SparseModel<AIToolbox::MDP::SparseModel> model(world.getO(), obfunc, world, precision);*/
-      AIToolbox::POMDP::SparseModel<decltype(world)> model(world);
-
   // Training
   double training_time, testing_time;
   start = std::chrono::high_resolution_clock::now();
   std::cout << current_time_str() << " - Init " << algo << " solver...!\n";
+  RecoMEMDP model;
 
   // Evaluation
   // POMCP
@@ -370,7 +354,7 @@ int main(int argc, char* argv[]) {
     // Build and Evaluate Policy
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
-    AIToolbox::POMDP::Policy policy(world.getS(), world.getA(), world.getO(), std::get<1>(solution));
+    AIToolbox::POMDP::Policy policy(n_states, n_actions, n_observations, std::get<1>(solution));
     evaluate_policyMEMDP(datafile_base + ".test", policy, discount, horizon, rewards);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
@@ -381,7 +365,7 @@ int main(int argc, char* argv[]) {
   std::cout << "   > Training : " << training_time << "s\n";
   std::cout << "   > Testing : " << testing_time << "s\n";
 
-  // Save policy in file
+  // Save policy or pomcp seach tree in file
   /*
    * TODO
    */
