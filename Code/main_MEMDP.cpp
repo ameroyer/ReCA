@@ -13,6 +13,8 @@
 #include "utils.hpp"
 
 #include <AIToolbox/POMDP/IO.hpp>
+#include <AIToolbox/MDP/SparseModel.hpp>
+#include <AIToolbox/MDP/Model.hpp>
 #include <AIToolbox/POMDP/SparseModel.hpp>
 #include <AIToolbox/POMDP/Algorithms/IncrementalPruning.hpp>
 
@@ -61,7 +63,7 @@ void load_model_parameters(std::string tfile, std::string rfile,
   // Check summary file
   check_summary_file(sfile, true);
 
-  
+
   // Load rewards
   infile.open(rfile, std::ios::in);
   assert((".rewards file not found", infile.is_open()));
@@ -75,7 +77,7 @@ void load_model_parameters(std::string tfile, std::string rfile,
   assert(("Missing links while parsing .rewards file",
 	  links_found == n_observations * n_actions));
   infile.close();
-  
+
   // Load transitions
   infile.open(tfile, std::ios::in);
   assert((".transitions file not found", infile.is_open()));
@@ -102,15 +104,28 @@ void load_model_parameters(std::string tfile, std::string rfile,
   }
   assert(("Missing profiles in .transitions file", profiles_found == n_environments));
   infile.close();
-  
+
   // Normalize transition matrix [sparing memory]
   double nrm;
   for (p = 0; p < n_environments; p++) {
     for (s1 = 0; s1 < n_observations; s1++) {
       for (a = 0; a < n_actions; a++) {
-	nrm = std::accumulate(transition_matrix[p][s1][a],
-			      transition_matrix[p][s1][a] + n_actions, 0);
-	//nrm = normalization[p][s1][a];
+	// If asking for precision, use kahan summation [slightly slower]
+	if (precision) {
+	  double kahan_correction = 0.0;
+	  nrm = 0.0;
+	  for (s2 = 0; s2 < n_actions; s2++) {
+	    double val = transition_matrix[p][s1][a][s2] - kahan_correction;
+	    double aux = nrm + val;
+	    kahan_correction = (aux - nrm) - val;
+	    nrm = aux;
+	  }
+	}
+	// Else basic sum
+	else {
+	  nrm = std::accumulate(transition_matrix[p][s1][a],
+				transition_matrix[p][s1][a] + n_actions, 0.);
+	}
 	std::transform(transition_matrix[p][s1][a],
 		       transition_matrix[p][s1][a] + n_actions,
 		       transition_matrix[p][s1][a],
@@ -216,6 +231,7 @@ public:
    * \return s2 such that s -a-> s2, and the associated reward R(s, a, s2).
    */
   std::tuple<size_t, double> sampleSR(size_t s,size_t a) const {
+    std::cout << "TEST\n";
     // Sample random transition
     std::discrete_distribution<int> distribution (transition_matrix[get_env(s)][get_rep(s)][a], transition_matrix[get_env(s)][get_rep(s)][a] + n_actions);
     size_t link = distribution(generator);
@@ -283,9 +299,7 @@ int main(int argc, char* argv[]) {
   assert(("Unvalid exploration parameter", exp >= 0));
   unsigned int beliefSize = ((argc > 8) ? std::atoi(argv[8]) : 100);
   assert(("Unvalid belief size", beliefSize >= 0));
-  int precision = ((argc > 9) ? std::atoi(argv[9]) : 10);
-  assert(("Unvalid precision parameter", precision >= 0));
-
+  bool precision = ((argc > 9) ? (atoi(argv[9]) == 1) : false);
 
   // Load model parameters
   auto start = std::chrono::high_resolution_clock::now();
@@ -298,7 +312,7 @@ int main(int argc, char* argv[]) {
 			datafile_base + ".summary",
 			std::pow(10, precision));
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-  //return 0;
+
   // Assert correct sizes
   assert(("Error in TRANSITION_MATRIX initialization",
 	  sizeof(transition_matrix)/sizeof(****transition_matrix) ==
@@ -308,10 +322,18 @@ int main(int argc, char* argv[]) {
   assert(("Out of range discount parameter", discount > 0 && discount <= 1));
 
   // Init Sparse Model in AIToolbox
-  start = std::chrono::high_resolution_clock::now();
-  RecoMEMDP world;
-  std::cout << "\n" << current_time_str() << " - Copying model [sparse]...!\n";
-  AIToolbox::POMDP::SparseModel<decltype(world)> model(world);
+    start = std::chrono::high_resolution_clock::now();
+    RecoMEMDP world;
+    std::cout << "\n" << current_time_str() << " - Copying model [sparse]...!\n";
+    /*
+       auto obfunc = new double[n_states][n_actions][n_observations]();
+      for (size_t s1 = 0; s1 < n_states; s1++) {
+      for (size_t a = 0; a < n_actions; a++) {
+      obfunc[s1][a][get_rep(s1)] = 1.;
+      }
+      }
+      AIToolbox::POMDP::SparseModel<AIToolbox::MDP::SparseModel> model(world.getO(), obfunc, world, precision);*/
+      AIToolbox::POMDP::SparseModel<decltype(world)> model(world);
 
   // Training
   double training_time, testing_time;

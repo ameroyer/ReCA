@@ -15,6 +15,7 @@
 #include <AIToolbox/MDP/IO.hpp>
 #include <AIToolbox/MDP/Algorithms/ValueIteration.hpp>
 #include <AIToolbox/MDP/SparseModel.hpp>
+#include <AIToolbox/MDP/Model.hpp>
 
 /*
  * Global variables
@@ -251,8 +252,6 @@ int main(int argc, char* argv[]) {
   float epsilon = ((argc > 4) ? std::atof(argv[4]) : 0.01);
   assert(("Unvalid epsilon parameter", epsilon >= 0));
   bool precision = ((argc > 5) ? (atoi(argv[5]) == 1) : false);
-  //std::cout << precision;
-  //return 0;
 
   // Load model parameters
   auto start = std::chrono::high_resolution_clock::now();
@@ -279,7 +278,6 @@ int main(int argc, char* argv[]) {
   start = std::chrono::high_resolution_clock::now();
   RecoMDP world;
   std::cout << "\n" << current_time_str() << " - Copying model [sparse]...!\n";
-  //AIToolbox::MDP::SparseModel model(world);
   AIToolbox::MDP::SparseModel model(world, precision);
 
   // Solve
