@@ -17,13 +17,14 @@ DISCOUNT="0.95"
 STEPS="1500"
 EPSILON="0.01"
 PRECISION="0"
+VERBOSE="0"
 BELIEFSIZE="100"
 EXPLORATION="10000"
 HORIZON="1"
 COMPILE=false
 
 # SET  ARGUMENTS FROM CMD LINE
-while getopts "m:d:n:k:g:s:h:e:x:b:cp" opt; do
+while getopts "m:d:n:k:g:s:h:e:x:b:cpv" opt; do
   case $opt in
     m)
       MODE=$OPTARG
@@ -45,6 +46,9 @@ while getopts "m:d:n:k:g:s:h:e:x:b:cp" opt; do
       ;;
     p)
       PRECISION=1
+      ;;
+    v)
+      VERBOSE=1
       ;;
     h)
       HORIZON=$OPTARG
@@ -110,7 +114,7 @@ if [ $MODE = "mdp" ]; then
 # RUN
     echo
     echo "Running mainMDP on $BASE"
-    ./mainMDP $BASE $DISCOUNT $STEPS $EPSILON $PRECISION
+    ./mainMDP $BASE $DISCOUNT $STEPS $EPSILON $PRECISION $VERBOSE
     echo
 # POMDPs
 else
@@ -130,6 +134,6 @@ else
 # RUN
     echo
     echo "Running mainMEMDP on $BASE with $MODE solver"
-    ./mainMEMDP $BASE $MODE $DISCOUNT $STEPS $HORIZON $EPSILON $EXPLORATION $BELIEFSIZE $PRECISION
+    ./mainMEMDP $BASE $MODE $DISCOUNT $STEPS $HORIZON $EPSILON $EXPLORATION $BELIEFSIZE $PRECISION $VERBOSE
     echo
 fi

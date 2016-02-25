@@ -246,10 +246,12 @@ std::pair<double, double> identification_score(std::vector<size_t> sampleBelief,
  * \param set_length contains the number of test sessions per cluster
  * \param results contains the various evaluation measures per cluster
  * \param titles contains the name of each evaluation measures
+ * \param verbose if true, increases the verbosity. Defaults to false.
  */
 void print_evaluation_result(int set_lengths[n_environments],
 			     std::vector<double*> results,
-			     std::vector<std::string> titles);
+			     std::vector<std::string> titles,
+			     bool verbose=false);
 
 
 /*! \brief Evaluates a given policy (MDP) on a sequence of test user sessions
@@ -259,11 +261,13 @@ void print_evaluation_result(int set_lengths[n_environments],
  * \param policy AIToolbox policy.
  * \param discount discount factor in the MDP model.
  * \param rewards stored reward values.
+ * \param verbose if true, increases the verbosity. Defaults to false.
  */
 void evaluate_policyMDP(std::string sfile,
 			AIToolbox::MDP::Policy policy,
 			double discount,
-			double rewards [n_observations][n_actions]);
+			double rewards [n_observations][n_actions],
+			bool verbose=false);
 
 
 /*! \brief Builds the belief (distribution over states) correpsonding to the
@@ -282,36 +286,15 @@ AIToolbox::POMDP::Belief build_belief(size_t o);
  * \param discount discount factor in the POMDP model.
  * \param horizon planning horizon for action sampling.
  * \param rewards stored reward values.
+ * \param verbose if true, increases the verbosity. Defaults to false.
  */
 void evaluate_policyMEMDP(std::string sfile,
 			  AIToolbox::POMDP::Policy policy,
 			  double discount,
 			  unsigned int horizon,
-			  double rewards [n_observations][n_actions]);
+			  double rewards [n_observations][n_actions],
+			  bool verbose=false);
 
-
-/*! \brief Returns a string representation of the internal tree for the POMCP algorithm.
- *
- * \param sfile full path to the base_name.test file.
- * \param pomcp AIToolbox pomcp instantiation.
- * \param discount discount factor in the POMDP model.
- * \param horizon planning horizon for POMCP.
- * \param rewards stored reward values.
- */
-template<typename M>
-void pomcp_tree_to_string(AIToolbox::POMDP::POMCP< M > pomcp) {
-  auto tree = pomcp.getGraph();
-  for (size_t a = 0; a < n_actions; a++) {
-    auto anode = tree.children[a];
-    std::cout <<  " - " << a << "-> (" << anode.V << ")\n" ;
-    std::cout << "      obs: ";
-    for (auto b = anode.children.begin(); b != anode.children.end(); ++b) {
-      std::cout << b->first << " ";;
-    }
-    std::cout << "\n";
-  }
-  //return;
-}
 
 
 /*! \brief Evaluates the sequence of actions recommended by POMCP.
@@ -321,6 +304,7 @@ void pomcp_tree_to_string(AIToolbox::POMDP::POMCP< M > pomcp) {
  * \param discount discount factor in the POMDP model.
  * \param horizon planning horizon for POMCP.
  * \param rewards stored reward values.
+ * \param verbose if true, increases the verbosity. Defaults to false.
  */
 
 template<typename M>
@@ -328,7 +312,8 @@ void evaluate_pomcp(std::string sfile,
 		    AIToolbox::POMDP::POMCP<M> pomcp,
 		    double discount,
 		    unsigned int horizon,
-		    double rewards [n_observations][n_actions])
+		    double rewards [n_observations][n_actions],
+		    bool verbose=false)
 {
   // Aux variables
   int cluster, session_length, chorizon;
@@ -371,8 +356,7 @@ void evaluate_pomcp(std::string sfile,
     }
     prediction =  pomcp.sampleAction(init_belief, chorizon);
     action = n_actions;
-
-    int i = 0;
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     // For each (state, action) in the session
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       size_t observation  = std::get<0>(*it2);
@@ -400,6 +384,7 @@ void evaluate_pomcp(std::string sfile,
       cdiscount *= discount;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
+    if (!verbose) {std::cerr.clear();}
     // Set score
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
@@ -413,7 +398,7 @@ void evaluate_pomcp(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
-  print_evaluation_result(set_lengths, results, titles);
+  print_evaluation_result(set_lengths, results, titles, verbose);
 }
 
 
@@ -426,6 +411,7 @@ void evaluate_pomcp(std::string sfile,
  * \param discount discount factor in the POMDP model.
  * \param horizon planning horizon for POMCP.
  * \param rewards stored reward values.
+ * \param verbose if true, increases the verbosity. Defaults to false.
  */
 
 template<typename M>
@@ -433,7 +419,8 @@ void evaluate_memcp(std::string sfile,
 		    AIToolbox::POMDP::MEMCP<M> memcp,
 		    double discount,
 		    unsigned int horizon,
-		    double rewards [n_observations][n_actions])
+		    double rewards [n_observations][n_actions],
+		    bool verbose=false)
 {
   // Aux variables
   int cluster, session_length, chorizon;
@@ -477,8 +464,8 @@ void evaluate_memcp(std::string sfile,
     prediction =  memcp.sampleAction(init_belief, init_state, chorizon, true);
     action = n_actions;
 
-    int i = 0;
     // For each (state, action) in the session
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       size_t observation  = std::get<0>(*it2);
       // If not init state, predict from past action and observation
@@ -505,6 +492,7 @@ void evaluate_memcp(std::string sfile,
       cdiscount *= discount;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
+    if (!verbose) {std::cerr.clear();}
     // Set score
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
@@ -518,7 +506,7 @@ void evaluate_memcp(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
-  print_evaluation_result(set_lengths, results, titles);
+  print_evaluation_result(set_lengths, results, titles, verbose);
 }
 
 

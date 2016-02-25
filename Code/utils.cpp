@@ -323,25 +323,26 @@ std::pair<double, double> identification_score(std::vector<size_t> sampleBelief,
  */
 void print_evaluation_result(int set_lengths[n_environments],
 			     std::vector<double*> results,
-			     std::vector<std::string> titles)
+			     std::vector<std::string> titles,
+			     bool verbose /* = false*/)
 {
 
   // Print results for each environment, as well as global result
   int n_results = results.size();
   int session_length = 0;
   std::vector<double> acc(n_results, 0);
-
-  std::cout << "> Results by cluster ----------------\n";
+  if (verbose) { std::cout << "> Results by cluster ----------------\n";}
   for (int i = 0; i < n_environments; i++) {
-    std::cout << "   cluster " << i;
+    if (verbose) { std::cout << "   cluster " << i;}
     for (int j = 0; j < n_results; j++) {
       acc.at(j) += results.at(j)[i];
-      std::cout << "\n      > " << titles[j] << ": " << results.at(j)[i] / set_lengths[i];
+      if (verbose) { std::cout << "\n      > " << titles[j] << ": " << results.at(j)[i] / set_lengths[i];}
     }
     session_length += set_lengths[i];
-    std::cout << "\n\n";
+    if (verbose) {std::cout << "\n\n";}
   }
 
+  // Global
   std::cout << "> Global results ----------------";
   for (int j = 0; j < n_results; j++) {
     std::cout << "\n      > " << titles[j] << ": " << acc.at(j) / session_length;
@@ -356,7 +357,8 @@ void print_evaluation_result(int set_lengths[n_environments],
 void evaluate_policyMDP(std::string sfile,
 			AIToolbox::MDP::Policy policy,
 			double discount,
-			double rewards [n_observations][n_actions]) {
+			double rewards [n_observations][n_actions],
+			bool verbose /* = false*/) {
   // Aux variables
   int cluster, session_length;
   double cdiscount;
@@ -410,7 +412,7 @@ void evaluate_policyMDP(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
-  print_evaluation_result(set_lengths, results, titles);
+  print_evaluation_result(set_lengths, results, titles, verbose);
 }
 
 
@@ -433,7 +435,8 @@ void evaluate_policyMEMDP(std::string sfile,
 			  AIToolbox::POMDP::Policy policy,
 			  double discount,
 			  unsigned int horizon,
-			  double rewards [n_observations][n_actions]) {
+			  double rewards [n_observations][n_actions],
+			  bool verbose /* = false*/) {
   // Aux variables
   int cluster, session_length;
   double cdiscount;
@@ -498,5 +501,5 @@ void evaluate_policyMEMDP(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
-  print_evaluation_result(set_lengths, results, titles);
+  print_evaluation_result(set_lengths, results, titles, verbose);
 }

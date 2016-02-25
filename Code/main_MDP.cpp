@@ -250,6 +250,7 @@ int main(int argc, char* argv[]) {
   float epsilon = ((argc > 4) ? std::atof(argv[4]) : 0.01);
   assert(("Unvalid epsilon parameter", epsilon >= 0));
   bool precision = ((argc > 5) ? (atoi(argv[5]) == 1) : false);
+  bool verbose = ((argc > 6) ? (atoi(argv[6]) == 1) : false);
 
   // Load model parameters
   auto start = std::chrono::high_resolution_clock::now();
@@ -286,7 +287,7 @@ int main(int argc, char* argv[]) {
   start = std::chrono::high_resolution_clock::now();
   std::cout << "\n" << current_time_str() << " - Evaluation results\n";
   AIToolbox::MDP::Policy policy(n_observations, n_actions, std::get<1>(solution));
-  evaluate_policyMDP(datafile_base + ".test", policy, discount, rewards);
+  evaluate_policyMDP(datafile_base + ".test", policy, discount, rewards, verbose);
   elapsed = std::chrono::high_resolution_clock::now() - start;
   double testing_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 

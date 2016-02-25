@@ -228,7 +228,6 @@ public:
    * \return s2 such that s -a-> s2, and the associated reward R(s, a, s2).
    */
   std::tuple<size_t, double> sampleSR(size_t s,size_t a) const {
-    std::cout << "TEST\n";
     // Sample random transition
     std::discrete_distribution<int> distribution (transition_matrix[get_env(s)][get_rep(s)][a], transition_matrix[get_env(s)][get_rep(s)][a] + n_actions);
     size_t link = distribution(generator);
@@ -297,6 +296,7 @@ int main(int argc, char* argv[]) {
   unsigned int beliefSize = ((argc > 8) ? std::atoi(argv[8]) : 100);
   assert(("Unvalid belief size", beliefSize >= 0));
   bool precision = ((argc > 9) ? (atoi(argv[9]) == 1) : false);
+  bool verbose = ((argc > 10) ? (atoi(argv[10]) == 1) : false);
 
   // Load model parameters
   auto start = std::chrono::high_resolution_clock::now();
@@ -331,7 +331,7 @@ int main(int argc, char* argv[]) {
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_pomcp(datafile_base + ".test", solver, discount, horizon, rewards);
+    evaluate_pomcp(datafile_base + ".test", solver, discount, horizon, rewards, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // MEMCP
@@ -340,7 +340,7 @@ int main(int argc, char* argv[]) {
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_memcp(datafile_base + ".test", solver, discount, horizon, rewards);
+    evaluate_memcp(datafile_base + ".test", solver, discount, horizon, rewards, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // Incremental Pruning
@@ -356,7 +356,7 @@ int main(int argc, char* argv[]) {
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(n_states, n_actions, n_observations, std::get<1>(solution));
-    evaluate_policyMEMDP(datafile_base + ".test", policy, discount, horizon, rewards);
+    evaluate_policyMEMDP(datafile_base + ".test", policy, discount, horizon, rewards, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 

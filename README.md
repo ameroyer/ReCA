@@ -62,7 +62,7 @@ ctest -V
 #### Running the code (``Code/`` folder)
 If needed, first set the correct library pathes in ``run.sh``. The script can then be used as follow:
 
-``./run.sh -m [1] -d [2] -n [3] -k [4] -g [5] -s [6] -h [7] -e [8] -x [9] -b [10] -c -p --help``
+``./run.sh -m [1] -d [2] -n [3] -k [4] -g [5] -s [6] -h [7] -e [8] -x [9] -b [10] -c -p -v --help``
 
    * ``[1]`` Model to use (Defaults to mdp). Available options are *mdp* (MDP model obtained by a weighted average of all the environments' transition probabilities and solved by Value iteration), *pbvi* (point-based value iteration optimized for the MEMDP structure), *pomcp* and *memcp* (Monte-carlo solver, respectively without and with optimization for the MEMDP structure).
    * ``[2]`` Dataset to use (Defaults to fm). Available options are *fm* (foodmart) and *rd* (synthetic data).
@@ -72,10 +72,11 @@ If needed, first set the correct library pathes in ``run.sh``. The script can th
    * ``[6]`` Number of iterations for mdp, and number of simulation steps for pomcp and memcp (Defaults to 1500).
    * ``[7]`` Horizon parameter for the POMDP solvers. Defaults to 1.
    * ``[8]`` Convergence criterion for mdp and ip. Defaults to 0.01.
-   * ``[9]`` Exploration parameter for pomcp and memcp. Defaults to 10000 (high exploration).
-   * ``[10]`` Number of particles for the belief approximation in pomcp and memcp. Defaults to  100.
-   * ``[-p]`` If present, use Kahan summation for more precision while handling small probabilities. Use this option if AIToolbox throws an ``Input transition table does not contain valid probabilities`` error.
+   * ``[9]`` Exploration parameter for pomcp and memcp. Defaults to 10000 (high exploration). A high exploration parameter allows for less "Observation never seen in the simulation" during evaluation of a pomcp or memcp model. (*Note*: to see these errors, you need to run in verbose mode).
+   * ``[10]`` Number of beliefs to use for PBVI, or number of particles for the belief approximation in pomcp and memcp. Defaults to  100.
    * ``[-c]`` If present, recompile the code before running (*Note*: this should be used whenever using a dataset with different parameters as the number of items, environments etc are determined at compilation time).
+   * ``[-p]`` If present, use Kahan summation for more precision while handling small probabilities. Use this option if AIToolbox throws an ``Input transition table does not contain valid probabilities`` error.
+   * ``[-v]`` If present, enables verbose output. In verbose mode, evaluation results per environments are displayed, and the std::cerr stream is eanbled during evaluation.
 
 **Example** *(foodmart, 6 environments, 3 actions, 13 states)* :
 ```bash
