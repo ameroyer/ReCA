@@ -229,6 +229,17 @@ double accuracy_score(size_t predicted, size_t action);
 double avprecision_score(std::vector<double> action_scores, size_t action);
 
 
+/*! \brief Returns accuracy and precision for the identification ability
+ * of the model.
+ *
+ * \param scores vector mapping an environment to its score.
+ * \param action the ground-truth environment.
+ *
+ * \return accuracy and average precision for the retrieved list.
+ */
+std::pair<double, double> identification_score(std::vector<size_t> sampleBelief, int cluster);
+
+
 /*! \brief Pretty-printer for the results returned by one of the
  * evaluation routines.
  *
@@ -302,6 +313,7 @@ void pomcp_tree_to_string(AIToolbox::POMDP::POMCP< M > pomcp) {
   //return;
 }
 
+
 /*! \brief Evaluates the sequence of actions recommended by POMCP.
  *
  * \param sfile full path to the base_name.test file.
@@ -321,7 +333,7 @@ void evaluate_pomcp(std::string sfile,
   // Aux variables
   int cluster, session_length, chorizon;
   double cdiscount;
-  double accuracy, precision, total_reward, discounted_reward;
+  double accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
   size_t action, prediction;
   int user = 0;
 
@@ -332,6 +344,8 @@ void evaluate_pomcp(std::string sfile,
   double mean_precision [n_environments] = {0};
   double mean_total_reward [n_environments] = {0};
   double mean_discounted_reward [n_environments] = {0};
+  double mean_identification [n_environments] = {0};
+  double mean_identification_precision [n_environments] = {0};
 
   // For each user
   for (auto it = begin(aux); it != end(aux); ++it) {
@@ -344,7 +358,7 @@ void evaluate_pomcp(std::string sfile,
     set_lengths[cluster] += 1;
 
     // reset
-    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
+    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
     cdiscount = discount;
     chorizon = horizon;
     std::vector< double > action_scores(n_actions, 0);
@@ -380,6 +394,9 @@ void evaluate_pomcp(std::string sfile,
 	total_reward += rewards[observation][prediction];
 	discounted_reward += cdiscount * rewards[observation][prediction];
       }
+      std::pair<double, double> aux = identification_score(pomcp.getGraph().belief, cluster);
+      identity += std::get<0>(aux);
+      identity_precision += std::get<1>(aux);
       cdiscount *= discount;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
@@ -388,12 +405,14 @@ void evaluate_pomcp(std::string sfile,
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
     mean_discounted_reward[cluster] += discounted_reward;
+    mean_identification[cluster] += identity / session_length;
+    mean_identification_precision[cluster] += identity_precision / session_length;
   }
 
   // Print results for each environment, as well as global result
   std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
-  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
+  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
+  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
   print_evaluation_result(set_lengths, results, titles);
 }
 
@@ -419,7 +438,7 @@ void evaluate_memcp(std::string sfile,
   // Aux variables
   int cluster, session_length, chorizon;
   double cdiscount;
-  double accuracy, precision, total_reward, discounted_reward;
+  double accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
   size_t action, prediction;
   int user = 0;
 
@@ -430,6 +449,8 @@ void evaluate_memcp(std::string sfile,
   double mean_precision [n_environments] = {0};
   double mean_total_reward [n_environments] = {0};
   double mean_discounted_reward [n_environments] = {0};
+  double mean_identification [n_environments] = {0};
+  double mean_identification_precision [n_environments] = {0};
 
   // init belief
   AIToolbox::POMDP::Belief init_belief = AIToolbox::POMDP::Belief(n_environments);
@@ -447,7 +468,7 @@ void evaluate_memcp(std::string sfile,
     set_lengths[cluster] += 1;
 
     // reset
-    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
+    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
     cdiscount = discount;
     chorizon = horizon;
     std::vector< double > action_scores(n_actions, 0);
@@ -478,6 +499,9 @@ void evaluate_memcp(std::string sfile,
 	total_reward += rewards[observation][prediction];
 	discounted_reward += cdiscount * rewards[observation][prediction];
       }
+      std::pair<double, double> aux = identification_score(memcp.getGraph().belief, cluster);
+      identity += std::get<0>(aux);
+      identity_precision += std::get<1>(aux);
       cdiscount *= discount;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
@@ -486,12 +510,14 @@ void evaluate_memcp(std::string sfile,
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
     mean_discounted_reward[cluster] += discounted_reward;
+    mean_identification[cluster] += identity / session_length;
+    mean_identification_precision[cluster] += identity_precision / session_length;
   }
 
   // Print results for each environment, as well as global result
   std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
-  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
+  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
+  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
   print_evaluation_result(set_lengths, results, titles);
 }
 

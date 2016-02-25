@@ -250,8 +250,8 @@ std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > load_test
     }
     test_sessions.push_back(std::make_pair(cluster, aux));
   }
-  //assert(("number of environments do not match the clustering in test sessions",
-  //	  n_environments == n_env + 1));
+  assert(("number of environments do not match the clustering in test sessions",
+  	  n_environments == n_env + 1));
   return test_sessions;
 }
 
@@ -293,6 +293,29 @@ double avprecision_score(std::vector<double> action_scores, size_t action) {
   return 1.0 / rank;
 }
 
+
+/**
+ * IDENTIFICATION_SCORE
+ */
+std::pair<double, double> identification_score(std::vector<size_t> sampleBelief, int cluster) {
+  // Build scores per cluster
+  std::vector<int> scores(n_environments);
+  for (auto it = begin(sampleBelief); it != end(sampleBelief); ++it) {
+    scores.at(get_env(*it))++;
+  }
+  // Accuracy
+  double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
+  // Precision
+  int rank = 0.;
+  double value = scores.at(cluster);
+  for (auto it = begin(scores); it != end(scores); ++it) {
+    if ( *it >= value) {
+      rank += 1;
+    }
+  }
+  // Return
+  return std::make_pair(accuracy, 1.0 / rank);
+}
 
 
 /**
