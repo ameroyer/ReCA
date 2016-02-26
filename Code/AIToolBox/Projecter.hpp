@@ -3,6 +3,7 @@
 
 #include <AIToolbox/ProbabilityUtils.hpp>
 #include <AIToolbox/POMDP/Types.hpp>
+//#include "../utils.hpp"
 
 namespace AIToolbox {
   namespace POMDP {
@@ -105,11 +106,13 @@ namespace AIToolbox {
 	  MDP::Values vproj(S); vproj.fill(0.0);
 	  // For each value function in the previous timestep, we compute the new value
 	  // if we performed action a and obtained observation o.
-	  //TODO OPTIMIZARION. ONLY TQKE S THAT ARE PREVIOUS OF O
-	  //TODO TRY TO OPTIMIZE BELIEFGENERQTOR
-	  for ( size_t s = 0; s < S; ++s ) {
-	    size_t s1 = NPROFILES * (s / O) + o;
-	    vproj[s] += model_.getTransitionProbability(s,a,s1) * v[s1];
+	  std::vector<size_t> aux = previous_states(o);
+	  for (auto it = aux.begin(); it != aux.end(); ++it) {
+	    for (int e = 0; e < NPROFILES; e++) {
+	      size_t s = e * O + *it;
+	      size_t s1 = e * O + o;
+	      vproj[s] += model_.getTransitionProbability(s, a, s1) * v[s1];
+	    }
 	  }
 	  // Set new projection with found value and previous V id.
 	  // projections[o].emplace_back(vproj, a, VObs(1,i));
@@ -117,60 +120,22 @@ namespace AIToolbox {
 	}
       }
 
-      //for ( size_t o = 1; o < O; ++o ) {
-      // Here we put in just the immediate rewards so that the cross-summing step in the main
-      // function works correctly. However we communicate via the boolean that pruning should
-      // not be done at this step (since adding constants shouldn't do anything anyway).
-      /*if ( !possibleObservations_[a][o] ) {
-      // We add a parent id anyway in order to keep the code that cross-sums simple. However
-      // note that this fake ID of 0 should never be used, so it should be safe to avoid
-      // setting it to a special value like -1. If one really wants to check, he/she can
-      // just look at the observation table and the belief and see if it makes sense.
-      projections[o].emplace_back(immediateRewards_.row(a), a, VObs(1,0));
-      continue;
-      }*/
-
-      // Otherwise we compute a projection for each ValueFunction supplied to us.
-      //for ( size_t i = 0; i < w.size(); ++i ) {
-      //    auto & v = std::get<VALUES>(w[i]);
-      //    MDP::Values vproj(S); vproj.fill(0.0);
-      // For each value function in the previous timestep, we compute the new value
-      // if we performed action a and obtained observation o.
-      //    for ( size_t s = 0; s < S; ++s )
-      // vproj_{a,o}[s] = R(s,a) / |O| + discount * sum_{s'} ( T(s,a,s') * O(s',a,o) * v_{t-1}(s') )
-      //   for ( size_t s1 = 0; s1 < S; ++s1 )
-      //   vproj[s] += model_.getTransitionProbability(s,a,s1) * model_.getObservationProbability(s1,a,o) * v[s1];
-      // Set new projection with found value and previous V id.
-      // projections[o].emplace_back(vproj, a, VObs(1,i));
-      //  projections[o].emplace_back(vproj * discount_ + immediateRewards_.row(a).transpose(), a, VObs(1,i));
-      //     }
-      //   }
-
       return projections;
     }
 
     template <typename M>
     void Projecter<M>::computeImmediateRewards() {
       immediateRewards_.fill(0.0);
-      for ( size_t a = 0; a < A; ++a )
-	for ( size_t s = 0; s < S; ++s )
-	  for ( size_t s1 = 0; s1 < S; ++s1 )
-	    immediateRewards_(a, s) += model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s,a,s1);
+      for ( size_t a = 0; a < A; ++a ) {
+	for ( size_t s = 0; s < S; ++s ) {
+	  size_t s1 = get_env(s) * O + next_state(get_rep(s), a);
+	  immediateRewards_(a, s) += model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s,a,s1);}
+      }
 
       // You can find out why this is divided in the incremental pruning paper =)
       // The idea is that at the end of all the cross sums it's going to add up to the correct value.
       immediateRewards_ /= static_cast<double>(O);
     }
-
-    /*template <typename M>
-      void Projecter<M>::computePossibleObservations() {
-      std::fill( boo.origin(), boo.origin() + boo.size(), true );
-      // MODIFIED: for our problem, all observations are possible except 0 (initial state)
-      for ( size_t a = 0; a < A; ++a )
-      for ( size_t o = 0; o < O; ++o )
-      for ( size_t s = 0; s < S; ++s ) // This NEEDS to be last!
-      if ( checkDifferentSmall(model_.getObservationProbability(s,a,o), 0.0) ) { possibleObservations_[a][o] = true; break; } // We only break the S loop!
-      }*/
   }
 }
 

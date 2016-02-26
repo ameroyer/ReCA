@@ -212,7 +212,7 @@ public:
    */
   double getExpectedReward( size_t s1, size_t a, size_t s2 ) const {
     size_t link = is_connected(get_rep(s1), get_rep(s2));
-    if (get_env(s1) != get_env(s2) || link >= n_actions) {
+    if (get_env(s1) != get_env(s2) || link != a) {
       return 0.;
     } else {
       return rewards[get_rep(s1)][link];

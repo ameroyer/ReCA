@@ -194,7 +194,7 @@ public:
    */
   double getExpectedReward( size_t s1, size_t a, size_t s2 ) const {
     size_t link = is_connected(s1, s2);
-    if (link >= n_actions) {
+    if (link != a) {
       return 0.;
     } else {
       return rewards[s1][link];
