@@ -189,6 +189,16 @@ std::vector<size_t> id_to_state(size_t id);
 size_t next_state(size_t state, size_t item);
 
 
+/*! \brief Given a state and item choice, return the next user state.
+ *
+ * \param state unique state index.
+ * \param item action chosen by the user [0 to n_actions - 1].
+ *
+ * \return next_state index of the state corresponding to the user choosing ``item`` in ``state``.
+ */
+std::vector<size_t> previous_states(size_t state);
+
+
 /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
  * or the value ``n_actions`` otherwise.
  *

@@ -200,6 +200,26 @@ size_t next_state(size_t state, size_t item) {
 
 
 /**
+ * PREVIOUS_STATES
+ */
+std::vector<size_t> previous_states(size_t state) {
+  div_t aux = div(state, n_actions);
+  int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
+  if (prefix_s2 < acpows[1]) {
+    std::vector<size_t> prev(1);
+    prev.at(0) = prefix_s2;
+    return prev;
+  } else {
+    std::vector<size_t> prev(n_actions + 1);
+    for (size_t a = 0; a <= n_actions; a++) {
+      prev.at(a) = prefix_s2 + a * pows[0];
+    }
+    return prev;
+  }
+}
+
+
+/**
  * IS_CONNECTED
  */
 size_t is_connected(size_t s1, size_t s2) {

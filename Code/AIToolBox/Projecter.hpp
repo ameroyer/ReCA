@@ -105,6 +105,8 @@ namespace AIToolbox {
 	  MDP::Values vproj(S); vproj.fill(0.0);
 	  // For each value function in the previous timestep, we compute the new value
 	  // if we performed action a and obtained observation o.
+	  //TODO OPTIMIZARION. ONLY TQKE S THAT ARE PREVIOUS OF O
+	  //TODO TRY TO OPTIMIZE BELIEFGENERQTOR
 	  for ( size_t s = 0; s < S; ++s ) {
 	    size_t s1 = NPROFILES * (s / O) + o;
 	    vproj[s] += model_.getTransitionProbability(s,a,s1) * v[s1];
