@@ -152,6 +152,7 @@ namespace AIToolbox {
             // up). However, this is easily changeable, since the belief generator
             // can be called multiple times to increase the size of the belief
             // vector.
+	    
             BeliefGenerator<M> bGen(model);
             auto beliefs = bGen(beliefSize_);
 
@@ -165,6 +166,7 @@ namespace AIToolbox {
             bool useEpsilon = checkDifferentSmall(epsilon_, 0.0);
             double variation = epsilon_ * 2; // Make it bigger
             while ( timestep < horizon_ && ( !useEpsilon || variation > epsilon_ ) ) {
+	        std::cout << "        Timestep " << timestep + 1 <<"/" << horizon_ << "\n";
                 ++timestep;
 
                 // Compute all possible outcomes, from our previous results.
@@ -184,10 +186,8 @@ namespace AIToolbox {
                 }
                 VList w;
                 w.reserve(finalWSize);
-
                 for ( size_t a = 0; a < A; ++a )
                     std::move(std::begin(projs[a][0]), std::end(projs[a][0]), std::back_inserter(w));
-
                 auto begin = std::begin(w), bound = begin, end = std::end(w);
                 for ( auto & belief : beliefs )
                     bound = extractWorstAtBelief(belief, begin, bound, end);

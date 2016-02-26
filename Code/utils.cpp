@@ -486,28 +486,42 @@ void evaluate_policyMEMDP(std::string sfile,
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
     cdiscount = discount;
 
+    // Initial belief and first action
+    size_t id, prediction;
+    size_t init_state = 0;
+    unsigned int timesteps = horizon;
+    AIToolbox::POMDP::Belief belief = build_belief(init_state);
+    std::tie(prediction, id) = policy.sampleAction(belief, timesteps);
+    timesteps --;
+
     // For each (state, action) in the session
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       // current state
-      size_t state = std::get<0>(*it2), action = std::get<1>(*it2);
+      size_t observation = std::get<0>(*it2), action = std::get<1>(*it2);
+
+      // predict
+      if (observation != init_state) {
+	std::tie(prediction, id) = policy.sampleAction(id, observation, timesteps);
+      }
 
       // get a prediction
-      AIToolbox::POMDP::Belief belief = build_belief(state);
-      for (size_t a = 0; a < n_actions; a++) {
+      //AIToolbox::POMDP::Belief belief = build_belief(state);
+      //for (size_t a = 0; a < n_actions; a++) {
 	//action_scores.at(a) = 1. / n_actions;
 	//action_scores.at(a) = policy.getActionProbability (belief, a, horizon);
-	action_scores.at(a) = policy.getActionProbability (belief, a);
-      }
-      size_t prediction = get_prediction(action_scores);
+	//action_scores.at(a) = policy.getActionProbability (belief, a);
+      //}
+      //size_t prediction = get_prediction(action_scores);
 
       // evaluate
       accuracy += accuracy_score(prediction, action);
-      precision += avprecision_score(action_scores, action);
+      //precision += avprecision_score(action_scores, action);
       if (prediction == action) {
-	total_reward += rewards[state][prediction];
-	discounted_reward += cdiscount * rewards[state][prediction];
+	total_reward += rewards[observation][prediction];
+	discounted_reward += cdiscount * rewards[observation][prediction];
       }
       cdiscount *= discount;
+      timesteps = ((timesteps > 1) ? timesteps - 1 : 1);
     }
 
     // accumulate

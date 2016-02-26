@@ -3,7 +3,6 @@
 
 #include <AIToolbox/ProbabilityUtils.hpp>
 #include <AIToolbox/POMDP/Types.hpp>
-//#include "../utils.hpp"
 
 namespace AIToolbox {
   namespace POMDP {
@@ -85,8 +84,11 @@ namespace AIToolbox {
     typename Projecter<M>::ProjectionsTable Projecter<M>::operator()(const VList & w) {
       ProjectionsTable projections( boost::extents[A][O] );
 
-      for ( size_t a = 0; a < A; ++a )
+      for ( size_t a = 0; a < A; ++a ) {
+	std::cerr << "\r          projection " << a + 1 << "/" << A;
 	projections[a] = operator()(w, a);
+      }
+      std::cerr << "\r          projection " << A << "/" << A <<"             \n";
 
       return projections;
     }
@@ -100,6 +102,7 @@ namespace AIToolbox {
 
       // Other obsevrations
       for ( size_t o = 1; o < O; ++o ) {
+	std::cerr << "\r          > observation " << o + 1 << "/" << O;
 
 	for ( size_t i = 0; i < w.size(); ++i ) {
 	  auto & v = std::get<VALUES>(w[i]);

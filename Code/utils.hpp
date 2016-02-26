@@ -365,13 +365,13 @@ void evaluate_pomcp(std::string sfile,
       init_belief(i * n_observations + init_state) = 1.0 / n_environments;
     }
     prediction =  pomcp.sampleAction(init_belief, chorizon);
-    action = n_actions;
+
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     // For each (state, action) in the session
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       size_t observation  = std::get<0>(*it2);
       // If not init state, predict from past action and observation
-      if (action < n_actions) {
+      if (observation != init_state) {
        	prediction = pomcp.sampleAction(action, observation, chorizon);
       }
       // Get graph and action scores
@@ -472,14 +472,13 @@ void evaluate_memcp(std::string sfile,
 
     // init belief
     prediction =  memcp.sampleAction(init_belief, init_state, chorizon, true);
-    action = n_actions;
 
     // For each (state, action) in the session
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       size_t observation  = std::get<0>(*it2);
       // If not init state, predict from past action and observation
-      if (action < n_actions) {
+      if (observation != init_state) {
        	prediction = memcp.sampleAction(action, observation, chorizon);
       }
       // Get graph and action scores

@@ -70,7 +70,7 @@ If needed, first set the correct library pathes in ``run.sh``. The script can th
    * ``[4]`` History length (Defaults to 2). Must be strictly greater than 1.
    * ``[5]`` Discount Parameter gamma (Defaults to 0.95). Must be strictly between 0 and 1.
    * ``[6]`` Number of iterations for mdp, and number of simulation steps for pomcp and memcp (Defaults to 1500).
-   * ``[7]`` Horizon parameter for the POMDP solvers. Defaults to 1.
+   * ``[7]`` Horizon parameter for the POMDP solvers. Defaults to 2. Must be above 1 (strictly, for pbvi).
    * ``[8]`` Convergence criterion for mdp and ip. Defaults to 0.01.
    * ``[9]`` Exploration parameter for pomcp and memcp. Defaults to 10000 (high exploration). A high exploration parameter allows for less "Observation never seen in the simulation" during evaluation of a pomcp or memcp model. (*Note*: to see these errors, you need to run in verbose mode).
    * ``[10]`` Number of beliefs to use for PBVI, or number of particles for the belief approximation in pomcp and memcp. Defaults to  100.

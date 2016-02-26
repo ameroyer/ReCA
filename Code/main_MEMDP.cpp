@@ -288,7 +288,7 @@ int main(int argc, char* argv[]) {
   int steps = ((argc > 4) ? std::atoi(argv[4]) : 1000000);
   assert(("Unvalid steps parameter", steps > 0));
   unsigned int horizon = ((argc > 5) ? std::atoi(argv[5]) : 1);
-  assert(("Unvalid horizon parameter", horizon > 0));
+  assert(("Unvalid horizon parameter", ( !algo.compare("pbvi") && horizon > 1 ) || (algo.compare("pbvi") && horizon > 0)));
   double epsilon = ((argc > 6) ? std::atof(argv[6]) : 0.01);
   assert(("Unvalid convergence criterion", epsilon >= 0));
   double exp = ((argc > 7) ? std::atof(argv[7]) : 10000);
@@ -346,8 +346,10 @@ int main(int argc, char* argv[]) {
   // Incremental Pruning
   else if (!algo.compare("pbvi")) {
     // DEBUG PBVI //nBelef = n observations ?
-    AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);
+    AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);    
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     auto solution = solver(model);
+    if (!verbose) {std::cerr.clear();}
     std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
     std::chrono::high_resolution_clock::now() - start;
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
