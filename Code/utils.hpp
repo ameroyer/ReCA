@@ -199,6 +199,16 @@ size_t next_state(size_t state, size_t item);
 std::vector<size_t> previous_states(size_t state);
 
 
+/*! \brief Returns true iff the given state if corresponds to an item sequence.
+ * with at least one empty selection.
+ *
+ * \param state unique state index.
+ *
+ * \return bool true iff the item sequence has an empty selection.
+ */
+bool has_empty_selection(size_t state);
+
+
 /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
  * or the value ``n_actions`` otherwise.
  *

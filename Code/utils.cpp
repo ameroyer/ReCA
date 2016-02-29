@@ -224,6 +224,14 @@ std::vector<size_t> previous_states(size_t state) {
 
 
 /**
+ * HAS_EMPTY_SELECTION
+ */
+bool has_empty_selection(size_t state) {
+  return (state < acpows[0]);
+}
+
+
+/**
  * IS_CONNECTED
  */
 size_t is_connected(size_t s1, size_t s2) {

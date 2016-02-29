@@ -192,7 +192,7 @@ public:
    * \param a chosen action.
    * \param o observation.
    *
-   * \return P( o | s1 -a-> ).
+   * \return P( o | -a-> s1 ).
    */
   double getObservationProbability(size_t s1, size_t a, size_t o) const {
     if (get_rep(s1) == o) {
