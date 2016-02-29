@@ -51,8 +51,16 @@ namespace AIToolbox {
        */
       ProjectionsRow operator()(const VList & w, size_t a);
 
+      /**
+       * @brief This function returns the precomputed immediate rewards for the given action.
+       *
+       * @param a an action in the model
+       *
+       * @return irw the immediate rewards for action a (normalized by the number of observations.
+       */
+      Vector getImmediateRewards(size_t a);
+
     private:
-      // using PossibleObservationsTable = boost::multi_array<bool,  2>;
 
       /**
        * @brief This function precomputes which observations are possible from specific actions.
@@ -69,14 +77,18 @@ namespace AIToolbox {
       double discount_;
 
       Matrix2D immediateRewards_;
-      //PossibleObservationsTable possibleObservations_;
     };
+
+    template <typename M>
+    Vector Projecter<M>::getImmediateRewards(size_t a) {
+      return immediateRewards_.row(a);
+    }
 
     template <typename M>
     Projecter<M>::Projecter(const M& model) : model_(model), S(model_.getS()), A(model_.getA()), O(model_.getO()), discount_(model_.getDiscount()),
 					      immediateRewards_(A, S)/*, possibleObservations_(boost::extents[A][O])*/
     {
-      //computePossibleObservations();
+      //computePossibleObservations(); // No need in our model. All observations, except 0 are possible after executing any action.
       computeImmediateRewards();
     }
 
@@ -98,27 +110,34 @@ namespace AIToolbox {
       ProjectionsRow projections( boost::extents[O] );
 
       // Observation 0 (impossible observation)
-      projections[0].emplace_back(immediateRewards_.row(a), a, VObs(1,0));
+      projections[0].emplace_back(immediateRewards_.row(a), a, VObs(1, 0));
 
-      // Other obsevrations
+      // Other (valid) observations
       for ( size_t o = 1; o < O; ++o ) {
-	std::cerr << "\r          > observation " << o + 1 << "/" << O;
-
-	for ( size_t i = 0; i < w.size(); ++i ) {
+	// We will only consider the subset of pairs (s, s1) such that
+	// - Obs(s1) = o
+	// - T(s, a, s1) > 0 (ie Obs(s) = o' s.t. o' -> o and s same environment as s1)
+	size_t npairs = ((has_empty_selection(o)) ? NPROFILES : NPROFILES * (A + 1));
+	std::vector<std::pair<size_t, size_t> > pairs (npairs);
+	std::vector<size_t> aux = previous_states(o);
+	size_t i = 0;
+	for (int e = 0; e < NPROFILES; e++) {
+	  size_t s1 = e * O + o;
+	  for (auto it = aux.begin(); it != aux.end(); ++it) {
+	    size_t s = e * O + *it;
+	    pairs.at(i) = std::make_pair(s, s1);
+	    i++;
+	  }
+	}    
+	
+	// Update vproj for every w
+	for ( i = 0; i < w.size(); ++i ) {
 	  auto & v = std::get<VALUES>(w[i]);
 	  MDP::Values vproj(S); vproj.fill(0.0);
-	  // For each value function in the previous timestep, we compute the new value
-	  // if we performed action a and obtained observation o.
-	  std::vector<size_t> aux = previous_states(o);
-	  for (auto it = aux.begin(); it != aux.end(); ++it) {
-	    for (int e = 0; e < NPROFILES; e++) {
-	      size_t s = e * O + *it;
-	      size_t s1 = e * O + o;
-	      vproj[s] += model_.getTransitionProbability(s, a, s1) * v[s1];
-	    }
+	  for (auto it = pairs.begin(); it != pairs.end(); ++it) {
+	    vproj[std::get<0>(*it)] += model_.getTransitionProbability(std::get<0>(*it), a, std::get<1>(*it)) * v[std::get<1>(*it)];
 	  }
 	  // Set new projection with found value and previous V id.
-	  // projections[o].emplace_back(vproj, a, VObs(1,i));
 	  projections[o].emplace_back(vproj * discount_ + immediateRewards_.row(a).transpose(), a, VObs(1,i));
 	}
       }
@@ -126,13 +145,16 @@ namespace AIToolbox {
       return projections;
     }
 
+
     template <typename M>
     void Projecter<M>::computeImmediateRewards() {
       immediateRewards_.fill(0.0);
       for ( size_t a = 0; a < A; ++a ) {
 	for ( size_t s = 0; s < S; ++s ) {
+	  // OPT: Only one s1 such that T(s, a, s1) and R(s, a, s1) are both non-null
 	  size_t s1 = get_env(s) * O + next_state(get_rep(s), a);
-	  immediateRewards_(a, s) += model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s,a,s1);}
+	  immediateRewards_(a, s) = model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s,a,s1);
+	}
       }
 
       // You can find out why this is divided in the incremental pruning paper =)
