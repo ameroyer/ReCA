@@ -205,6 +205,10 @@ size_t next_state(size_t state, size_t item) {
 std::vector<size_t> previous_states(size_t state) {
   div_t aux = div(state, n_actions);
   int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
+  if (state == 0) {
+    std::vector<size_t> prev;
+    return prev;
+  }
   if (prefix_s2 < acpows[1]) {
     std::vector<size_t> prev(1);
     prev.at(0) = prefix_s2;
@@ -507,9 +511,9 @@ void evaluate_policyMEMDP(std::string sfile,
       // get a prediction
       //AIToolbox::POMDP::Belief belief = build_belief(state);
       //for (size_t a = 0; a < n_actions; a++) {
-	//action_scores.at(a) = 1. / n_actions;
-	//action_scores.at(a) = policy.getActionProbability (belief, a, horizon);
-	//action_scores.at(a) = policy.getActionProbability (belief, a);
+      //action_scores.at(a) = 1. / n_actions;
+      //action_scores.at(a) = policy.getActionProbability (belief, a, horizon);
+      //action_scores.at(a) = policy.getActionProbability (belief, a);
       //}
       //size_t prediction = get_prediction(action_scores);
 
