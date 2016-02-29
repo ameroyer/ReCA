@@ -128,8 +128,8 @@ namespace AIToolbox {
 	    pairs.at(i) = std::make_pair(s, s1);
 	    i++;
 	  }
-	}    
-	
+	}
+
 	// Update vproj for every w
 	for ( i = 0; i < w.size(); ++i ) {
 	  auto & v = std::get<VALUES>(w[i]);

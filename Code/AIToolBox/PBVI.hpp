@@ -152,7 +152,7 @@ namespace AIToolbox {
       // up). However, this is easily changeable, since the belief generator
       // can be called multiple times to increase the size of the belief
       // vector.
-	    
+
       BeliefGenerator<M> bGen(model);
       auto beliefs = bGen(beliefSize_);
 
@@ -226,7 +226,6 @@ namespace AIToolbox {
 	// We compute the crossSum between each best vector for the belief.
 	for ( size_t o = 0; o < O; ++o ) {
 	  const VList & projsO = projs[o];
-
 	  // OPT: Efficient bestMatch search by ignoring constant value in projs[a][o][i].Values
 	  // Build list of states of interest
 	  std::vector<size_t> aux = previous_states(o);
@@ -253,7 +252,7 @@ namespace AIToolbox {
 	      bestMatch = it;
 	    }
 	  }
-		    
+
 	  // OPT: Only take into account the state with a discount term in projs[a][o][i].Values
 	  for (auto it = aux.begin(); it != aux.end(); ++it) {
 	    for (int e = 0; e < NPROFILES; e++) {
@@ -266,7 +265,6 @@ namespace AIToolbox {
 	result.emplace_back(std::move(v), a, std::move(obs));
       }
       result.erase(extractDominated(S, std::begin(result), std::end(result)), std::end(result));
-
       return result;
     }
   }
