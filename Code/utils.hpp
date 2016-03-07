@@ -334,7 +334,8 @@ void evaluate_pomcp(std::string sfile,
 		    double discount,
 		    unsigned int horizon,
 		    double rewards [n_observations][n_actions],
-		    bool verbose=false)
+		    bool verbose=false,
+		    bool supervised=true)
 {
   // Aux variables
   int cluster, session_length, chorizon;
@@ -383,14 +384,13 @@ void evaluate_pomcp(std::string sfile,
       size_t observation  = std::get<0>(*it2);
       // If not init state, predict from past action and observation
       if (observation != init_state) {
-       	prediction = pomcp.sampleAction(action, observation, chorizon);
+       	prediction = (supervised ? pomcp.sampleAction(action, observation, chorizon) : pomcp.sampleAction(prediction, observation, chorizon));
       }
       // Get graph and action scores
       auto & graph_ = pomcp.getGraph();
       for (size_t a = 0; a < n_actions; a++) {
 	action_scores.at(a) = graph_.children[a].V;
       }
-
       // Evaluate
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
@@ -498,7 +498,6 @@ void evaluate_memcp(std::string sfile,
       for (size_t a = 0; a < n_actions; a++) {
 	action_scores.at(a) = graph_.children[a].V;
       }
-
       // Evaluate
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
