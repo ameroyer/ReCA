@@ -327,9 +327,9 @@ double avprecision_score(std::vector<double> action_scores, size_t action) {
 
 
 /**
- * IDENTIFICATION_SCORE
+ * IDENTIFICATION_SCORE_MCP
  */
-std::pair<double, double> identification_score(std::vector<size_t> sampleBelief, int cluster) {
+std::pair<double, double> identification_score_mcp(std::vector<size_t> sampleBelief, int cluster) {
   // Build scores per cluster
   std::vector<int> scores(n_environments);
   for (auto it = begin(sampleBelief); it != end(sampleBelief); ++it) {
@@ -459,6 +459,12 @@ AIToolbox::POMDP::Belief build_belief(size_t o) {
   return belief;
 }
 
+
+/**
+ * TODO
+ */
+AIToolbox::POMDP::Belief update_belief(size_t o) {
+}
 
 /**
  * EVALUATE_POLICYMEMDP

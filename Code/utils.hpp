@@ -257,7 +257,7 @@ double avprecision_score(std::vector<double> action_scores, size_t action);
  *
  * \return accuracy and average precision for the retrieved list.
  */
-std::pair<double, double> identification_score(std::vector<size_t> sampleBelief, int cluster);
+std::pair<double, double> identification_score_mcp(std::vector<size_t> sampleBelief, int cluster);
 
 
 /*! \brief Pretty-printer for the results returned by one of the
@@ -399,7 +399,7 @@ void evaluate_pomcp(std::string sfile,
 	total_reward += rewards[observation][prediction];
 	discounted_reward += cdiscount * rewards[observation][prediction];
       }
-      std::pair<double, double> aux = identification_score(pomcp.getGraph().belief, cluster);
+      std::pair<double, double> aux = identification_score_mcp(pomcp.getGraph().belief, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
       cdiscount *= discount;
@@ -506,7 +506,7 @@ void evaluate_memcp(std::string sfile,
 	total_reward += rewards[observation][prediction];
 	discounted_reward += cdiscount * rewards[observation][prediction];
       }
-      std::pair<double, double> aux = identification_score(memcp.getGraph().belief, cluster);
+      std::pair<double, double> aux = identification_score_mcp(memcp.getGraph().belief, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
       cdiscount *= discount;
