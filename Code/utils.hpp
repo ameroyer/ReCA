@@ -23,7 +23,6 @@
 #include <AIToolbox/POMDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Algorithms/POMCP.hpp>
 #include "AIToolBox/MEMCP.hpp"
-//#include <AIToolbox/POMDP/Algorithms/MEMCP.hpp>
 #include <AIToolbox/POMDP/Types.hpp>
 #include <AIToolbox/Types.hpp>
 #include <AIToolbox/Utils.hpp>
@@ -260,6 +259,8 @@ double avprecision_score(std::vector<double> action_scores, size_t action);
 std::pair<double, double> identification_score_mcp(std::vector<size_t> sampleBelief, int cluster);
 
 
+std::pair<double, double> identification_score_belief(AIToolbox::POMDP::Belief  b, size_t o, int cluster);
+
 /*! \brief Pretty-printer for the results returned by one of the
  * evaluation routines.
  *
@@ -293,9 +294,19 @@ void evaluate_policyMDP(std::string sfile,
 /*! \brief Builds the belief (distribution over states) correpsonding to the
  * given observation.
  *
- * \param o obsevation.
+ * \param o observation.
  */
 AIToolbox::POMDP::Belief build_belief(size_t o);
+
+
+/*! \brief Belief update for our particular MEMDP structure.
+ *
+ * \param b current belief.
+ * \param a last action taken.
+ * \param o observation seen after applying a.
+ */
+AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, size_t o, double transition_matrix [n_environments][n_observations][n_actions][n_actions]);
+
 
 
 /*! \brief Evaluates a given policy (POMDP) on a sequence of test user sessions
@@ -313,6 +324,7 @@ void evaluate_policyMEMDP(std::string sfile,
 			  double discount,
 			  unsigned int horizon,
 			  double rewards [n_observations][n_actions],
+			  double transition_matrix [n_environments][n_observations][n_actions][n_actions],
 			  bool verbose=false,
 			  bool supervised=true);
 
@@ -509,6 +521,7 @@ void evaluate_memcp(std::string sfile,
       std::pair<double, double> aux = identification_score_mcp(memcp.getGraph().belief, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
+      // Update
       cdiscount *= discount;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }

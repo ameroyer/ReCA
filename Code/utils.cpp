@@ -351,6 +351,30 @@ std::pair<double, double> identification_score_mcp(std::vector<size_t> sampleBel
 
 
 /**
+ * IDENTIFICATION_SCORE_BELIEF
+ */
+std::pair<double, double> identification_score_belief(AIToolbox::POMDP::Belief b, size_t o, int cluster) {
+  // Build scores per cluster
+  std::vector<double> scores(n_environments);
+  for (int e = 0; e < n_environments; e++) {
+    scores.at(e) = b(e * n_observations + o);
+  }
+  // Accuracy
+  double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
+  // Precision
+  int rank = 1.;
+  double value = scores.at(cluster);
+  for (auto it = begin(scores); it != end(scores); ++it) {
+    if ( *it > value) {
+      rank += 1;
+    }
+  }
+  // Return
+  return std::make_pair(accuracy, 1.0 / rank);
+}
+
+
+/**
  * PRINT_EVALUATION_RESULT
  */
 void print_evaluation_result(int set_lengths[n_environments],
@@ -461,25 +485,40 @@ AIToolbox::POMDP::Belief build_belief(size_t o) {
 
 
 /**
- * TODO
+ * UPDATE_BELIEF
  */
-AIToolbox::POMDP::Belief update_belief(size_t o) {
+AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, size_t o, double transition_matrix [n_environments][n_observations][n_actions][n_actions]) {
+  AIToolbox::POMDP::Belief bp =  AIToolbox::POMDP::Belief::Zero(n_states);
+  double normalization = 0.;
+  // Belief is non-zero only for states with observation o
+  std::vector<size_t> prev = previous_states(o);
+  for (int e = 0; e < n_environments; e++) {
+    size_t s = e * n_observations + o;
+    for (auto it = prev.begin(); it != prev.end(); ++it) {
+      bp(s) += transition_matrix[e][*it][a][is_connected(*it, o)] * b(e * n_observations + *it);
+    }
+    normalization += bp(s);
+  }
+  bp /= normalization;
+  return bp;
 }
 
 /**
  * EVALUATE_POLICYMEMDP
  */
+
 void evaluate_policyMEMDP(std::string sfile,
 			  AIToolbox::POMDP::Policy policy,
 			  double discount,
 			  unsigned int horizon,
 			  double rewards [n_observations][n_actions],
-			  bool verbose /* = false*/,
-			  bool supervised /* true*/) {
+			  double transition_matrix [n_environments][n_observations][n_actions][n_actions],
+			  bool verbose /* =false */,
+			  bool supervised /* =true */) {
   // Aux variables
   int cluster, session_length;
   double cdiscount;
-  double accuracy, precision, total_reward, discounted_reward;
+  double accuracy, precision, total_reward, discounted_reward,identity,  identity_precision;
   int user = 0;
 
   // Initialize arrays
@@ -489,7 +528,8 @@ void evaluate_policyMEMDP(std::string sfile,
   double mean_precision [n_environments] = {0};
   double mean_total_reward [n_environments] = {0};
   double mean_discounted_reward [n_environments] = {0};
-  std::vector< double > action_scores(n_actions, 0);
+  double mean_identification [n_environments] = {0};
+  double mean_identification_precision [n_environments] = {0};
 
   // For each user
   for (auto it = begin(aux); it != end(aux); ++it) {
@@ -502,13 +542,14 @@ void evaluate_policyMEMDP(std::string sfile,
     assert(("Empty test user session", session_length > 0));
 
     // Reset
-    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
+    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
     cdiscount = discount;
 
     // Initial belief and first action
-    size_t id, prediction;
+    size_t id, prediction, action;
     size_t init_state = 0;
     unsigned int timesteps = horizon;
+    std::vector< double > action_scores(n_actions, 0);
     AIToolbox::POMDP::Belief belief = build_belief(init_state);
     std::tie(prediction, id) = policy.sampleAction(belief, timesteps);
     timesteps --;
@@ -516,14 +557,17 @@ void evaluate_policyMEMDP(std::string sfile,
     // For each (state, action) in the session
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       // current state
-      size_t observation = std::get<0>(*it2), action = std::get<1>(*it2);
+      size_t observation = std::get<0>(*it2);
 
       // predict
       if (observation != init_state) {
-	std::tie(prediction, id) = policy.sampleAction(id, observation, timesteps);
+	belief = (supervised ? update_belief(belief, action, observation, transition_matrix) :  update_belief(belief, prediction, observation, transition_matrix));
+	std::tie(prediction, id) = policy.sampleAction(belief, timesteps);
+	//std::cout << belief(observation) << "\n";
+	//std::cout << belief(n_observations + observation) << "\n";
+	//std::tie(prediction, id) = policy.sampleAction(id, observation, timesteps);
       }
-
-      // get a prediction
+      // get action scores from value function ?
       //AIToolbox::POMDP::Belief belief = build_belief(state);
       //for (size_t a = 0; a < n_actions; a++) {
       //action_scores.at(a) = 1. / n_actions;
@@ -532,13 +576,18 @@ void evaluate_policyMEMDP(std::string sfile,
       //}
       //size_t prediction = get_prediction(action_scores);
 
-      // evaluate
+      // Evaluate
+      action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
       //precision += avprecision_score(action_scores, action);
       if (prediction == action) {
 	total_reward += rewards[observation][prediction];
 	discounted_reward += cdiscount * rewards[observation][prediction];
       }
+      std::pair<double, double> aux = identification_score_belief(belief, observation, cluster);
+      identity += std::get<0>(aux);
+      identity_precision += std::get<1>(aux);
+      // Update
       cdiscount *= discount;
       timesteps = ((timesteps > 1) ? timesteps - 1 : 1);
     }
@@ -548,11 +597,13 @@ void evaluate_policyMEMDP(std::string sfile,
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
     mean_discounted_reward[cluster] += discounted_reward;
+    mean_identification[cluster] += identity / session_length;
+    mean_identification_precision[cluster] += identity_precision / session_length;
   }
 
   // Print results for each environment, as well as global result
   std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
-  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
+  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
+  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
   print_evaluation_result(set_lengths, results, titles, verbose);
 }
