@@ -313,7 +313,8 @@ void evaluate_policyMEMDP(std::string sfile,
 			  double discount,
 			  unsigned int horizon,
 			  double rewards [n_observations][n_actions],
-			  bool verbose=false);
+			  bool verbose=false,
+			  bool supervised=true);
 
 
 
@@ -440,7 +441,8 @@ void evaluate_memcp(std::string sfile,
 		    double discount,
 		    unsigned int horizon,
 		    double rewards [n_observations][n_actions],
-		    bool verbose=false)
+		    bool verbose=false,
+		    bool supervised=true)
 {
   // Aux variables
   int cluster, session_length, chorizon;
@@ -489,7 +491,7 @@ void evaluate_memcp(std::string sfile,
       size_t observation  = std::get<0>(*it2);
       // If not init state, predict from past action and observation
       if (observation != init_state) {
-       	prediction = memcp.sampleAction(action, observation, chorizon);
+       	prediction = (supervised ? memcp.sampleAction(action, observation, chorizon) : memcp.sampleAction(prediction, observation, chorizon));
       }
       // Get graph and action scores
       auto & graph_ = memcp.getGraph();

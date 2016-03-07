@@ -132,7 +132,7 @@ size_t get_rep(size_t s) {
 
 
 /**
- * Static
+ * Static variables
  */
 static int pows[hlength];   /*!< Precomputed exponents for conversion to base n_items */
 static int acpows[hlength]; /*!< Cumulative exponents for conversion from base n_items */
@@ -468,7 +468,8 @@ void evaluate_policyMEMDP(std::string sfile,
 			  double discount,
 			  unsigned int horizon,
 			  double rewards [n_observations][n_actions],
-			  bool verbose /* = false*/) {
+			  bool verbose /* = false*/,
+			  bool supervised /* true*/) {
   // Aux variables
   int cluster, session_length;
   double cdiscount;
