@@ -525,7 +525,6 @@ void evaluate_policyMEMDP(std::string sfile,
   std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
   int set_lengths [n_environments] = {0};
   double mean_accuracy [n_environments] = {0};
-  double mean_precision [n_environments] = {0};
   double mean_total_reward [n_environments] = {0};
   double mean_discounted_reward [n_environments] = {0};
   double mean_identification [n_environments] = {0};
@@ -542,7 +541,7 @@ void evaluate_policyMEMDP(std::string sfile,
     assert(("Empty test user session", session_length > 0));
 
     // Reset
-    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
+    accuracy = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
     cdiscount = discount;
 
     // Initial belief and first action
@@ -567,19 +566,10 @@ void evaluate_policyMEMDP(std::string sfile,
 	//std::cout << belief(n_observations + observation) << "\n";
 	//std::tie(prediction, id) = policy.sampleAction(id, observation, timesteps);
       }
-      // get action scores from value function ?
-      //AIToolbox::POMDP::Belief belief = build_belief(state);
-      //for (size_t a = 0; a < n_actions; a++) {
-      //action_scores.at(a) = 1. / n_actions;
-      //action_scores.at(a) = policy.getActionProbability (belief, a, horizon);
-      //action_scores.at(a) = policy.getActionProbability (belief, a);
-      //}
-      //size_t prediction = get_prediction(action_scores);
 
       // Evaluate
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
-      //precision += avprecision_score(action_scores, action);
       if (prediction == action) {
 	total_reward += rewards[observation][prediction];
 	discounted_reward += cdiscount * rewards[observation][prediction];
@@ -594,7 +584,6 @@ void evaluate_policyMEMDP(std::string sfile,
 
     // accumulate
     mean_accuracy[cluster] += accuracy / session_length;
-    mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
     mean_discounted_reward[cluster] += discounted_reward;
     mean_identification[cluster] += identity / session_length;
@@ -603,7 +592,7 @@ void evaluate_policyMEMDP(std::string sfile,
 
   // Print results for each environment, as well as global result
   std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
-  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
+  std::vector<std::string> titles {"acc", "avgrw", "discrw", "idac", "idpr"};
+  std::vector<double*> results {mean_accuracy, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
   print_evaluation_result(set_lengths, results, titles, verbose);
 }

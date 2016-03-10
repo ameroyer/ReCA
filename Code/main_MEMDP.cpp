@@ -358,7 +358,7 @@ int main(int argc, char* argv[]) {
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(n_states, n_actions, n_observations, std::get<1>(solution));
-    evaluate_policyMEMDP(datafile_base + ".test", policy, discount, horizon, rewards, verbose);
+    evaluate_policyMEMDP(datafile_base + ".test", policy, discount, horizon, rewards, transition_matrix, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 
