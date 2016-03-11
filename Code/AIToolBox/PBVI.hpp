@@ -129,8 +129,8 @@ namespace AIToolbox {
        *
        * @return The optimal cross-sum list for the given projections and BeliefList.
        */
-      template <typename ProjectionsRow>
-      VList crossSum(const ProjectionsRow & projs, size_t a, const std::vector<Belief> & bl, MDP::Values irw);
+      template <typename ProjectionsRow, typename M>
+      VList crossSum(const ProjectionsRow & projs, size_t a, const std::vector<Belief> & bl, MDP::Values irw, const M & model_);
 
       size_t S, A, O, beliefSize_;
       unsigned horizon_;
@@ -182,7 +182,7 @@ namespace AIToolbox {
 	// so (not that I found one, if there is one I'd like to know!)
 	for ( size_t a = 0; a < A; ++a ) {
 	  std::cerr << "\r          cross-sum " << a + 1 << "/" << A <<"                    ";
-	  projs[a][0] = crossSum( projs[a], a, beliefs, projecter.getImmediateRewards(a) );
+	  projs[a][0] = crossSum( projs[a], a, beliefs, projecter.getImmediateRewards(a), model);
 	  finalWSize += projs[a][0].size();
 	}
 	std::cerr << "\n";
@@ -212,27 +212,27 @@ namespace AIToolbox {
       return std::make_tuple(true, v);
     }
 
-    template <typename ProjectionsRow>
-    VList PBVI::crossSum(const ProjectionsRow & projs, size_t a, const std::vector<Belief> & bl, MDP::Values irw) {
+    template <typename ProjectionsRow, typename M>
+    VList PBVI::crossSum(const ProjectionsRow & projs, size_t a, const std::vector<Belief> & bl, MDP::Values irw, const M& model_) {
 
       VList result;
       result.reserve(bl.size());
 
       for ( auto & b : bl ) {
 	// OPT: Initialize with constant term (immediate rewards)
-	MDP::Values v = O * irw;
+	MDP::Values v = model_.getO() * irw;
 	VObs obs(O);
 
 	// We compute the crossSum between each best vector for the belief.
-	for ( size_t o = 0; o < O; ++o ) {
+	for ( size_t o = 0; o < model_.getO(); ++o ) {
 	  const VList & projsO = projs[o];
 	  // OPT: Efficient bestMatch search by ignoring constant value in projs[a][o][i].Values
 	  // Build list of states of interest
-	  std::vector<size_t> aux = previous_states(o);
-	  std::vector<size_t> int_states (aux.size() * NPROFILES);
+	  std::vector<size_t> aux = model_.previous_states(o);
+	  std::vector<size_t> int_states (aux.size() * model_.getE());
 	  for (int i = 0; i < aux.size(); i++) {
-	    for (int e = 0; e < NPROFILES; e++) {
-	      int_states.at(e * aux.size() + i) = e * O + aux.at(i);
+	    for (int e = 0; e < model_.getE(); e++) {
+	      int_states.at(e * aux.size() + i) = e * model_.getO() + aux.at(i);
 	    }
 	  }
 	  // Init bestMatch at beginning
@@ -255,8 +255,8 @@ namespace AIToolbox {
 
 	  // OPT: Only take into account the state with a discount term in projs[a][o][i].Values
 	  for (auto it = aux.begin(); it != aux.end(); ++it) {
-	    for (int e = 0; e < NPROFILES; e++) {
-	      size_t s = e * O + *it;
+	    for (int e = 0; e < model_.getE(); e++) {
+	      size_t s = e * model_.getO() + *it;
 	      v[s] += std::get<VALUES>(*bestMatch)[s] - irw[s];
 	    }
 	  }

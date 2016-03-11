@@ -110,6 +110,7 @@ namespace AIToolbox {
       ProjectionsRow projections( boost::extents[O] );
 
       // Observation 0 (impossible observation)
+      // TODO generalize this case
       projections[0].emplace_back(immediateRewards_.row(a), a, VObs(1, 0));
 
       // Other (valid) observations
@@ -117,14 +118,13 @@ namespace AIToolbox {
 	// We will only consider the subset of pairs (s, s1) such that
 	// - Obs(s1) = o
 	// - T(s, a, s1) > 0 (ie Obs(s) = o' s.t. o' -> o and s same environment as s1)
-	size_t npairs = ((has_empty_selection(o)) ? NPROFILES : NPROFILES * (A + 1));
-	std::vector<std::pair<size_t, size_t> > pairs (npairs);
-	std::vector<size_t> aux = previous_states(o);
+	std::vector<size_t> aux = model_.previous_states(o);
+	std::vector<std::pair<size_t, size_t> > pairs (model_.getE() * aux.size());
 	size_t i = 0;
-	for (int e = 0; e < NPROFILES; e++) {
-	  size_t s1 = e * O + o;
+	for (int e = 0; e < model_.getE(); e++) {
+	  size_t s1 = e * model_.getO() + o;
 	  for (auto it = aux.begin(); it != aux.end(); ++it) {
-	    size_t s = e * O + *it;
+	    size_t s = e * model_.getO() + *it;
 	    pairs.at(i) = std::make_pair(s, s1);
 	    i++;
 	  }
@@ -152,8 +152,11 @@ namespace AIToolbox {
       for ( size_t a = 0; a < A; ++a ) {
 	for ( size_t s = 0; s < S; ++s ) {
 	  // OPT: Only one s1 such that T(s, a, s1) and R(s, a, s1) are both non-null
-	  size_t s1 = get_env(s) * O + next_state(get_rep(s), a);
-	  immediateRewards_(a, s) = model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s,a,s1);
+	  // TODO enqble pbvi if model interfqce or if not with_structure then qpply normal pbvi
+	  // TODO generalize
+	  // TODO next sand previous state taking the nevironment into
+	  size_t s1 = model_.get_env(s) * O + model_.next_state(model_.get_rep(s), a);
+	  immediateRewards_(a, s) = model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s, a, s1);
 	}
       }
 

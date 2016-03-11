@@ -157,7 +157,6 @@ public:
   bool isInitial(size_t s) const;
 
 
-protected:
   /*! \brief Given a state, returns all its predecessors.
    *
    * \param state unique state index.

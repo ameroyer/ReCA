@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
     // Build and Evaluate Policy
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
-    AIToolbox::POMDP::Policy policy(n_states, n_actions, n_observations, std::get<1>(solution));
+    AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
     evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
