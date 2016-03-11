@@ -7,11 +7,24 @@
 ** -------------------------------------------------------------------------*/
 
 #include "recomodel.hpp"
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <cassert>
+#include <algorithm>
+#include <ctime>
+
+
+/**
+ * RANDOM ENGINE
+ */
+std::default_random_engine Recomodel::generator(time(NULL));
+
 
 /**
  * INDEX
  */
-int Recomodel::index(size_t env, size_t s, size_t a, size_t link) {
+int Recomodel::index(size_t env, size_t s, size_t a, size_t link) const {
   return link + n_actions * (a + n_actions * (s + n_observations * env));
 }
 
@@ -19,7 +32,7 @@ int Recomodel::index(size_t env, size_t s, size_t a, size_t link) {
 /**
  * STATE_TO_ID
  */
-size_t Recomodel::state_to_id(std::vector<size_t> state) {
+size_t Recomodel::state_to_id(std::vector<size_t> state) const {
   size_t id = 0;
   for (int i = 0; i < hlength; i++) {
     id += state.at(i) * pows[i];
@@ -31,7 +44,7 @@ size_t Recomodel::state_to_id(std::vector<size_t> state) {
 /**
  * ID_TO_STATE
  */
-std::vector<size_t> Recomodel::id_to_state(size_t id) {
+std::vector<size_t> Recomodel::id_to_state(size_t id) const {
   std::vector<size_t> state (hlength);
   int indx = 0;
   while (id > n_actions) {
@@ -82,8 +95,8 @@ Recomodel::Recomodel(std::string sfile, bool is_mdp_) {
   iss.str(line);
   iss >> aux;
   hlength = aux;
-  assert((pow(n_actions, hlength + 1) - 1) / (n_actions - 1),
-	 "number of observations and actions do not match");
+  assert(("number of observations and actions do not match",
+  	  (pow(n_actions, hlength + 1) - 1) / (n_actions - 1)));
   infile.close();
 
   //********** Initialize
@@ -109,6 +122,8 @@ Recomodel::Recomodel(std::string sfile, bool is_mdp_) {
   }
 
   //********** Precompute exponents for base conversion
+  pows = new int[hlength];
+  acpows = new int[hlength];
   pows[hlength - 1] = 1;
   acpows[hlength - 1] = 1;
   for (int i = hlength - 2; i >= 0; i--) {
@@ -121,9 +136,11 @@ Recomodel::Recomodel(std::string sfile, bool is_mdp_) {
 /**
  * DESTRUCTOR
  */
-Recomodel::~Recomodel {
+Recomodel::~Recomodel() {
   delete []transition_matrix;
   delete []rewards;
+  delete []pows;
+  delete []acpows;
 }
 
 
@@ -131,23 +148,27 @@ Recomodel::~Recomodel {
  * LOAD_REWARDS
  */
 void Recomodel::load_rewards(std::string rfile) {
+  std::ifstream infile;
+  std::string line;
+  std::istringstream iss;
   double v;
   size_t a;
   int rewards_found = 0;
-  size_t temp1, temp2; // TODO
+  size_t s1, s2; // TODO
 
   infile.open(rfile, std::ios::in);
   assert((".rewards file not found", infile.is_open()));
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
     //if (!(iss >> a >> v)) { break; } TODO
-    if (!(temp1 >> a >> temp2)) { break; }
+    if (!(iss >> s1 >> a >> s2 >> v)) { break; }
     assert(("Unvalid reward entry", a <= n_actions));
     rewards[a - 1] = v;
     rewards_found++;
+    //std::cout << v << " " << a << "\n";
   }
-  assert(("Missing item while parsing .rewards file",
-	  rewards_found == n_actions));
+  //assert(("Missing item while parsing .rewards file",
+  //	  rewards_found == n_actions)); TODO
   infile.close();
 }
 
@@ -156,6 +177,9 @@ void Recomodel::load_rewards(std::string rfile) {
  * LOAD_TRANSITIONS
  */
 void Recomodel::load_transitions(std::string tfile, bool precision) {
+  std::ifstream infile;
+  std::string line;
+  std::istringstream iss;
   double v;
   size_t s1, a, s2, link, p;
   int transitions_found = 0, profiles_found = 0;
@@ -175,7 +199,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision) {
       continue;
     }
     // Set transition
-    link = this->is_connected(s1, s2);
+    link = is_connected(s1, s2);
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     if (is_mdp) {
       transition_matrix[index(0, s1, a - 1, link)] += v;
@@ -189,7 +213,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision) {
 
   //Normalization
   int env_loop = (is_mdp ? 1 : n_environments);
-  for (int p = 0; i < env_loop; p++) {
+  for (int p = 0; p < env_loop; p++) {
     for (s1 = 0; s1 < n_observations; s1++) {
       for (a = 0; a < n_actions; a++) {
 	double nrm = 0.0;
@@ -205,14 +229,15 @@ void Recomodel::load_transitions(std::string tfile, bool precision) {
 	}
 	// Else basic sum
 	else{
-	  for (s2 = 0; s2 < n_actions; s2++) {
-	    nrm += transition_matrix[index(p, s1, a, s2)]
-	      }
+	  nrm = std::accumulate(&transition_matrix[index(p, s1, a, 0)],
+				&transition_matrix[index(p, s1, a, n_actions)], 0.);
 	}
 	// Normalize
-	for (s2 = 0; s2 < n_actions; s2++) {
-	  transition_matrix[index(p, s1, a, s2)] /= nrm;
-	}
+	std::transform(&transition_matrix[index(p, s1, a, 0)],
+		       &transition_matrix[index(p, s1, a, n_actions)],
+		       &transition_matrix[index(p, s1, a, 0)],
+		       [nrm](const double t){ return t / nrm; }
+		       );
       }
     }
   }
@@ -262,7 +287,7 @@ double Recomodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
  */
 std::tuple<size_t, double> Recomodel::sampleSR(size_t s,size_t a) const {
   // Sample random transition
-  std::discrete_distribution<int> distribution (transition_matrix[get_env(s)][get_rep(s)][a], transition_matrix[get_env(s)][get_rep(s)][a] + n_actions);
+  std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_actions)]);
   size_t link = distribution(generator);
   // Return values
   size_t s2 = get_env(s) * n_observations + next_state(get_rep(s), link);
@@ -279,7 +304,7 @@ std::tuple<size_t, double> Recomodel::sampleSR(size_t s,size_t a) const {
  */
 std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) const {
   // Sample random transition
-  std::discrete_distribution<int> distribution (transition_matrix[get_env(s)][get_rep(s)][a], transition_matrix[get_env(s)][get_rep(s)][a] + n_actions);
+  std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_actions)]);
   size_t link = distribution(generator);
   // Return values
   size_t o2 = next_state(get_rep(s), link);
@@ -303,7 +328,7 @@ bool Recomodel::isTerminal(size_t) const {
 /**
  * PREVIOUS_STATES
  */
-std::vector<size_t> Recomodel::previous_states(size_t state) {
+std::vector<size_t> Recomodel::previous_states(size_t state) const {
   div_t aux = div(state, n_actions);
   int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
   if (state == 0) {
@@ -327,7 +352,7 @@ std::vector<size_t> Recomodel::previous_states(size_t state) {
 /**
  * NEXT_STATE
  */
-size_t Recomodel::next_state(size_t state, size_t item) {
+size_t Recomodel::next_state(size_t state, size_t item) const {
   size_t aux = state % pows[0];
   if (aux >= acpows[1] || state < pows[0]) {
     return aux * n_actions + item + 1;
@@ -340,7 +365,7 @@ size_t Recomodel::next_state(size_t state, size_t item) {
 /**
  * IS_CONNECTED
  */
-size_t Recomodel::is_connected(size_t s1, size_t s2) {
+size_t Recomodel::is_connected(size_t s1, size_t s2) const {
   // Check if states have the same environment
   if (get_env(s1) != get_env(s2)) {
     return n_actions;

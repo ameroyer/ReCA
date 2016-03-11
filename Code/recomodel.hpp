@@ -1,3 +1,6 @@
+#ifndef RECOMODEL_H_INCLUDED
+#define RECOMODEL_H_INCLUDED
+
 /* ---------------------------------------------------------------------------
 ** recomodel.hpp
 ** Represent a MEMDP model constructed from data for a recommender system task
@@ -8,6 +11,10 @@
 
 #include "model.hpp"
 #include <iostream>
+#include <tuple>
+#include <random>
+#include <string>
+#include <ctime>
 
 
 
@@ -18,15 +25,15 @@ private:
   double* rewards;           /*!< Rewards matrix */
   int hlength;               /*!< History length */
   bool is_mdp;               /*!< True if mdp mode is activated */
-  int pows[hlength];         /*!< Precomputed exponents for conversion to base n_items */
-  int acpows[hlength];       /*!< Cumulative exponents for conversion from base n_items */
-  std::default_random_engine generator(time(NULL)); /*!< Private random generator */
+  int* pows;                 /*!< Precomputed exponents for conversion to base n_items */
+  int* acpows;               /*!< Cumulative exponents for conversion from base n_items */
+  static std::default_random_engine generator;
 
 
   /*! \brie fGiven an environment e, state s1, action a and state s2 (suffix),
    * returns the corresponding index in an 1D array.
    */
-  int index(size_t env, size_t s, size_t a, size_t link);
+  int index(size_t env, size_t s, size_t a, size_t link) const;
 
 
   /*! \brief Returns the index of the state corresponding to a given sequence of item selections.
@@ -39,7 +46,7 @@ private:
    *
    * \return the unique index representing the given state in the model.
    */
-  size_t state_to_id(std::vector<size_t> state);
+  size_t state_to_id(std::vector<size_t> state) const;
 
 
   /*! \brief Returns the sequence of items selection corresponding to the given state index.
@@ -49,7 +56,7 @@ private:
    *
    * \return state a state, represented by a sequence of selected items.
    */
-  std::vector<size_t> id_to_state(size_t id);
+  std::vector<size_t> id_to_state(size_t id) const;
 
 
 public:
@@ -60,7 +67,7 @@ public:
 
   /*! \brief Destructor
    */
-  ~Recomodel;
+  ~Recomodel();
 
 
   /*! \brief Load rewards of the model from file
@@ -148,7 +155,7 @@ protected:
    *
    * \return next_state index of the state corresponding to the user choosing ``item`` in ``state``.
    */
-  std::vector<size_t> previous_states(size_t state);
+  std::vector<size_t> previous_states(size_t state) const;
 
 
   /*! \brief Given a state and choice (e.g. item, direction) , return the next user state.
@@ -158,7 +165,7 @@ protected:
    *
    * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
    */
-  size_t next_state(size_t state, size_t item);
+  size_t next_state(size_t state, size_t item) const;
 
 
   /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
@@ -169,7 +176,8 @@ protected:
    *
    * \return link a valid action index [0 to n_actions - 1] if s1 and s2 can be connected, n_actions otherwise.
    */
-  size_t is_connected(size_t s1, size_t s2);
+  size_t is_connected(size_t s1, size_t s2) const;
 
 };
 
+#endif
