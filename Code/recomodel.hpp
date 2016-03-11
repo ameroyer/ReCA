@@ -20,6 +20,7 @@ private:
   bool is_mdp;               /*!< True if mdp mode is activated */
   int pows[hlength];         /*!< Precomputed exponents for conversion to base n_items */
   int acpows[hlength];       /*!< Cumulative exponents for conversion from base n_items */
+  std::default_random_engine generator(time(NULL)); /*!< Private random generator */
 
 
   /*! \brie fGiven an environment e, state s1, action a and state s2 (suffix),
@@ -54,8 +55,7 @@ private:
 public:
   /*! \brief Initialize a MEMDP model from a given recommendation dataset.
    */
-  Recomodel(std::string tfile, std::string rfile, std::string sfile,
-	    double precision, bool is_mdp_);
+  Recomodel(std::string sfile, bool is_mdp_);
 
 
   /*! \brief Destructor
@@ -148,25 +148,7 @@ protected:
    *
    * \return next_state index of the state corresponding to the user choosing ``item`` in ``state``.
    */
-  virtual std::vector<size_t> previous_states(size_t state) {
-    div_t aux = div(state, n_actions);
-    int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
-    if (state == 0) {
-      std::vector<size_t> prev;
-      return prev;
-    }
-    if (prefix_s2 < acpows[1]) {
-      std::vector<size_t> prev(1);
-      prev.at(0) = prefix_s2;
-      return prev;
-    } else {
-      std::vector<size_t> prev(n_actions + 1);
-      for (size_t a = 0; a <= n_actions; a++) {
-	prev.at(a) = prefix_s2 + a * pows[0];
-      }
-      return prev;
-    }
-  }
+  std::vector<size_t> previous_states(size_t state);
 
 
   /*! \brief Given a state and choice (e.g. item, direction) , return the next user state.
@@ -176,14 +158,7 @@ protected:
    *
    * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
    */
-  virtual size_t next_state(size_t state, size_t choice) {
-    size_t aux = state % pows[0];
-    if (aux >= acpows[1] || state < pows[0]) {
-      return aux * n_actions + choice + 1;
-    } else {
-      return (pows[0] + aux) * n_actions + choice + 1;
-    }
-  }
+  size_t next_state(size_t state, size_t item);
 
 
   /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,

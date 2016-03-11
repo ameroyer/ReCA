@@ -53,8 +53,7 @@ std::vector<size_t> Recomodel::id_to_state(size_t id) {
 /**
  * CONSTRUCTOR
  */
-Recomodel::Recomodel(std::string tfile, std::string rfile, std::string sfile,
-		     double precision, bool is_mdp_) {
+Recomodel::Recomodel(std::string sfile, bool is_mdp_) {
 
   //********** Load summary information
   std::ifstream infile;
@@ -304,7 +303,7 @@ bool Recomodel::isTerminal(size_t) const {
 /**
  * PREVIOUS_STATES
  */
-virtual std::vector<size_t> previous_states(size_t state) {
+std::vector<size_t> Recomodel::previous_states(size_t state) {
   div_t aux = div(state, n_actions);
   int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
   if (state == 0) {
@@ -328,12 +327,12 @@ virtual std::vector<size_t> previous_states(size_t state) {
 /**
  * NEXT_STATE
  */
-virtual size_t next_state(size_t state, size_t choice) {
+size_t Recomodel::next_state(size_t state, size_t item) {
   size_t aux = state % pows[0];
   if (aux >= acpows[1] || state < pows[0]) {
-    return aux * n_actions + choice + 1;
+    return aux * n_actions + item + 1;
   } else {
-    return (pows[0] + aux) * n_actions + choice + 1;
+    return (pows[0] + aux) * n_actions + item + 1;
   }
 }
 
@@ -341,7 +340,7 @@ virtual size_t next_state(size_t state, size_t choice) {
 /**
  * IS_CONNECTED
  */
-size_t is_connected(size_t s1, size_t s2) {
+size_t Recomodel::is_connected(size_t s1, size_t s2) {
   // Check if states have the same environment
   if (get_env(s1) != get_env(s2)) {
     return n_actions;
