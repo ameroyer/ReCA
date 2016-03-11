@@ -1,3 +1,5 @@
+#ifndef UTILS_H_
+#define UTILS_H_
 /* ---------------------------------------------------------------------------
 ** utils.hpp
 ** This files contains functions related to the conversion from states
@@ -10,71 +12,18 @@
 ** Email: amelie.royer@ist.ac.at
 ** -------------------------------------------------------------------------*/
 
-
-#ifndef UTILS_H_
-#define UTILS_H_
-
 #include <random>
 #include <vector>
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <fstream>
-#include "model.hpp"
 #include <AIToolbox/MDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Algorithms/POMCP.hpp>
 #include "AIToolBox/MEMCP.hpp"
-#include <AIToolbox/POMDP/Types.hpp>
-#include <AIToolbox/Types.hpp>
-#include <AIToolbox/Utils.hpp>
+#include "model.hpp"
 
-
-/*!
- * Static parameters [set before compilation]
- */
-static const int NITEMS =
-#ifdef NITEMSPRM
-  NITEMSPRM;
-#undef NITEMSPRM
-#else
-3;
-#endif        /*!< Number of items/products available */
-static const int HIST =
-#ifdef HISTPRM
-  HISTPRM;
-#undef HISTPRM
-#else
-2;
-#endif        /*!< History length */
-static const int NPROFILES =
-#ifdef NPROFILESPRM
-  NPROFILESPRM;
-#undef NPROFILESPRM
-#else
-6;
-#endif       /*!< Number of environments in the MEMDP */
-
-
-
-
-
-/*!
- * Global variables
- */
-const int hlength = HIST;             /*!< History length */
-const size_t n_actions = NITEMS;      /*!< Number of items */
-const size_t n_environments = NPROFILES;  /*!< Number of environments */
-const size_t n_observations = (pow(NITEMS, HIST + 1) - 1) / (NITEMS - 1); /*!< Number of oservations */
-const size_t n_states = NPROFILES * n_observations; /*!< Number of states in the MEMDP */
-
-
-/*! \brief Asserts that the information contained in the summary file match the
- * parameters given at compilation time.
- *
- * \param sfile full path to the base_name.summary file.
- * \param mode respectively false for MDP and true for MEMDP.
- */
-void check_summary_file(std::string sfile, bool mode);
 
 
 /*! \brief Returns a string representation of the current system time.
@@ -82,62 +31,6 @@ void check_summary_file(std::string sfile, bool mode);
  * \return current time in a readable string format.
  */
 std::string current_time_str();
-
-
-/*! \brief Returns the number of actions (possible product
- * recommendations) in the MEMDP model.
- *
- * \return number of actions.
- */
-size_t get_nactions();
-
-
-/*! \brief Returns the number of environments in the MEMDP model.
- *
- * \return number of environments.
- */
-size_t get_nenvironments();
-
-
-/*! \brief Returns the number of observations in the MEMDP model.
- *
- * \return number of observations.
- */
-size_t get_nobservations();
-
-
-/*! \brief Returns the number of states in the underlying MDP model.
- *
- * \return number of states in the MDP.
- */
-size_t get_nstates_MDP();
-
-
-/*! \brief Returns the number of states in the MEMDP model.
- *
- * \return number of states in the MEMDP.
- */
-size_t get_nstates_MEMDP();
-
-
-/*!
- * \brief Given a state of the MEMDP, returns the corresponding environment.
- *
- * \param s a state in the MEMDP.
- *
- * \return the environment to which s belongs.
- */
-size_t get_env(size_t s);
-
-
-/*!
- * \brief Given a state of the MEMDP, returns its representative/observation.
- *
- * \param s a state in the MEMDP.
- *
- * \return the corresponding observation.
- */
-size_t get_rep(size_t s);
 
 
 /*! \brief Returns a sequence of sessions and corresponding user
@@ -152,81 +45,20 @@ size_t get_rep(size_t s);
 std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > load_test_sessions(std::string sfile);
 
 
-/*! \brief Precomputes the ``n_actions`` exponents for conversion of decimals
- * to and from the ``n_actions`` base.
+/*! \brief Pretty-printer for the results returned by one of the
+ * evaluation routines.
+ *
+ * \param set_lengths contains the number of test sessions per cluster
+ * \param n_environments length of n_environments
+ * \param results contains the various evaluation measures per cluster
+ * \param titles contains the name of each evaluation measures
+ * \param verbose if true, increases the verbosity. Defaults to false.
  */
-void init_pows();
-
-
-/*! \brief Returns the index of the state corresponding to a given sequence of item selections.
- * Note 1: Items correspond to actions with a +1 index shift, in order to allow the empty
- * selection to be represented by index 0.
- * Note 2: Items are ordered in decreasing age; the first time is the oldest in the history.
- *
- * \param state a state, represented by a sequence of selected items.
- *
- * \return the unique index representing the given state in the model.
- */
-size_t state_to_id(std::vector<size_t> state);
-
-
-/*! \brief Returns the sequence of items selection corresponding to the given state index.
- *
- * \param id unique state index.
- *
- * \return state a state, represented by a sequence of selected items.
- */
-std::vector<size_t> id_to_state(size_t id);
-
-
-/*! \brief Given a state and item choice, return the next user state.
- *
- * \param state unique state index.
- * \param item action chosen by the user [0 to n_actions - 1].
- *
- * \return next_state index of the state corresponding to the user choosing ``item`` in ``state``.
- */
-size_t next_state(size_t state, size_t item);
-
-
-/*! \brief Given a state and item choice, return the next user state.
- *
- * \param state unique state index.
- * \param item action chosen by the user [0 to n_actions - 1].
- *
- * \return next_state index of the state corresponding to the user choosing ``item`` in ``state``.
- */
-std::vector<size_t> previous_states(size_t state);
-
-
-/*! \brief Returns true iff the given state if corresponds to an item sequence.
- * with at least one empty selection.
- *
- * \param state unique state index.
- *
- * \return bool true iff the item sequence has an empty selection.
- */
-bool has_empty_selection(size_t state);
-
-
-/*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
- * or the value ``n_actions`` otherwise.
- *
- * \param s1 unique state index.
- * \param s2 unique state index
- *
- * \return link a valid action index [0 to n_actions - 1] if s1 and s2 can be connected, n_actions otherwise.
- */
-size_t is_connected(size_t s1, size_t s2);
-
-
-/*! \brief Returns the best action (greedy strategy).
- *
- * \param action_scores vector mapping an action to its score.
- *
- * \return action with the best score.
- */
-size_t get_prediction(std::vector<double> action_scores);
+void print_evaluation_result(int* set_lengths,
+			     int n_environments,
+			     std::vector<double*> results,
+			     std::vector<std::string> titles,
+			     bool verbose /* = false*/);
 
 
 /*! \brief Returns a 0-1 accuracy score given a prediction and ground-truth.
@@ -249,31 +81,15 @@ double accuracy_score(size_t predicted, size_t action);
 double avprecision_score(std::vector<double> action_scores, size_t action);
 
 
-/*! \brief Returns accuracy and precision for the identification ability
- * of the model.
+/*! \brief Returns accuracy and precision for the identification ability for a set of belief particles.
  *
- * \param scores vector mapping an environment to its score.
- * \param action the ground-truth environment.
+ * \param sampleBelief current belief particles of the model.
+ * \param cluster ground-truth identity of the current user.
+ * \param model MEMDP model.
  *
  * \return accuracy and average precision for the retrieved list.
  */
-std::pair<double, double> identification_score_mcp(std::vector<size_t> sampleBelief, int cluster);
-
-
-std::pair<double, double> identification_score_belief(AIToolbox::POMDP::Belief  b, size_t o, int cluster);
-
-/*! \brief Pretty-printer for the results returned by one of the
- * evaluation routines.
- *
- * \param set_length contains the number of test sessions per cluster
- * \param results contains the various evaluation measures per cluster
- * \param titles contains the name of each evaluation measures
- * \param verbose if true, increases the verbosity. Defaults to false.
- */
-void print_evaluation_result(int set_lengths[n_environments],
-			     std::vector<double*> results,
-			     std::vector<std::string> titles,
-			     bool verbose=false);
+std::pair<double, double> identification_score_particles(std::vector<size_t> sampleBelief, int cluster, const Model& model);
 
 
 /*! \brief Evaluates a given policy (MDP) on a sequence of test user sessions
@@ -289,22 +105,15 @@ void evaluate_policyMDP(std::string sfile,
 			bool verbose=false);
 
 
-/*! \brief Builds the belief (distribution over states) correpsonding to the
+/*! \brief Builds a belief over environments corresponding to the
  * given observation.
  *
  * \param o observation.
+ * \param n_states total number of states.
+ * \param n_observations total number of observations.
+ * \param n_environments total number of environments.
  */
-AIToolbox::POMDP::Belief build_belief(size_t o);
-
-
-/*! \brief Belief update for our particular MEMDP structure.
- *
- * \param b current belief.
- * \param a last action taken.
- * \param o observation seen after applying a.
- */
-AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, size_t o, double transition_matrix [n_environments][n_observations][n_actions][n_actions]);
-
+AIToolbox::POMDP::Belief build_belief(size_t o, size_t n_states, size_t n_observations, size_t n_environments);
 
 
 /*! \brief Evaluates a given policy (POMDP) on a sequence of test user sessions
@@ -318,14 +127,11 @@ AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, siz
  * \param verbose if true, increases the verbosity. Defaults to false.
  */
 void evaluate_policyMEMDP(std::string sfile,
-			  AIToolbox::POMDP::Policy policy,
-			  double discount,
+			  const Model& model,
+			  AIToolbox::POMDP::Policy  policy,
 			  unsigned int horizon,
-			  double rewards [n_observations][n_actions],
-			  double transition_matrix [n_environments][n_observations][n_actions][n_actions],
-			  bool verbose=false,
-			  bool supervised=true);
-
+			  bool verbose /* =false */,
+			  bool supervised /* =true */);
 
 
 /*! \brief Evaluates the sequence of actions recommended by POMCP.
@@ -346,11 +152,9 @@ void evaluate_pomcp(std::string sfile,
 		    bool supervised=true)
 {
   // Aux variables
-  int cluster, session_length, chorizon;
-  double cdiscount;
-  double accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
   size_t observation, action, prediction;
-  int user = 0;
+  int cluster, session_length, chorizon, user = 0;
+  double cdiscount, accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
 
   // Initialize arrays
   int set_lengths [model.getE()] = {0};
@@ -361,34 +165,33 @@ void evaluate_pomcp(std::string sfile,
   double mean_identification [model.getE()] = {0};
   double mean_identification_precision [model.getE()] = {0};
 
-  // For each user
   std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
   for (auto it = begin(aux); it != end(aux); ++it) {
+    // Identity
     user++;
-    std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
-
-    // identity
     cluster = std::get<0>(*it);
     set_lengths[cluster] += 1;
     session_length = std::get<1>(*it).size();
     assert(("Empty test user session", session_length > 0));
-    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
+    std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
 
-    // reset
+    // Reset
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
-    cdiscount = model.getDiscount();
+    cdiscount = 1.;
     chorizon = horizon;
     std::vector< double > action_scores(model.getA(), 0);
 
-    // init belief
-    AIToolbox::POMDP::Belief init_belief = AIToolbox::POMDP::Belief::Zero(model.getS());
+    // Init belief
     size_t init_state = 0;
-    for (int i = 0; i < model.getE(); i++) {
-      init_belief(i * n_observations + init_state) = 1.0 / model.getE();
-    }
-    prediction =  pomcp.sampleAction(init_belief, chorizon);
+    AIToolbox::POMDP::Belief init_belief = build_belief(init_state, model.getS(), model.getO(), model.getE());
+    prediction = pomcp.sampleAction(init_belief, chorizon);
 
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
+      // Update
+      cdiscount *= model.getDiscount();
+      chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
+
       // Predict
       observation  = std::get<0>(*it2);
       if (!model.isInitial(observation)) {
@@ -397,7 +200,7 @@ void evaluate_pomcp(std::string sfile,
 
       // Get graph and action scores
       auto & graph_ = pomcp.getGraph();
-      for (size_t a = 0; a < n_actions; a++) {
+      for (size_t a = 0; a < model.getA(); a++) {
 	action_scores.at(a) = graph_.children[a].V;
       }
 
@@ -405,18 +208,14 @@ void evaluate_pomcp(std::string sfile,
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      if (prediction == action) {
-	total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-	discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-      }
-      std::pair<double, double> aux = identification_score_mcp(pomcp.getGraph().belief, cluster);
+      // TODO state instead of obs
+      total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      auto aux = identification_score_particles(pomcp.getGraph().belief, cluster, model);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
-
-      // Update
-      cdiscount *= model.getDiscount();
-      chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
+
     if (!verbose) {std::cerr.clear();}
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
@@ -430,10 +229,8 @@ void evaluate_pomcp(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
-  print_evaluation_result(set_lengths, results, titles, verbose);
+  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
-
-
 
 
 /*! \brief Evaluates the sequence of actions recommended by POMCP.
@@ -445,7 +242,6 @@ void evaluate_pomcp(std::string sfile,
  * \param rewards stored reward values.
  * \param verbose if true, increases the verbosity. Defaults to false.
  */
-
 template<typename M>
 void evaluate_memcp(std::string sfile,
 		    const Model& model,
@@ -455,11 +251,9 @@ void evaluate_memcp(std::string sfile,
 		    bool supervised=true)
 {
   // Aux variables
-  int cluster, session_length, chorizon;
-  double cdiscount;
-  double accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
   size_t observation, action, prediction;
-  int user = 0;
+  int cluster, session_length, chorizon, user = 0;
+  double cdiscount, accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
 
   // Initialize arrays
   std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
@@ -471,9 +265,9 @@ void evaluate_memcp(std::string sfile,
   double mean_identification [model.getE()] = {0};
   double mean_identification_precision [model.getE()] = {0};
 
-  // Init belief once for each user
-  AIToolbox::POMDP::Belief init_belief = AIToolbox::POMDP::Belief(n_environments);
-  init_belief.fill(1.0 / n_environments);
+  // Init belief over the environments
+  AIToolbox::POMDP::Belief env_belief = AIToolbox::POMDP::Belief(model.getE());
+  env_belief.fill(1.0 / model.getE());
   size_t init_state = 0;
 
   for (auto it = begin(aux); it != end(aux); ++it) {
@@ -484,16 +278,20 @@ void evaluate_memcp(std::string sfile,
     set_lengths[cluster] += 1;
     session_length = std::get<1>(*it).size();
     assert(("Empty test user session", session_length > 0));
-    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
 
-    // reset
+    // Reset
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
     cdiscount = model.getDiscount();
     chorizon = horizon;
-    std::vector< double > action_scores(n_actions, 0);
-    prediction =  memcp.sampleAction(init_belief, init_state, chorizon, true);
+    std::vector< double > action_scores(model.getA(), 0);
+    prediction =  memcp.sampleAction(env_belief, init_state, chorizon, true);
 
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
+      // Update
+      cdiscount *= model.getDiscount();
+      chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
+
       // Predict
       observation  = std::get<0>(*it2);
       if (observation != init_state) {
@@ -502,7 +300,7 @@ void evaluate_memcp(std::string sfile,
 
       // Get graph and action scores
       auto & graph_ = memcp.getGraph();
-      for (size_t a = 0; a < n_actions; a++) {
+      for (size_t a = 0; a < model.getA(); a++) {
 	action_scores.at(a) = graph_.children[a].V;
       }
 
@@ -510,18 +308,13 @@ void evaluate_memcp(std::string sfile,
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      if (prediction == action) {
-	total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-	discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-      }
-      std::pair<double, double> aux = identification_score_mcp(memcp.getGraph().belief, cluster);
+      total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      auto aux = identification_score_particles(memcp.getGraph().belief, cluster, model);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
-
-      // Update
-      cdiscount *= model.getDiscount();
-      chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
+
     if (!verbose) {std::cerr.clear();}
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
@@ -535,8 +328,7 @@ void evaluate_memcp(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
-  print_evaluation_result(set_lengths, results, titles, verbose);
+  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
-
 
 #endif //UTILS_H_

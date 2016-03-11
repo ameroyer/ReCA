@@ -78,9 +78,12 @@ int main(int argc, char* argv[]) {
   // Incremental Pruning
   else if (!algo.compare("pbvi")) {
     // DEBUG PBVI //nBelef = n observations ?
+    std::cout << "WTFFF\n";
     AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);    
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
+    std::cout << "WTFFF\n";
     auto solution = solver(model);
+    std::cout << "WTFFF\n";
     if (!verbose) {std::cerr.clear();}
     std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
     std::chrono::high_resolution_clock::now() - start;
@@ -90,7 +93,7 @@ int main(int argc, char* argv[]) {
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(n_states, n_actions, n_observations, std::get<1>(solution));
-    //evaluate_policyMEMDP(datafile_base + ".test", policy, discount, horizon, rewards, transition_matrix, verbose);
+    evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 

@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <iostream>
+#include <tuple>
 
 class Model {
 public:
@@ -134,6 +135,8 @@ public:
    * \return whether the state s is initial or not.
    */
   virtual bool isInitial(size_t s) const = 0;
+
+  
 
 
   /*!
