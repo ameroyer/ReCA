@@ -103,7 +103,7 @@ if [ $MODE = "mdp" ]; then
     if [ "$COMPILE" = true ]; then
 	echo
 	echo "Compiling MDP model in mainMDP"
-	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 utils.cpp main_MDP.cpp -o mainMDP -I $AIINCLUDE -I $EIGEN -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
+	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 recomodel.cpp utils.cpp main_MDP.cpp -o mainMDP -I $AIINCLUDE -I $EIGEN -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
 	if [ $? -ne 0 ]; then
 	    echo "Compilation failed!"
 	    echo "exit"
@@ -122,7 +122,7 @@ else
     if [ "$COMPILE" = true ]; then
 	echo
 	echo "Compiling MEMDP model in mainMEMDP"
-	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 utils.cpp main_MEMDP.cpp -o mainMEMDP -I $AIINCLUDE -I $EIGEN -L $LPSOLVE -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
+	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 recomodel.cpp utils.cpp main_MEMDP.cpp -o mainMEMDP -I $AIINCLUDE -I $EIGEN -L $LPSOLVE -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
 	if [ $? -ne 0 ]
 	then
 	    echo "Compilation failed!"

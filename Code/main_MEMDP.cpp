@@ -11,7 +11,7 @@
 #include <math.h>
 #include <chrono>
 #include "utils.hpp"
-#include "recomodel.cpp"
+#include "recomodel.hpp"
 
 #include <AIToolbox/POMDP/IO.hpp>
 #include "AIToolBox/PBVI.hpp"

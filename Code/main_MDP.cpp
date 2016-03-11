@@ -14,7 +14,7 @@
 
 #include <AIToolbox/MDP/IO.hpp>
 #include <AIToolbox/MDP/Algorithms/ValueIteration.hpp>
-#include "recomodel.cpp"
+#include "recomodel.hpp"
 
 /**
  * MAIN ROUTINE
