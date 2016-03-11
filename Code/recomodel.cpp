@@ -66,7 +66,7 @@ std::vector<size_t> Recomodel::id_to_state(size_t id) const {
 /**
  * CONSTRUCTOR
  */
-Recomodel::Recomodel(std::string sfile, bool is_mdp_) {
+Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
 
   //********** Load summary information
   std::ifstream infile;
@@ -101,6 +101,7 @@ Recomodel::Recomodel(std::string sfile, bool is_mdp_) {
 
   //********** Initialize
   has_mdp = true;
+  discount = discount_;
   is_mdp = is_mdp_;
   n_states = (is_mdp ? n_observations : n_environments * n_observations);
   rewards = new double[n_actions](); // rewards[a] = profit for item a
@@ -165,7 +166,6 @@ void Recomodel::load_rewards(std::string rfile) {
     assert(("Unvalid reward entry", a <= n_actions));
     rewards[a - 1] = v;
     rewards_found++;
-    //std::cout << v << " " << a << "\n";
   }
   //assert(("Missing item while parsing .rewards file",
   //	  rewards_found == n_actions)); TODO
@@ -176,7 +176,7 @@ void Recomodel::load_rewards(std::string rfile) {
 /**
  * LOAD_TRANSITIONS
  */
-void Recomodel::load_transitions(std::string tfile, bool precision) {
+void Recomodel::load_transitions(std::string tfile, std::string pfile /* ="" */, bool precision /* =false */) {
   std::ifstream infile;
   std::string line;
   std::istringstream iss;
@@ -184,6 +184,21 @@ void Recomodel::load_transitions(std::string tfile, bool precision) {
   size_t s1, a, s2, link, p;
   int transitions_found = 0, profiles_found = 0;
 
+  // Load profiles proportions if mdp
+  std::vector<double> profiles_prop;
+  if (is_mdp) {  
+    infile.open(pfile, std::ios::in);
+    assert((".profiles file not found", infile.is_open()));
+    while (std::getline(infile, line)) {
+      std::istringstream iss(line);
+      if (!(iss >> s1 >> s2 >> v)) { break; }
+      profiles_prop.push_back(v);
+    }
+    infile.close();
+    assert(("Missing profiles in .profiles file", profiles_prop.size() == n_environments));
+  }
+
+  // Load transitions
   infile.open(tfile, std::ios::in);
   assert((".transitions file not found", infile.is_open()));
   while (std::getline(infile, line)) {
@@ -202,7 +217,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision) {
     link = is_connected(s1, s2);
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     if (is_mdp) {
-      transition_matrix[index(0, s1, a - 1, link)] += v;
+      transition_matrix[index(0, s1, a - 1, link)] += profiles_prop.at(profiles_found) * v;
     } else {
       transition_matrix[index(profiles_found, s1, a - 1, link)] = v;
     }
@@ -212,11 +227,12 @@ void Recomodel::load_transitions(std::string tfile, bool precision) {
   infile.close();
 
   //Normalization
+  double nrm;
   int env_loop = (is_mdp ? 1 : n_environments);
   for (int p = 0; p < env_loop; p++) {
     for (s1 = 0; s1 < n_observations; s1++) {
       for (a = 0; a < n_actions; a++) {
-	double nrm = 0.0;
+	nrm = 0.0;
 	// If asking for precision, use kahan summation [slightly slower]
 	if (precision) {
 	  double kahan_correction = 0.0;
@@ -277,7 +293,7 @@ double Recomodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
   if (link != a) {
     return 0.;
   } else {
-    return rewards[link];
+    return rewards[a];
   }
 }
 
@@ -292,7 +308,7 @@ std::tuple<size_t, double> Recomodel::sampleSR(size_t s,size_t a) const {
   // Return values
   size_t s2 = get_env(s) * n_observations + next_state(get_rep(s), link);
   if (a == link) {
-    return std::make_tuple(s2, rewards[link]);
+    return std::make_tuple(s2, rewards[a]);
   } else {
     return std::make_tuple(s2, 0);
   }
@@ -310,7 +326,7 @@ std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) cons
   size_t o2 = next_state(get_rep(s), link);
   size_t s2 = get_env(s) * n_observations + o2;
   if (a == link) {
-    return std::make_tuple(s2, o2, rewards[link]);
+    return std::make_tuple(s2, o2, rewards[a]);
   } else {
     return std::make_tuple(s2, o2, 0);
   }
@@ -322,6 +338,14 @@ std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) cons
  */
 bool Recomodel::isTerminal(size_t) const {
   return false;
+}
+
+
+/**
+ * ISINITIAL
+ */
+bool Recomodel::isInitial(size_t s) const {
+  return get_rep(s) == 0;
 }
 
 

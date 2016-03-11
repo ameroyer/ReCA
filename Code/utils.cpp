@@ -411,9 +411,8 @@ void print_evaluation_result(int set_lengths[n_environments],
  * EVALUATE_POLICYMDP
  */
 void evaluate_policyMDP(std::string sfile,
+			const Model& model,
 			AIToolbox::MDP::Policy policy,
-			double discount,
-			double rewards [n_observations][n_actions],
 			bool verbose /* = false*/) {
   // Aux variables
   int cluster, session_length;
@@ -423,11 +422,12 @@ void evaluate_policyMDP(std::string sfile,
 
   // Initialize arrays
   std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
-  int set_lengths [n_environments] = {0};
-  double mean_accuracy [n_environments] = {0};
-  double mean_precision [n_environments] = {0};
-  double mean_total_reward [n_environments] = {0};
-  double mean_discounted_reward [n_environments] = {0};
+  int set_lengths [model.getE()] = {0};
+  double mean_accuracy [model.getE()] = {0};
+  double mean_precision [model.getE()] = {0};
+  double mean_total_reward [model.getE()] = {0};
+  double mean_discounted_reward [model.getE()] = {0};
+  size_t state, previous_state, action, prediction;
 
   // For each user
   for (auto it = begin(aux); it != end(aux); ++it) {
@@ -441,21 +441,25 @@ void evaluate_policyMDP(std::string sfile,
 
     // Reset
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
-    cdiscount = discount;
+    cdiscount = model.getDiscount();
 
     // For each (state, action) in the session
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      size_t state = std::get<0>(*it2), action = std::get<1>(*it2);
+      // Predict
+      state = std::get<0>(*it2);
+      action = std::get<1>(*it2);
       std::vector< double > action_scores = policy.getStatePolicy(state);
-      size_t prediction = get_prediction(action_scores);
-
+      prediction = get_prediction(action_scores);
+      // Evaluate
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      if (prediction == action) {
-	total_reward += rewards[state][prediction];
-	discounted_reward += cdiscount * rewards[state][prediction];
+      if (prediction == action && !model.isInitial(state)) {
+	total_reward += model.getExpectedReward(previous_state, prediction, state);
+	discounted_reward += cdiscount * model.getExpectedReward(previous_state, prediction, state);;
       }
-      cdiscount *= discount;
+      // Update
+      cdiscount *= model.getDiscount();
+      previous_state = state;
     }
     // Accumulate
     mean_accuracy[cluster] += accuracy / session_length;

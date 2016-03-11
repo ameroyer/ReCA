@@ -62,7 +62,7 @@ private:
 public:
   /*! \brief Initialize a MEMDP model from a given recommendation dataset.
    */
-  Recomodel(std::string sfile, bool is_mdp_);
+  Recomodel(std::string sfile, double discount_, bool is_mdp_);
 
 
   /*! \brief Destructor
@@ -80,9 +80,10 @@ public:
   /*! \brief Load transitions of the model from file
    *
    * \param tfile Transition file.
+   * \param pfile Profiles distribution file.
    * \param precision If true, precise normalization is enabled.
    */
-  void load_transitions(std::string tfile, bool precision);
+  void load_transitions(std::string tfile, std::string pfile="", bool precision=false);
 
 
   /*! \brief Returns a given transition probability.
@@ -145,6 +146,15 @@ public:
    * \return whether the state s is terminal or not.
    */
   bool isTerminal(size_t s) const;
+
+
+  /*! \brief Rwturns whether a state is initial or not.
+   *
+   * \param s state
+   *
+   * \return whether the state s is initial or not.
+   */
+  bool isInitial(size_t s) const;
 
 
 

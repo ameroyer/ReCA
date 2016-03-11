@@ -19,6 +19,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include "model.hpp"
 #include <AIToolbox/MDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Algorithms/POMCP.hpp>
@@ -280,14 +281,11 @@ void print_evaluation_result(int set_lengths[n_environments],
  *
  * \param sfile full path to the base_name.test file.
  * \param policy AIToolbox policy.
- * \param discount discount factor in the MDP model.
- * \param rewards stored reward values.
  * \param verbose if true, increases the verbosity. Defaults to false.
  */
 void evaluate_policyMDP(std::string sfile,
+			const Model& model,
 			AIToolbox::MDP::Policy policy,
-			double discount,
-			double rewards [n_observations][n_actions],
 			bool verbose=false);
 
 
