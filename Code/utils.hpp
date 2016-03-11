@@ -337,13 +337,11 @@ void evaluate_policyMEMDP(std::string sfile,
  * \param rewards stored reward values.
  * \param verbose if true, increases the verbosity. Defaults to false.
  */
-
 template<typename M>
 void evaluate_pomcp(std::string sfile,
+		    const Model& model,
 		    AIToolbox::POMDP::POMCP<M> pomcp,
-		    double discount,
 		    unsigned int horizon,
-		    double rewards [n_observations][n_actions],
 		    bool verbose=false,
 		    bool supervised=true)
 {
@@ -351,72 +349,75 @@ void evaluate_pomcp(std::string sfile,
   int cluster, session_length, chorizon;
   double cdiscount;
   double accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
-  size_t action, prediction;
+  size_t observation, action, prediction;
   int user = 0;
 
   // Initialize arrays
-  std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
-  int set_lengths [n_environments] = {0};
-  double mean_accuracy [n_environments] = {0};
-  double mean_precision [n_environments] = {0};
-  double mean_total_reward [n_environments] = {0};
-  double mean_discounted_reward [n_environments] = {0};
-  double mean_identification [n_environments] = {0};
-  double mean_identification_precision [n_environments] = {0};
+  int set_lengths [model.getE()] = {0};
+  double mean_accuracy [model.getE()] = {0};
+  double mean_precision [model.getE()] = {0};
+  double mean_total_reward [model.getE()] = {0};
+  double mean_discounted_reward [model.getE()] = {0};
+  double mean_identification [model.getE()] = {0};
+  double mean_identification_precision [model.getE()] = {0};
 
   // For each user
+  std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
   for (auto it = begin(aux); it != end(aux); ++it) {
     user++;
     std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
-    // update
+
+    // identity
     cluster = std::get<0>(*it);
+    set_lengths[cluster] += 1;
     session_length = std::get<1>(*it).size();
     assert(("Empty test user session", session_length > 0));
-    set_lengths[cluster] += 1;
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
 
     // reset
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
-    cdiscount = discount;
+    cdiscount = model.getDiscount();
     chorizon = horizon;
-    std::vector< double > action_scores(n_actions, 0);
+    std::vector< double > action_scores(model.getA(), 0);
 
     // init belief
-    AIToolbox::POMDP::Belief init_belief = AIToolbox::POMDP::Belief::Zero(n_states);
+    AIToolbox::POMDP::Belief init_belief = AIToolbox::POMDP::Belief::Zero(model.getS());
     size_t init_state = 0;
-    for (int i = 0; i < n_environments; i++) {
-      init_belief(i * n_observations + init_state) = 1.0 / n_environments;
+    for (int i = 0; i < model.getE(); i++) {
+      init_belief(i * n_observations + init_state) = 1.0 / model.getE();
     }
     prediction =  pomcp.sampleAction(init_belief, chorizon);
 
-    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
-    // For each (state, action) in the session
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      size_t observation  = std::get<0>(*it2);
-      // If not init state, predict from past action and observation
-      if (observation != init_state) {
+      // Predict
+      observation  = std::get<0>(*it2);
+      if (!model.isInitial(observation)) {
        	prediction = (supervised ? pomcp.sampleAction(action, observation, chorizon) : pomcp.sampleAction(prediction, observation, chorizon));
       }
+
       // Get graph and action scores
       auto & graph_ = pomcp.getGraph();
       for (size_t a = 0; a < n_actions; a++) {
 	action_scores.at(a) = graph_.children[a].V;
       }
+
       // Evaluate
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
       if (prediction == action) {
-	total_reward += rewards[observation][prediction];
-	discounted_reward += cdiscount * rewards[observation][prediction];
+	total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+	discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
       }
       std::pair<double, double> aux = identification_score_mcp(pomcp.getGraph().belief, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
-      cdiscount *= discount;
+
+      // Update
+      cdiscount *= model.getDiscount();
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
     if (!verbose) {std::cerr.clear();}
-    // Set score
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
@@ -447,10 +448,9 @@ void evaluate_pomcp(std::string sfile,
 
 template<typename M>
 void evaluate_memcp(std::string sfile,
+		    const Model& model,
 		    AIToolbox::POMDP::MEMCP<M> memcp,
-		    double discount,
 		    unsigned int horizon,
-		    double rewards [n_observations][n_actions],
 		    bool verbose=false,
 		    bool supervised=true)
 {
@@ -458,73 +458,71 @@ void evaluate_memcp(std::string sfile,
   int cluster, session_length, chorizon;
   double cdiscount;
   double accuracy, precision, total_reward, discounted_reward, identity, identity_precision;
-  size_t action, prediction;
+  size_t observation, action, prediction;
   int user = 0;
 
   // Initialize arrays
   std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
-  int set_lengths [n_environments] = {0};
-  double mean_accuracy [n_environments] = {0};
-  double mean_precision [n_environments] = {0};
-  double mean_total_reward [n_environments] = {0};
-  double mean_discounted_reward [n_environments] = {0};
-  double mean_identification [n_environments] = {0};
-  double mean_identification_precision [n_environments] = {0};
+  int set_lengths [model.getE()] = {0};
+  double mean_accuracy [model.getE()] = {0};
+  double mean_precision [model.getE()] = {0};
+  double mean_total_reward [model.getE()] = {0};
+  double mean_discounted_reward [model.getE()] = {0};
+  double mean_identification [model.getE()] = {0};
+  double mean_identification_precision [model.getE()] = {0};
 
-  // init belief
+  // Init belief once for each user
   AIToolbox::POMDP::Belief init_belief = AIToolbox::POMDP::Belief(n_environments);
   init_belief.fill(1.0 / n_environments);
   size_t init_state = 0;
 
-  // For each user
   for (auto it = begin(aux); it != end(aux); ++it) {
+    // Identity
     user++;
     std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
-    // update
     cluster = std::get<0>(*it);
+    set_lengths[cluster] += 1;
     session_length = std::get<1>(*it).size();
     assert(("Empty test user session", session_length > 0));
-    set_lengths[cluster] += 1;
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
 
     // reset
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
-    cdiscount = discount;
+    cdiscount = model.getDiscount();
     chorizon = horizon;
     std::vector< double > action_scores(n_actions, 0);
-
-    // init belief
     prediction =  memcp.sampleAction(init_belief, init_state, chorizon, true);
 
-    // For each (state, action) in the session
-    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      size_t observation  = std::get<0>(*it2);
-      // If not init state, predict from past action and observation
+      // Predict
+      observation  = std::get<0>(*it2);
       if (observation != init_state) {
        	prediction = (supervised ? memcp.sampleAction(action, observation, chorizon) : memcp.sampleAction(prediction, observation, chorizon));
       }
+
       // Get graph and action scores
       auto & graph_ = memcp.getGraph();
       for (size_t a = 0; a < n_actions; a++) {
 	action_scores.at(a) = graph_.children[a].V;
       }
+
       // Evaluate
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
       if (prediction == action) {
-	total_reward += rewards[observation][prediction];
-	discounted_reward += cdiscount * rewards[observation][prediction];
+	total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+	discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
       }
       std::pair<double, double> aux = identification_score_mcp(memcp.getGraph().belief, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
+
       // Update
-      cdiscount *= discount;
+      cdiscount *= model.getDiscount();
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
     }
     if (!verbose) {std::cerr.clear();}
-    // Set score
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;

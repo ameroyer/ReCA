@@ -136,17 +136,6 @@ public:
   virtual bool isInitial(size_t s) const = 0;
 
 
-
-protected:
-  bool has_mdp; /*!< True iff mdp interpretation is possible */
-  bool with_structure; /*< True iff the structure of the model can be used for optimizations (through functions previous_states etc > */
-  size_t n_states; /*!< Number of states in the model */
-  size_t n_actions;  /*!< Number of actions in the model */
-  size_t n_observations;  /*!< Number of observations in the model */
-  size_t n_environments;  /*!< Number of environments */
-  double discount; /*!< Discount factor */
-
-
   /*!
    * \brief Given a state of the MEMDP, returns the corresponding environment.
    *
@@ -185,6 +174,15 @@ protected:
    */
   virtual size_t next_state(size_t state, size_t choice) const = 0;
 
+
+protected:
+  bool has_mdp; /*!< True iff mdp interpretation is possible */
+  bool with_structure; /*< True iff the structure of the model can be used for optimizations (through functions previous_states etc > */
+  size_t n_states; /*!< Number of states in the model */
+  size_t n_actions;  /*!< Number of actions in the model */
+  size_t n_observations;  /*!< Number of observations in the model */
+  size_t n_environments;  /*!< Number of environments */
+  double discount; /*!< Discount factor */
 };
 
 #endif

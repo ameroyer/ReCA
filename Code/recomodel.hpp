@@ -83,7 +83,7 @@ public:
    * \param pfile Profiles distribution file.
    * \param precision If true, precise normalization is enabled.
    */
-  void load_transitions(std::string tfile, std::string pfile="", bool precision=false);
+  void load_transitions(std::string tfile, bool precision=false, std::string pfile="");
 
 
   /*! \brief Returns a given transition probability.
@@ -157,7 +157,6 @@ public:
   bool isInitial(size_t s) const;
 
 
-
 protected:
   /*! \brief Given a state, returns all its predecessors.
    *
@@ -176,7 +175,6 @@ protected:
    * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
    */
   size_t next_state(size_t state, size_t item) const;
-
 
   /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
    * or the value ``n_actions`` otherwise.

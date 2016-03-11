@@ -176,7 +176,7 @@ void Recomodel::load_rewards(std::string rfile) {
 /**
  * LOAD_TRANSITIONS
  */
-void Recomodel::load_transitions(std::string tfile, std::string pfile /* ="" */, bool precision /* =false */) {
+void Recomodel::load_transitions(std::string tfile, bool precision /* =false */, std::string pfile /* ="" */) {
   std::ifstream infile;
   std::string line;
   std::istringstream iss;

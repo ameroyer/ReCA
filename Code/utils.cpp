@@ -427,7 +427,7 @@ void evaluate_policyMDP(std::string sfile,
   double mean_precision [model.getE()] = {0};
   double mean_total_reward [model.getE()] = {0};
   double mean_discounted_reward [model.getE()] = {0};
-  size_t state, previous_state, action, prediction;
+  size_t state, action, prediction;
 
   // For each user
   for (auto it = begin(aux); it != end(aux); ++it) {
@@ -453,13 +453,12 @@ void evaluate_policyMDP(std::string sfile,
       // Evaluate
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      if (prediction == action && !model.isInitial(state)) {
-	total_reward += model.getExpectedReward(previous_state, prediction, state);
-	discounted_reward += cdiscount * model.getExpectedReward(previous_state, prediction, state);;
+      if (prediction == action) {
+	total_reward += model.getExpectedReward(state, prediction, model.next_state(state, action));
+	discounted_reward += cdiscount * model.getExpectedReward(state, prediction, model.next_state(state, action));
       }
       // Update
       cdiscount *= model.getDiscount();
-      previous_state = state;
     }
     // Accumulate
     mean_accuracy[cluster] += accuracy / session_length;

@@ -14,7 +14,7 @@
 
 #include <AIToolbox/MDP/IO.hpp>
 #include <AIToolbox/MDP/Algorithms/ValueIteration.hpp>
-#include "recomodel.hpp"
+#include "recomodel.cpp"
 
 /**
  * MAIN ROUTINE
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
   std::string datafile_base = std::string(argv[1]);
   Recomodel model(datafile_base + ".summary", discount, true);
   model.load_rewards(datafile_base + ".rewards");
-  model.load_transitions(datafile_base + ".transitions", datafile_base + ".profiles", precision);
+  model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 
