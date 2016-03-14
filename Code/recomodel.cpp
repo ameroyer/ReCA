@@ -353,20 +353,21 @@ bool Recomodel::isInitial(size_t s) const {
  * PREVIOUS_STATES
  */
 std::vector<size_t> Recomodel::previous_states(size_t state) const {
-  div_t aux = div(state, n_actions);
+  size_t obs = get_rep(state), env = get_env(state);
+  div_t aux = div(obs, n_actions);
   int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
-  if (state == 0) {
+  if (obs == 0) {
     std::vector<size_t> prev;
     return prev;
   }
   if (prefix_s2 < acpows[1]) {
     std::vector<size_t> prev(1);
-    prev.at(0) = prefix_s2;
+    prev.at(0) = env * n_observations + prefix_s2;
     return prev;
   } else {
     std::vector<size_t> prev(n_actions + 1);
     for (size_t a = 0; a <= n_actions; a++) {
-      prev.at(a) = prefix_s2 + a * pows[0];
+      prev.at(a) = env * n_observations + (prefix_s2 + a * pows[0]);
     }
     return prev;
   }

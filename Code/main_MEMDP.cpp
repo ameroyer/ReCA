@@ -77,13 +77,10 @@ int main(int argc, char* argv[]) {
   }
   // Incremental Pruning
   else if (!algo.compare("pbvi")) {
-    // DEBUG PBVI //nBelef = n observations ?
-    std::cout << "WTFFF\n";
+    // TODO DEBUG PBVI //nBelef = n observations ?
     AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);    
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
-    std::cout << "WTFFF\n";
     auto solution = solver(model);
-    std::cout << "WTFFF\n";
     if (!verbose) {std::cerr.clear();}
     std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
     std::chrono::high_resolution_clock::now() - start;
