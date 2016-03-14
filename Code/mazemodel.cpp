@@ -14,6 +14,10 @@
 #include <algorithm>
 #include <ctime>
 
+/**
+ * RANDOM ENGINE
+ */
+std::default_random_engine Mazemodel::generator(time(NULL));
 
 /**
  * INDEX
@@ -95,7 +99,7 @@ Mazemodel::Mazemodel(std::string sfile, double discount_) {
   discount = discount_;
   n_actions = 3;
   n_observations = 3 + (max_x - min_x) * (max_y - min_y) * 4;
-  n_states = n_environments * n_actions;
+  n_states = n_environments * n_observations;
   if (is_mdp) {
     transition_matrix = new double[(n_observations - 3) * n_actions * n_actions]();
   } else {
@@ -283,7 +287,7 @@ double Mazemodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
     return 0.;
   }
   if (get_rep(s1) == 0) {
-    if (get_env(s1) != get_env(s2) || std::find(initial_states.begin(), initial_states.end(), get_rep(s)) == initial_states.end())) {
+    if (get_env(s1) != get_env(s2) || std::find(initial_states.begin(), initial_states.end(), get_rep(s2)) == initial_states.end()) {
     return 0.;
   } else {
     return 1.0 / initial_states.size();
@@ -340,7 +344,7 @@ std::tuple<size_t, double> Mazemodel::sampleSR(size_t s, size_t a) const {
     size_t link = distribution(generator);
     // Return values
     size_t s2 = next_state(s, link);
-    if (s2 == goal_state.at(get_env(s))) {
+    if (s2 == goal_states.at(get_env(s))) {
       return std::make_tuple(s2, goal_rewards.at(get_env(s)));
     } else {
       return std::make_tuple(s2, 0.);
@@ -380,7 +384,7 @@ bool Mazemodel::isInitial(size_t s) const {
 /**
  * NEXT_STATE
  */
-size_t Mazemodel::next_state(size_t s, size_t direction) {
+size_t Mazemodel::next_state(size_t s, size_t direction) const {
   size_t state = get_rep(s);
   size_t x, y, orientation;
   std::tie(x, y, orientation) = id_to_state(state);
@@ -410,7 +414,7 @@ size_t Mazemodel::next_state(size_t s, size_t direction) {
 /**
  * PREVIOUS_STATES
  */
-std::vector<size_t> Recomodel::previous_states(size_t state) const {
+std::vector<size_t> Mazemodel::previous_states(size_t state) const {
   /*
     size_t obs = get_rep(state), env = get_env(state);
     div_t aux = div(obs, n_actions);
@@ -434,14 +438,14 @@ std::vector<size_t> Recomodel::previous_states(size_t state) const {
 }
 
 
-std::vector<size_t> Recomodel::reachable_states(size_t state) const {
+std::vector<size_t> Mazemodel::reachable_states(size_t state) const {
   // Start states
   if (get_rep(state) == 0) {
     std::vector<size_t> result(initial_states.size());
     for (int i = 0; i < initial_states.size(); i++) {
       result.at(i) = get_env(state) * n_observations + initial_states.at(i);
     }
-    return results;
+    return result;
     //Absorbing states
   } else if (get_rep(state) == 1 || get_rep(state == 2)) {
     std::vector<size_t> result(1);
@@ -470,7 +474,7 @@ size_t Mazemodel::is_connected(size_t s1, size_t s2) const {
     return n_actions;
   }
   if (get_rep(s1) == 0) {
-    return ((std::find(initial_states.begin(), initial_states.end(), get_rep(s)) != initial_states.end()) ? 2 : n_actions);
+    return ((std::find(initial_states.begin(), initial_states.end(), get_rep(s2)) != initial_states.end()) ? 2 : n_actions);
   }
   // Absorbing states
   if (get_rep(s1) == 1 || get_rep(s1) == 2) {

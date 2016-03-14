@@ -28,6 +28,7 @@ private:
   double* transition_matrix;        /*!< Transition matrix */
   std::vector <size_t> goal_states;  /*!< Indices of the goal states */
   std::vector <size_t> trap_states;
+  std::vector <size_t> initial_states;
   std::vector <double> goal_rewards;
   static std::default_random_engine generator;
 
