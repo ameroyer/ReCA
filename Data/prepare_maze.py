@@ -1,6 +1,8 @@
-
 __author__ = 'mchmelik'
+import os
 import sys
+import shutil
+import argparse
 
 left = {'N':'W','W':'S','S':'E','E':'N'}
 right = {'N':'E','E':'S','S':'W','W':'N'}
@@ -24,10 +26,20 @@ def turnLeft(orient):
 def turnRight(orient):
     return right[orient]
 
-fIn = open(sys.argv[1], 'r');
-f_transitions = open(sys.argv[2], 'w');
-f_rewards = open(sys.argv[3],'w')
-
+###### Parameters
+base_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+parser = argparse.ArgumentParser(description='Generate Maze MEMDP.')
+parser.add_argument("fin", type=str, default=os.path.join(base_folder, "Code", "Models"), help="Path to output directory.")
+parser.add_argument('-o', '--output', type=str, default=os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "Code", "Models"), help="Path to output directory.")
+args = parser.parse_args()
+base_name = os.path.basename(args.fin).rsplit('.', 1)[0]
+output_dir = os.path.join(args.output, base_name)
+if os.path.isdir(output_dir):
+    shutil.rmtree(output_dir)
+os.makedirs(output_dir)
+fIn = open(args.fin, 'r')
+f_transitions = open(os.path.join(output_dir, "%s.transitions" % base_name), 'w')
+f_rewards = open(os.path.join(output_dir, "%s.rewards" % base_name), 'w')
 
 actions = {'F','L','R'}
 maze = [];
@@ -114,6 +126,39 @@ for goal_row,goal_column in goal_states:
 
   f_transitions.write("\n")
   f_rewards.write("\n")
+
+
+# END
+f_transitions.close()
+f_rewards.close()
+
+# write out summary file
+f_summary = open(os.path.join(output_dir, "%s.summary" % base_name), 'w')
+
+# Find min x
+for x in xrange(width):
+  if not all(z == '1' for z in maze[x]):
+    break
+min_x = x
+# Find max x
+for x in xrange(width - 1, -1, -1):
+  if not all(z == '1' for z in maze[x]):
+    break
+max_x = x
+
+# Find min y
+for y in xrange(height):
+  if not all(maze[x][y] == '1' for x in xrange(min_x, max_x + 1)):
+    break
+min_y = y
+# Find max y
+for y in xrange(height - 1, -1, -1):
+  if not all(maze[x][y] == '1' for x in xrange(min_x, max_x + 1)):
+    break
+max_y = y
+
+f_summary.write("%d min x\n%d max x\n%d min y\n%d max y" % (min_x, max_x, min_y, max_y))
+f_summary.close()
 
 
 
