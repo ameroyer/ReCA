@@ -87,17 +87,17 @@ if [ $DATA = "fm" ]; then
 	echo "exit"
 	exit 1
     fi
-    DATA = "reco"
+    DATA="reco"
     NITEMS=$(($(wc -l < "$BASE.items") + 1))
 elif [ $DATA = "rd" ]; then
     PROFILES=$PLEVEL
     NITEMS=$PLEVEL
     printf -v BASE "$DIR/Models/Synth%d%d%d/synth_u%d_k%d_pl%d" "$PLEVEL" "$HIST" "$PLEVEL" "$PLEVEL" "$HIST" "$PLEVEL"
-    DATA = "reco"
+    DATA="reco"
 elif [ $DATA = "mz" ]; then
     NAME=$PLEVEL
     printf -v BASE "$DIR/Models/%s/%s" "$PLEVEL" "$PLEVEL"
-    DATA = "maze"
+    DATA="maze"
 else
     echo "Unkown data mode $DATA"
     echo "exit"
@@ -109,7 +109,7 @@ if [ $MODE = "mdp" ]; then
     if [ "$COMPILE" = true ]; then
 	echo
 	echo "Compiling MDP model in mainMDP"
-	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 recomodel.cpp utils.cpp main_MDP.cpp -o mainMDP -I $AIINCLUDE -I $EIGEN -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
+	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 mazemodel.cpp recomodel.cpp utils.cpp main_MDP.cpp -o mainMDP -I $AIINCLUDE -I $EIGEN -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
 	if [ $? -ne 0 ]; then
 	    echo "Compilation failed!"
 	    echo "exit"
@@ -128,7 +128,7 @@ else
     if [ "$COMPILE" = true ]; then
 	echo
 	echo "Compiling MEMDP model in mainMEMDP"
-	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 recomodel.cpp utils.cpp main_MEMDP.cpp -o mainMEMDP -I $AIINCLUDE -I $EIGEN -L $LPSOLVE -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
+	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 mazemodel.cpp recomodel.cpp utils.cpp main_MEMDP.cpp -o mainMEMDP -I $AIINCLUDE -I $EIGEN -L $LPSOLVE -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55
 	if [ $? -ne 0 ]
 	then
 	    echo "Compilation failed!"

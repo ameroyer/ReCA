@@ -85,7 +85,9 @@ public:
    *
    * \return P( o | -a-> s1 ).
    */
-  virtual double getObservationProbability(size_t s1, size_t a, size_t o) const = 0;
+  virtual double getObservationProbability(size_t s1, size_t a, size_t o) const {
+    return ((get_rep(s1)) ? 1. : 0.);
+  };
 
   /*! \brief Returns a given reward.
    * @AIToolBox Model interface

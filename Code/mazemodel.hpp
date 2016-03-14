@@ -84,7 +84,7 @@ public:
    * \param pfile Profiles distribution file.
    * \param precision If true, precise normalization is enabled.
    */
-  void load_transitions(std::string tfile, bool precision=false, std::string pfile="");
+  void load_transitions(std::string tfile, bool precision=false);
 
 
   /*! \brief Returns a given transition probability.
@@ -95,18 +95,7 @@ public:
    *
    * \return P( s2 | s1 -a-> ).
    */
-  double getTransitionProbability(size_t s1, size_t a, size_t s2) const ;
-
-
-  /*! \brief Returns a given observation probability.
-   *
-   * \param s1 origin statte.
-   * \param a chosen action.
-   * \param o observation.
-   *
-   * \return P( o | -a-> s1 ).
-   */
-  double getObservationProbability(size_t s1, size_t a, size_t o) const;
+  double getTransitionProbability(size_t s1, size_t a, size_t s2) const;
 
 
   /*! \brief Returns a given reward.

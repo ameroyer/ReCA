@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
     model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
   } else if (!data.compare("maze")) {
     model = Mazemodel(datafile_base + ".summary", discount);
+    model.load_rewards(datafile_base + ".rewards");
     // TODO
   }
   auto elapsed = std::chrono::high_resolution_clock::now() - start;

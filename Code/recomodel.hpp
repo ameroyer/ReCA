@@ -96,17 +96,6 @@ public:
   double getTransitionProbability(size_t s1, size_t a, size_t s2) const ;
 
 
-  /*! \brief Returns a given observation probability.
-   *
-   * \param s1 origin statte.
-   * \param a chosen action.
-   * \param o observation.
-   *
-   * \return P( o | -a-> s1 ).
-   */
-  double getObservationProbability(size_t s1, size_t a, size_t o) const;
-
-
   /*! \brief Returns a given reward.
    *
    * \param s1 origin state.

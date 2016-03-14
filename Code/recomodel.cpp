@@ -100,7 +100,6 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
   infile.close();
 
   //********** Initialize
-  has_mdp = true;
   discount = discount_;
   is_mdp = is_mdp_;
   n_states = (is_mdp ? n_observations : n_environments * n_observations);
@@ -269,18 +268,6 @@ double Recomodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
     return 0.;
   } else {
     return (is_mdp ? transition_matrix[index(0, s1, a, link)] : transition_matrix[index(get_env(s1), get_rep(s1), a, link)]);
-  }
-}
-
-
-/**
- * GET_OBSERVATION_PROBABILITY
- */
-double Recomodel::getObservationProbability(size_t s1, size_t a, size_t o) const {
-  if (get_rep(s1) == o) {
-    return 1.;
-  } else {
-    return 0.;
   }
 }
 
