@@ -20,6 +20,7 @@
  */
 int index(size_t env, size_t s, size_t a, size_t link) const {
   // TODO
+  return 0;
 }
 
 
@@ -54,19 +55,46 @@ size_t Mazemodel::id_to_state(size_t state) const {
  */
 Mazemodel::Mazemodel(double discount_) {
   //********** Load summary information
-  // TODO load from summary file
-  min_x = 0;
-  max_x = 2;
-  min_y = 0;
-  max_y = 2;
-  n_environments = 2;
+  std::ifstream infile;
+  std::string line;
+  std::istringstream iss;
+  size_t aux;
+  infile.open(sfile, std::ios::in);
+  assert((".summary file not found", infile.is_open()));
+  // min x
+  std::getline(infile, line);
+  iss.str(line);
+  iss >> aux;
+  min_x = aux;
+  // max x
+  std::getline(infile, line);
+  iss.str(line);
+  iss >> aux;
+  max_x = aux;
+  assert(("Invalid x boundaries", min_x <= max_x));
+  // min y
+  std::getline(infile, line);
+  iss.str(line);
+  iss >> aux;
+  min_y = aux;
+  // max y
+  std::getline(infile, line);
+  iss.str(line);
+  iss >> aux;
+  max_y = aux;
+  assert(("Invalid y boundaries", min_y <= max_y));
+  // number of environments
+  std::getline(infile, line);
+  iss.str(line);
+  iss >> aux;
+  n_environments = aux;
 
   //********** Initialize
   has_mdp = false;
   discount = discount_;
+  n_actions = 3;
   n_observations = 3 + (max_x - min_x) * (max_y - min_y) * 4;
   n_states = n_environments * n_actions;
-  n_actions = 3;
   if (is_mdp) {
     transition_matrix = new double[(n_observations - 3) * n_actions * n_actions]();
   } else {
@@ -79,6 +107,7 @@ Mazemodel::Mazemodel(double discount_) {
   std::cout << "   -> The model contains " << n_states << " states\n";
   std::cout << "   -> The model contains " << n_environments << " environments\n";
 }
+
 
 /**
  * DESTRUCTOR

@@ -62,7 +62,7 @@ for i in range(0, width):
 
 
 
-print(goal_states)
+#print(goal_states)
 
 
 
@@ -157,8 +157,9 @@ for y in xrange(height - 1, -1, -1):
     break
 max_y = y
 
-f_summary.write("%d min x\n%d max x\n%d min y\n%d max y" % (min_x, max_x, min_y, max_y))
+f_summary.write("%d min x\n%d max x\n%d min y\n%d max y\n%d environments" % (min_x, max_x, min_y, max_y, len(goal_states)))
 f_summary.close()
+
 
 
 
