@@ -377,13 +377,24 @@ std::vector<size_t> Recomodel::previous_states(size_t state) const {
  * NEXT_STATE
  */
 size_t Recomodel::next_state(size_t state, size_t item) const {
-  size_t aux = state % pows[0];
-  if (aux >= acpows[1] || state < pows[0]) {
-    return aux * n_actions + item + 1;
+  size_t obs = get_rep(state), env = get_env(state);
+  size_t aux = obs % pows[0];
+  if (aux >= acpows[1] || obs < pows[0]) {
+    return env * n_observations + (aux * n_actions + item + 1);
   } else {
-    return (pows[0] + aux) * n_actions + item + 1;
+    return env * n_observations + ((pows[0] + aux) * n_actions + item + 1);
   }
 }
+
+
+std::vector<size_t> Recomodel::reachable_states(size_t state) const {
+  std::vector<size_t> aux (n_actions);
+  for (int a = 0; a < n_actions; a++) {
+    aux.at(a) = next_state(state, a);
+  }
+  return aux;
+}
+    
 
 
 /**

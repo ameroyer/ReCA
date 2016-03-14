@@ -176,6 +176,7 @@ public:
    * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
    */
   virtual size_t next_state(size_t state, size_t choice) const = 0;
+  virtual std::vector<size_t> reachable_states(size_t state) const = 0;
 
 
 protected:

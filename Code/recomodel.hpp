@@ -185,6 +185,8 @@ public:
    */
   size_t is_connected(size_t s1, size_t s2) const;
 
+  std::vector<size_t> reachable_states(size_t state) const;
+
 };
 
 #endif

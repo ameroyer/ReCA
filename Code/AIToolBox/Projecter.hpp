@@ -109,29 +109,24 @@ namespace AIToolbox {
     typename Projecter<M>::ProjectionsRow Projecter<M>::operator()(const VList & w, size_t a) {
       ProjectionsRow projections( boost::extents[O] );
 
-      // Observation 0 (impossible observation)
-      // TODO generalize this case
-      projections[0].emplace_back(immediateRewards_.row(a), a, VObs(1, 0));
-
       // Other (valid) observations
-      for ( size_t o = 1; o < O; ++o ) {
-	// We will only consider the subset of pairs (s, s1) such that
+      for ( size_t o = 0; o < O; ++o ) {
+	// OPT: We only consider the subset of pairs (s, s1) such that
 	// - Obs(s1) = o
 	// - T(s, a, s1) > 0 (ie Obs(s) = o' s.t. o' -> o and s same environment as s1)
 	std::vector<size_t> aux = model_.previous_states(o);
 	std::vector<std::pair<size_t, size_t> > pairs (model_.getE() * aux.size());
 	size_t i = 0;
 	for (int e = 0; e < model_.getE(); e++) {
-	  size_t s1 = e * model_.getO() + o;
+	  size_t s1 = e * O + o;
 	  for (auto it = aux.begin(); it != aux.end(); ++it) {
-	    size_t s = e * model_.getO() + *it;
-	    pairs.at(i) = std::make_pair(s, s1);
-	    i++;
+	    size_t s = e * O + *it;
+	    pairs.at(i++) = std::make_pair(s, s1);
 	  }
 	}
 
 	// Update vproj for every w
-	for ( i = 0; i < w.size(); ++i ) {
+	for (i = 0; i < w.size(); ++i) {
 	  auto & v = std::get<VALUES>(w[i]);
 	  MDP::Values vproj(S); vproj.fill(0.0);
 	  for (auto it = pairs.begin(); it != pairs.end(); ++it) {
@@ -151,12 +146,11 @@ namespace AIToolbox {
       immediateRewards_.fill(0.0);
       for ( size_t a = 0; a < A; ++a ) {
 	for ( size_t s = 0; s < S; ++s ) {
-	  // OPT: Only one s1 such that T(s, a, s1) and R(s, a, s1) are both non-null
-	  // TODO enqble pbvi if model interfqce or if not with_structure then qpply normal pbvi
-	  // TODO generalize
-	  // TODO next sand previous state taking the nevironment into
-	  size_t s1 = model_.get_env(s) * O + model_.next_state(model_.get_rep(s), a);
-	  immediateRewards_(a, s) = model_.getTransitionProbability(s,a,s1) * model_.getExpectedReward(s, a, s1);
+	  std::vector<size_t> target = model_.reachable_states(s);
+	  for (auto it = target.begin(); it != target.end(); ++it) {
+	    // OPT: Only one s1 such that T(s, a, s1) and R(s, a, s1) are both non-null
+	    immediateRewards_(a, s) += model_.getTransitionProbability(s, a, *it) * model_.getExpectedReward(s, a, *it);
+	  }
 	}
       }
 
