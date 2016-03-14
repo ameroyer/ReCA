@@ -29,7 +29,7 @@ public:
    *
    * \return true if the model can be interpreted as a MDP.
    */
-  bool mdp_enabled() const { return has_mdp; };
+  bool mdp_enabled() const { return is_mdp; };
 
   /*! \brief Returns the number of states in the model.
    * @AIToolBox Model interface
@@ -180,7 +180,7 @@ public:
 
 
 protected:
-  bool has_mdp; /*!< True iff mdp interpretation is possible */
+  bool is_mdp; /*!< True iff mdp interpretation is possible */
   bool with_structure; /*< True iff the structure of the model can be used for optimizations (through functions previous_states etc > */
   size_t n_states; /*!< Number of states in the model */
   size_t n_actions;  /*!< Number of actions in the model */

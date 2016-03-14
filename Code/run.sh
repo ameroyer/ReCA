@@ -87,11 +87,17 @@ if [ $DATA = "fm" ]; then
 	echo "exit"
 	exit 1
     fi
+    DATA = "reco"
     NITEMS=$(($(wc -l < "$BASE.items") + 1))
 elif [ $DATA = "rd" ]; then
     PROFILES=$PLEVEL
     NITEMS=$PLEVEL
     printf -v BASE "$DIR/Models/Synth%d%d%d/synth_u%d_k%d_pl%d" "$PLEVEL" "$HIST" "$PLEVEL" "$PLEVEL" "$HIST" "$PLEVEL"
+    DATA = "reco"
+elif [ $DATA = "mz" ]; then
+    NAME=$PLEVEL
+    printf -v BASE "$DIR/Models/%s/%s" "$PLEVEL" "$PLEVEL"
+    DATA = "maze"
 else
     echo "Unkown data mode $DATA"
     echo "exit"
@@ -114,7 +120,7 @@ if [ $MODE = "mdp" ]; then
 # RUN
     echo
     echo "Running mainMDP on $BASE"
-    ./mainMDP $BASE $DISCOUNT $STEPS $EPSILON $PRECISION $VERBOSE
+    ./mainMDP $BASE $DATA $DISCOUNT $STEPS $EPSILON $PRECISION $VERBOSE
     echo
 # POMDPs
 else

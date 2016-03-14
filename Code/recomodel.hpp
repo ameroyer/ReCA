@@ -24,7 +24,6 @@ private:
   double* transition_matrix; /*!< Transition matrix */
   double* rewards;           /*!< Rewards matrix */
   int hlength;               /*!< History length */
-  bool is_mdp;               /*!< True if mdp mode is activated */
   int* pows;                 /*!< Precomputed exponents for conversion to base n_items */
   int* acpows;               /*!< Cumulative exponents for conversion from base n_items */
   static std::default_random_engine generator;

@@ -14,29 +14,40 @@
 
 #include <AIToolbox/MDP/IO.hpp>
 #include <AIToolbox/MDP/Algorithms/ValueIteration.hpp>
+#include "model.hpp"
 #include "recomodel.hpp"
+#include "mazemodel.hpp"
 
 /**
  * MAIN ROUTINE
  */
 int main(int argc, char* argv[]) {
   // Parse input arguments
-  assert(("Usage: ./main files_basename [Discount] [nsteps] [precision]", argc >= 2));
-  double discount = ((argc > 2) ? std::atof(argv[2]) : 0.95);
+  assert(("Usage: ./main file_basename data_mode [Discount] [nsteps] [precision]", argc >= 3));
+  std::string data = argv[2];
+  assert(("Unvalid data mode", !(data.compare("reco") && data.compare("maze"))));
+  double discount = ((argc > 3) ? std::atof(argv[3]) : 0.95);
   assert(("Unvalid discount parameter", discount > 0 && discount < 1));
-  int steps = ((argc > 3) ? std::atoi(argv[3]) : 1000000);
+  int steps = ((argc > 4) ? std::atoi(argv[4]) : 1000000);
   assert(("Unvalid steps parameter", steps > 0));
-  float epsilon = ((argc > 4) ? std::atof(argv[4]) : 0.01);
+  float epsilon = ((argc > 5) ? std::atof(argv[5]) : 0.01);
   assert(("Unvalid epsilon parameter", epsilon >= 0));
-  bool precision = ((argc > 5) ? (atoi(argv[5]) == 1) : false);
-  bool verbose = ((argc > 6) ? (atoi(argv[6]) == 1) : false);
+  bool precision = ((argc > 6) ? (atoi(argv[6]) == 1) : false);
+  bool verbose = ((argc > 7) ? (atoi(argv[7]) == 1) : false);
+  Model model;
 
   // Create model
   auto start = std::chrono::high_resolution_clock::now();
   std::string datafile_base = std::string(argv[1]);
-  Recomodel model(datafile_base + ".summary", discount, true);
-  model.load_rewards(datafile_base + ".rewards");
-  model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
+  if (!data.compare("reco")) {
+    model = Recomodel(datafile_base + ".summary", discount, true);
+    model.load_rewards(datafile_base + ".rewards");
+    model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
+  } else if (!data.compare("maze")) {
+    model = Mazemodel(datafile_base + ".summary", discount);
+    // TODO
+  }
+  assert(("Model does not enable MDP mode", model.mdp_enabled));
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 

@@ -11,6 +11,8 @@
 #include <math.h>
 #include <chrono>
 #include "utils.hpp"
+#include "model.hpp"
+#include "mazemodel.hpp"
 #include "recomodel.hpp"
 
 #include <AIToolbox/POMDP/IO.hpp>
@@ -23,31 +25,39 @@
 int main(int argc, char* argv[]) {
 
   // Parse input arguments
-  assert(("Usage: ./main files_basename [solver] [discount] [nsteps] [precision]", argc >= 2));
-  std::string algo = ((argc > 2) ? argv[2] : "pbvi");
+  assert(("Usage: ./main file_basename data_mode [solver] [discount] [nsteps] [precision]", argc >= 3));  
+  std::string data = argv[2];
+  assert(("Unvalid data mode", !(data.compare("reco") && data.compare("maze"))));
+  std::string algo = ((argc > 3) ? argv[3] : "pbvi");
   std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
   assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("memcp"))));
-  double discount = ((argc > 3) ? std::atof(argv[3]) : 0.95);
+  double discount = ((argc > 4) ? std::atof(argv[4]) : 0.95);
   assert(("Unvalid discount parameter", discount > 0 && discount < 1));
-  int steps = ((argc > 4) ? std::atoi(argv[4]) : 1000000);
+  int steps = ((argc > 5) ? std::atoi(argv[5]) : 1000000);
   assert(("Unvalid steps parameter", steps > 0));
-  unsigned int horizon = ((argc > 5) ? std::atoi(argv[5]) : 1);
+  unsigned int horizon = ((argc > 6) ? std::atoi(argv[6]) : 1);
   assert(("Unvalid horizon parameter", ( !algo.compare("pbvi") && horizon > 1 ) || (algo.compare("pbvi") && horizon > 0)));
-  double epsilon = ((argc > 6) ? std::atof(argv[6]) : 0.01);
+  double epsilon = ((argc > 7) ? std::atof(argv[7]) : 0.01);
   assert(("Unvalid convergence criterion", epsilon >= 0));
-  double exp = ((argc > 7) ? std::atof(argv[7]) : 10000);
+  double exp = ((argc > 8) ? std::atof(argv[8]) : 10000);
   assert(("Unvalid exploration parameter", exp >= 0));
-  unsigned int beliefSize = ((argc > 8) ? std::atoi(argv[8]) : 100);
+  unsigned int beliefSize = ((argc > 9) ? std::atoi(argv[9]) : 100);
   assert(("Unvalid belief size", beliefSize >= 0));
-  bool precision = ((argc > 9) ? (atoi(argv[9]) == 1) : false);
-  bool verbose = ((argc > 10) ? (atoi(argv[10]) == 1) : false);
+  bool precision = ((argc > 10) ? (atoi(argv[10]) == 1) : false);
+  bool verbose = ((argc > 11) ? (atoi(argv[11]) == 1) : false);
 
   // Create model
   auto start = std::chrono::high_resolution_clock::now();
   std::string datafile_base = std::string(argv[1]);
-  Recomodel model(datafile_base + ".summary", discount, false);
-  model.load_rewards(datafile_base + ".rewards");
-  model.load_transitions(datafile_base + ".transitions", precision);
+  Model model;
+  if (!data.compare("reco")) {
+    model = Recomodel(datafile_base + ".summary", discount, false);
+    model.load_rewards(datafile_base + ".rewards");
+    model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
+  } else if (!data.compare("maze")) {
+    model = Mazemodel(datafile_base + ".summary", discount);
+    // TODO
+  }
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 
