@@ -148,6 +148,15 @@ public:
   bool isInitial(size_t s) const;
 
 
+  /*! \brief Rwturns whether a state is final or not (ie if it precedes the absorbing goal state G).
+   *
+   * \param s state
+   *
+   * \return whether the state s is final or not.
+   */
+  bool isGoal(size_t s) const;
+
+
   /*! \brief Given a state, returns all its predecessors.
    *
    * \param state unique state index.

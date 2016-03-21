@@ -58,13 +58,14 @@ int main(int argc, char* argv[]) {
   } else if (!data.compare("maze")) {
     Mazemodel m(datafile_base + ".summary", discount);
     m.load_rewards(datafile_base + ".rewards");
+    m.load_transitions(datafile_base + ".transitions", precision);
     model = &m;
     // TODO
   }
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
   std::cout << model->mdp_enabled() << "\n";
-  return 0;
+  // return 0;
 
   // Training
   double training_time, testing_time;
