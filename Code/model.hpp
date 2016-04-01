@@ -99,7 +99,7 @@ public:
    */
   virtual double getExpectedReward( size_t s1, size_t a, size_t s2 ) const = 0;
 
-  /*! \brief Sample a state and reward given an origin state and chosen acion.
+  /*! \brief Sample a state and reward given an origin state and chosen action.
    *
    * \param s origin state.
    * \param a chosen action.

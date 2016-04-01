@@ -130,6 +130,7 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
     pows[i] = pows[i + 1] * n_actions;
     acpows[i] = acpows[i + 1] + pows[i];
   }
+  std::cout << "WUUUT " << hlength << " " << pows[0] << "\n";
 }
 
 
@@ -256,6 +257,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
       }
     }
   }
+  std::cout << "ICRY " << pows[0] << "\n";
 }
 
 
@@ -276,6 +278,7 @@ double Recomodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
  * GET_EXPECTED_REWARD
  */
 double Recomodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
+  // std::cout << "YI\n";
   size_t link = is_connected(s1, s2);
   if (link != a) {
     return 0.;
@@ -289,11 +292,16 @@ double Recomodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
  * SAMPLESR
  */
 std::tuple<size_t, double> Recomodel::sampleSR(size_t s,size_t a) const {
+  //std::cout << "YO " << s << " " << a << "\n";
   // Sample random transition
   std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_actions)]);
   size_t link = distribution(generator);
   // Return values
+  //std::cout << "let me see" << transition_matrix[index(get_env(s), get_rep(s), a, 1)] << "\n";
+  //std::cout << "YUUUU " << n_observations << " " << link << " " << "\n";
+  // std::cout << "YAAAAA " << pows[0] << "\n";
   size_t s2 = get_env(s) * n_observations + next_state(get_rep(s), link);
+  //std::cout << "YAAAA\n";
   if (a == link) {
     return std::make_tuple(s2, rewards[a]);
   } else {
@@ -305,7 +313,7 @@ std::tuple<size_t, double> Recomodel::sampleSR(size_t s,size_t a) const {
 /**
  * SAMPLESOR
  */
-std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) const {
+/*std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) const {
   // Sample random transition
   std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_actions)]);
   size_t link = distribution(generator);
@@ -318,7 +326,7 @@ std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) cons
     return std::make_tuple(s2, o2, 0);
   }
 }
-
+*/
 
 /**
  * ISTERMINAL
@@ -366,6 +374,8 @@ std::vector<size_t> Recomodel::previous_states(size_t state) const {
  */
 size_t Recomodel::next_state(size_t state, size_t item) const {
   size_t obs = get_rep(state), env = get_env(state);
+  //std::cout << "HUHUHUH " << hlength << "\n";
+  //std::cout << "YTTTT " << pows[0] << " " << pows[1] << "\n";
   size_t aux = obs % pows[0];
   if (aux >= acpows[1] || obs < pows[0]) {
     return env * n_observations + (aux * n_actions + item + 1);

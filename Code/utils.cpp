@@ -220,8 +220,8 @@ void evaluate_policyMDP(std::string sfile,
       // Evaluate
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      total_reward += model.getExpectedReward(state, prediction, model.next_state(state, action));
-      discounted_reward += cdiscount * model.getExpectedReward(state, prediction, model.next_state(state, action));
+      //total_reward += model.getExpectedReward(state, prediction, model.next_state(state, action));
+      //discounted_reward += cdiscount * model.getExpectedReward(state, prediction, model.next_state(state, action));
 
       // Update
       cdiscount *= model.getDiscount();
@@ -340,8 +340,8 @@ void evaluate_policyMEMDP(std::string sfile,
       // Evaluate
       accuracy += accuracy_score(prediction, action);
       // TODO STATE RATHER THAN OBSEVRATION
-      total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-      discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      //total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      //discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
       auto aux = identification_score_belief(belief, observation, cluster, model.getE(), model.getO());
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);

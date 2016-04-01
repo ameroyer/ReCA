@@ -209,8 +209,8 @@ void evaluate_pomcp(std::string sfile,
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
       // TODO state instead of obs
-      total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-      discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      //total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      //discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
       auto aux = identification_score_particles(pomcp.getGraph().belief, cluster, model);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
@@ -219,16 +219,18 @@ void evaluate_pomcp(std::string sfile,
     if (!verbose) {std::cerr.clear();}
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
-    mean_total_reward[cluster] += total_reward / session_length;
-    mean_discounted_reward[cluster] += discounted_reward;
+    //mean_total_reward[cluster] += total_reward / session_length;
+    //mean_discounted_reward[cluster] += discounted_reward;
     mean_identification[cluster] += identity / session_length;
     mean_identification_precision[cluster] += identity_precision / session_length;
   }
 
   // Print results for each environment, as well as global result
   std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
-  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
+  //std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw", "idac", "idpr"};
+  //std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
+  std::vector<std::string> titles {"acc", "avgpr", "idac", "idpr"};
+  std::vector<double*> results {mean_accuracy, mean_precision, mean_identification, mean_identification_precision};
   print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
 
@@ -308,8 +310,8 @@ void evaluate_memcp(std::string sfile,
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-      discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      //total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
+      //discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
       auto aux = identification_score_particles(memcp.getGraph().belief, cluster, model);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);

@@ -11,7 +11,6 @@
 #include <math.h>
 #include <chrono>
 #include "utils.hpp"
-#include "model.hpp"
 #include "mazemodel.hpp"
 #include "recomodel.hpp"
 
@@ -49,22 +48,22 @@ int main(int argc, char* argv[]) {
   // Create model
   auto start = std::chrono::high_resolution_clock::now();
   std::string datafile_base = std::string(argv[1]);
-  Model* model = NULL;
-  if (!data.compare("reco")) {
-    Recomodel m(datafile_base + ".summary", discount, false);
-    m.load_rewards(datafile_base + ".rewards");
-    m.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
-    model = &m;
-  } else if (!data.compare("maze")) {
-    Mazemodel m(datafile_base + ".summary", discount);
-    m.load_rewards(datafile_base + ".rewards");
-    m.load_transitions(datafile_base + ".transitions", precision);
-    model = &m;
+  //Recomodel model = NULL;
+  //if (!data.compare("reco")) {
+    Recomodel model(datafile_base + ".summary", discount, false);
+    model.load_rewards(datafile_base + ".rewards");
+    model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
+    //model = m;
+    //} else if (!data.compare("maze")) {
+    //Mazemodel m(datafile_base + ".summary", discount);
+    //m.load_rewards(datafile_base + ".rewards");
+    //m.load_transitions(datafile_base + ".transitions", precision);
+    //model = &m;
     // TODO
-  }
+    //}
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
-  std::cout << model->mdp_enabled() << "\n";
+  //std::cout << model->mdp_enabled() << "\n";
   // return 0;
 
   // Training
@@ -75,21 +74,21 @@ int main(int argc, char* argv[]) {
   // Evaluation
   // POMCP
   if (!algo.compare("pomcp")) {
-    AIToolbox::POMDP::POMCP<Model> solver( *model, beliefSize, steps, exp);
+    AIToolbox::POMDP::POMCP<Model> solver( model, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_pomcp(datafile_base + ".test", *model, solver, horizon, verbose);
+    evaluate_pomcp(datafile_base + ".test", model, solver, horizon, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // MEMCP
   // TODO MEMCP remove model.getE pqrqmeter
   else if (!algo.compare("memcp")) {
-    AIToolbox::POMDP::MEMCP<Model> solver( *model, model->getE(), beliefSize, steps, exp);
+    AIToolbox::POMDP::MEMCP<Recomodel> solver( model, model.getE(), beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_memcp(datafile_base + ".test", *model, solver, horizon, verbose);
+    evaluate_memcp(datafile_base + ".test", model, solver, horizon, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // Incremental Pruning
@@ -97,7 +96,7 @@ int main(int argc, char* argv[]) {
     // TODO DEBUG PBVI //nBelef = n observations ?
     AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);    
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
-    auto solution = solver(*model);
+    auto solution = solver(model);
     if (!verbose) {std::cerr.clear();}
     std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
     std::chrono::high_resolution_clock::now() - start;
@@ -106,8 +105,8 @@ int main(int argc, char* argv[]) {
     // Build and Evaluate Policy
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
-    AIToolbox::POMDP::Policy policy(model->getS(), model->getA(), model->getO(), std::get<1>(solution));
-    evaluate_policyMEMDP(datafile_base + ".test", *model, policy, horizon, verbose, true);
+    AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
+    evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 

@@ -11,7 +11,6 @@
 
 #include "model.hpp"
 #include <iostream>
-#include <tuple>
 #include <random>
 #include <string>
 #include <ctime>
@@ -56,6 +55,15 @@ private:
    * \return state a state, represented by a sequence of selected items.
    */
   std::vector<size_t> id_to_state(size_t id) const;
+
+  /*! \brief Given a state and choice (e.g. item, direction) , return the next user state.
+   *
+   * \param state unique state index.
+   * \param item user choice [0 to n_actions - 1].
+   *
+   * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
+   */
+  size_t next_state(size_t state, size_t item) const;
 
 
 public:
@@ -124,7 +132,7 @@ public:
    *
    * \return s2 such that s -a-> s2, and the associated reward R(s, a, s2).
    */
-  virtual std::tuple<size_t, size_t, double> sampleSOR(size_t s, size_t a) const;
+  //virtual std::tuple<size_t, size_t, double> sampleSOR(size_t s, size_t a) const;
 
 
   /*! \brief Rwturns whether a state is terminal or not.
@@ -153,15 +161,6 @@ public:
    */
   std::vector<size_t> previous_states(size_t state) const;
 
-
-  /*! \brief Given a state and choice (e.g. item, direction) , return the next user state.
-   *
-   * \param state unique state index.
-   * \param item user choice [0 to n_actions - 1].
-   *
-   * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
-   */
-  size_t next_state(size_t state, size_t item) const;
 
   /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
    * or the value ``n_actions`` otherwise.
