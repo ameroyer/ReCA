@@ -24,10 +24,9 @@ public:
    */
   ~Model() {};
 
-  /*! \brief Returns true iff the model can also be used as a MDP .
-   * In this case, select the correct setting with the protected variable ``mode``.
+  /*! \brief Returns true iff the model should be interpreted as as MDP.
    *
-   * \return true if the model can be interpreted as a MDP.
+   * \return true if the model is in MDP mode (see Recomodel for instance).
    */
   bool mdp_enabled() const { return is_mdp; };
 
@@ -109,16 +108,20 @@ public:
    */
   virtual std::tuple<size_t, double> sampleSR(size_t s,size_t a) const = 0;
 
-  /*! \brief Sample a state and reward given an origin state and chosen acion.
+  /*! \brief Sample a state, observation and reward given an origin state and chosen acion.
    * @AIToolBox Model interface
    *
    * \param s origin state.
    * \param a chosen action.
    *
-   * \return s2 such that s -a-> s2, and the associated reward R(s, a, s2).
+   * \return s2 such that s -a-> s2, and the associated observation and reward R(s, a, s2).
    */
-  virtual std::tuple<size_t, size_t, double> sampleSOR(size_t s, size_t a) const = 0;
-
+  virtual std::tuple<size_t, size_t, double> sampleSOR(size_t s, size_t a) const {
+    size_t s2;
+    double reward;
+    std::tie(s2, reward) = sampleSR(s, a);
+    return std::make_tuple(s2, get_rep(s2), reward);
+  }
 
   /*! \brief Rwturns whether a state is terminal or not.
    * @AIToolBox Model interface
@@ -138,9 +141,6 @@ public:
    */
   virtual bool isInitial(size_t s) const = 0;
 
-  
-
-
   /*!
    * \brief Given a state of the MEMDP, returns the corresponding environment.
    *
@@ -149,7 +149,6 @@ public:
    * \return the environment to which s belongs.
    */
   size_t get_env(size_t s) const { return s / n_observations; };
-
 
   /*!
    * \brief Given a state of the MEMDP, returns its representative/observation.
@@ -160,30 +159,25 @@ public:
    */
   size_t get_rep(size_t s) const { return s % n_observations; };
 
-
-  /*! \brief Given a state, returns all its predecessors.
+  /*! \brief Given a state, returns all its possible predecessors.
    *
    * \param state unique state index.
    *
-   * \return next_state index of the state corresponding to the user choosing ``item`` in ``state``.
+   * \return previous_states the state's possible predecessors.
    */
   virtual std::vector<size_t> previous_states(size_t state) const = 0;
 
-
-  /*! \brief Given a state and choice (e.g. item, direction) , return the next user state.
+  /*! \brief Given a state, returns all its possible successors.
    *
    * \param state unique state index.
-   * \param item user choice [0 to n_actions - 1].
    *
-   * \return next_state index of the state corresponding to the user choosing ``choice`` in ``state``.
+   * \return reachable_states the state's possible successors.
    */
-  virtual size_t next_state(size_t state, size_t choice) const = 0;
   virtual std::vector<size_t> reachable_states(size_t state) const = 0;
 
 
 protected:
   bool is_mdp; /*!< True iff mdp interpretation is possible */
-  bool with_structure; /*< True iff the structure of the model can be used for optimizations (through functions previous_states etc > */
   size_t n_states; /*!< Number of states in the model */
   size_t n_actions;  /*!< Number of actions in the model */
   size_t n_observations;  /*!< Number of observations in the model */
