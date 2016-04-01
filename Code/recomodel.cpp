@@ -7,27 +7,24 @@
 ** -------------------------------------------------------------------------*/
 
 #include "recomodel.hpp"
+#include <ctime>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <cassert>
 #include <algorithm>
-#include <ctime>
-
 
 /**
  * RANDOM ENGINE
  */
 std::default_random_engine Recomodel::generator(time(NULL));
 
-
 /**
  * INDEX
  */
-int Recomodel::index(size_t env, size_t s, size_t a, size_t link) const {
-  return link + n_actions * (a + n_actions * (s + n_observations * env));
+int Recomodel::index(size_t env, size_t s1, size_t a, size_t s2_link) const {
+  return s2_link + n_actions * (a + n_actions * (s1 + n_observations * env));
 }
-
 
 /**
  * STATE_TO_ID
@@ -39,7 +36,6 @@ size_t Recomodel::state_to_id(std::vector<size_t> state) const {
   }
   return id;
 }
-
 
 /**
  * ID_TO_STATE
@@ -62,6 +58,44 @@ std::vector<size_t> Recomodel::id_to_state(size_t id) const {
   return state;
 }
 
+/**
+ * IS_CONNECTED
+ */
+size_t Recomodel::is_connected(size_t s1, size_t s2) const {
+  // Check environments
+  if (get_env(s1) != get_env(s2)) {
+    return n_actions;
+  } else if (!is_mdp) {
+    s1 = get_rep(s1);
+    s2 = get_rep(s2);
+  }
+  // Check if corresponding observations are connected
+  // Suffix of s1
+  int suffix_s1 = s1 % pows[0];
+  suffix_s1 = ((suffix_s1 >= acpows[1] || s1 < pows[0])  ? suffix_s1 - acpows[1] : suffix_s1 + pows[0] - acpows[1]);
+  // Prefix of s2
+  div_t aux = div(s2, n_actions);
+  int prefix_s2 = aux.quot - acpows[1];
+  size_t last_s2 = aux.rem - 1;
+  if (aux.rem == 0) {
+    prefix_s2 -= 1;
+    last_s2 = n_actions - 1;
+  }
+  return ((prefix_s2 == suffix_s1)? last_s2 : n_actions);
+}
+
+/**
+ * NEXT_STATE
+ */
+size_t Recomodel::next_state(size_t state, size_t item) const {
+  size_t obs = get_rep(state), env = get_env(state);
+  size_t aux = obs % pows[0];
+  if (aux >= acpows[1] || obs < pows[0]) {
+    return env * n_observations + (aux * n_actions + item + 1);
+  } else {
+    return env * n_observations + ((pows[0] + aux) * n_actions + item + 1);
+  }
+}
 
 /**
  * CONSTRUCTOR
@@ -103,7 +137,7 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
   discount = discount_;
   is_mdp = is_mdp_;
   n_states = (is_mdp ? n_observations : n_environments * n_observations);
-  rewards = new double[n_actions](); // rewards[a] = profit for item a
+  rewards = new double[n_actions]();
   if (is_mdp) {
     transition_matrix = new double[n_observations * n_actions * n_actions]();
   } else {
@@ -130,9 +164,7 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
     pows[i] = pows[i + 1] * n_actions;
     acpows[i] = acpows[i + 1] + pows[i];
   }
-  std::cout << "WUUUT " << hlength << " " << pows[0] << "\n";
 }
-
 
 /**
  * DESTRUCTOR
@@ -143,7 +175,6 @@ Recomodel::~Recomodel() {
   delete []pows;
   delete []acpows;
 }
-
 
 /**
  * LOAD_REWARDS
@@ -184,9 +215,9 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
   size_t s1, a, s2, link, p;
   int transitions_found = 0, profiles_found = 0;
 
-  // Load profiles proportions if mdp
+  // If MDP mode, load profiles proportions for weighted average
   std::vector<double> profiles_prop;
-  if (is_mdp) {  
+  if (is_mdp) {
     infile.open(pfile, std::ios::in);
     assert((".profiles file not found", infile.is_open()));
     while (std::getline(infile, line)) {
@@ -203,7 +234,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
   assert((".transitions file not found", infile.is_open()));
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
-    // Change profile
+    // Change of environment
     if (!(iss >> s1 >> a >> s2 >> v)) {
       profiles_found += 1;
       assert(("Incomplete transition function in current profile in .transitions",
@@ -213,7 +244,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
       transitions_found = 0;
       continue;
     }
-    // Set transition
+    // Set transition probability
     link = is_connected(s1, s2);
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     if (is_mdp) {
@@ -257,9 +288,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
       }
     }
   }
-  std::cout << "ICRY " << pows[0] << "\n";
 }
-
 
 /**
  * GET_TRANSITION_PROBABILITY
@@ -273,60 +302,25 @@ double Recomodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
   }
 }
 
-
 /**
  * GET_EXPECTED_REWARD
  */
 double Recomodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
-  // std::cout << "YI\n";
   size_t link = is_connected(s1, s2);
-  if (link != a) {
-    return 0.;
-  } else {
-    return rewards[a];
-  }
+  return ((link == a) ? rewards[a] : 0.);
 }
-
 
 /**
  * SAMPLESR
  */
 std::tuple<size_t, double> Recomodel::sampleSR(size_t s,size_t a) const {
-  //std::cout << "YO " << s << " " << a << "\n";
-  // Sample random transition
+  // Sample next state according to transition function
   std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_actions)]);
-  size_t link = distribution(generator);
-  // Return values
-  //std::cout << "let me see" << transition_matrix[index(get_env(s), get_rep(s), a, 1)] << "\n";
-  //std::cout << "YUUUU " << n_observations << " " << link << " " << "\n";
-  // std::cout << "YAAAAA " << pows[0] << "\n";
-  size_t s2 = get_env(s) * n_observations + next_state(get_rep(s), link);
-  //std::cout << "YAAAA\n";
-  if (a == link) {
-    return std::make_tuple(s2, rewards[a]);
-  } else {
-    return std::make_tuple(s2, 0);
-  }
+  size_t s2_link = distribution(generator);
+  // Return sampled state and rewards
+  size_t s2 = get_env(s) * n_observations + next_state(get_rep(s), s2_link);
+  return std::make_tuple(s2, ((s2_link == a) ? rewards[a] : 0));
 }
-
-
-/**
- * SAMPLESOR
- */
-/*std::tuple<size_t, size_t, double> Recomodel::sampleSOR(size_t s, size_t a) const {
-  // Sample random transition
-  std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_actions)]);
-  size_t link = distribution(generator);
-  // Return values
-  size_t o2 = next_state(get_rep(s), link);
-  size_t s2 = get_env(s) * n_observations + o2;
-  if (a == link) {
-    return std::make_tuple(s2, o2, rewards[a]);
-  } else {
-    return std::make_tuple(s2, o2, 0);
-  }
-}
-*/
 
 /**
  * ISTERMINAL
@@ -335,14 +329,12 @@ bool Recomodel::isTerminal(size_t) const {
   return false;
 }
 
-
 /**
  * ISINITIAL
  */
 bool Recomodel::isInitial(size_t s) const {
   return get_rep(s) == 0;
 }
-
 
 /**
  * PREVIOUS_STATES
@@ -351,15 +343,19 @@ std::vector<size_t> Recomodel::previous_states(size_t state) const {
   size_t obs = get_rep(state), env = get_env(state);
   div_t aux = div(obs, n_actions);
   int prefix_s2 = ((aux.rem == 0) ? aux.quot - 1 : aux.quot);
+  // If starting states
   if (obs == 0) {
     std::vector<size_t> prev;
     return prev;
   }
+  // If contains empty selections
   if (prefix_s2 < acpows[1]) {
     std::vector<size_t> prev(1);
     prev.at(0) = env * n_observations + prefix_s2;
     return prev;
-  } else {
+  }
+  // Else, consider all possible incoming actions
+  else {
     std::vector<size_t> prev(n_actions + 1);
     for (size_t a = 0; a <= n_actions; a++) {
       prev.at(a) = env * n_observations + (prefix_s2 + a * pows[0]);
@@ -368,23 +364,9 @@ std::vector<size_t> Recomodel::previous_states(size_t state) const {
   }
 }
 
-
 /**
- * NEXT_STATE
+ * REACHABLE_STATES
  */
-size_t Recomodel::next_state(size_t state, size_t item) const {
-  size_t obs = get_rep(state), env = get_env(state);
-  //std::cout << "HUHUHUH " << hlength << "\n";
-  //std::cout << "YTTTT " << pows[0] << " " << pows[1] << "\n";
-  size_t aux = obs % pows[0];
-  if (aux >= acpows[1] || obs < pows[0]) {
-    return env * n_observations + (aux * n_actions + item + 1);
-  } else {
-    return env * n_observations + ((pows[0] + aux) * n_actions + item + 1);
-  }
-}
-
-
 std::vector<size_t> Recomodel::reachable_states(size_t state) const {
   std::vector<size_t> aux (n_actions);
   for (int a = 0; a < n_actions; a++) {
@@ -392,36 +374,6 @@ std::vector<size_t> Recomodel::reachable_states(size_t state) const {
   }
   return aux;
 }
-    
 
 
-/**
- * IS_CONNECTED
- */
-size_t Recomodel::is_connected(size_t s1, size_t s2) const {
-  // Check if states have the same environment
-  if (get_env(s1) != get_env(s2)) {
-    return n_actions;
-  } else if (!is_mdp) {
-    s1 = get_rep(s1);
-    s2 = get_rep(s2);
-  }
 
-  // Check if corresponding observations are connected
-  // Find suffix of first state
-  int suffix_s1 = s1 % pows[0];
-  suffix_s1 = ((suffix_s1 >= acpows[1] || s1 < pows[0])  ? suffix_s1 - acpows[1] : suffix_s1 + pows[0] - acpows[1]);
-  // Find prefix of second state
-  div_t aux = div(s2, n_actions);
-  int prefix_s2 = aux.quot - acpows[1];
-  size_t last_s2 = aux.rem - 1;
-  if (aux.rem == 0) {
-    prefix_s2 -= 1;
-    last_s2 = n_actions - 1;
-  }
-  if (prefix_s2 == suffix_s1) {
-    return last_s2;
-  } else {
-    return n_actions;
-  }
-}
