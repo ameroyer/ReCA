@@ -17,27 +17,24 @@
 #include <ctime>
 
 
-
 class Mazemodel: public Model {
 
 private:
-  int min_x;   /*!< Minimum line index reachable by the robot */
-  int max_x;   /*!< Maximum line index reachable by the robot */
-  int min_y;   /*!< Minimum column index reachable by the robot */
-  int max_y;   /*!< Minimum line index reachable by the robot */
-  double* transition_matrix;        /*!< Transition matrix */
-  std::vector <size_t> goal_states;  /*!< Indices of the goal states */
-  std::vector <size_t> trap_states;
-  std::vector <size_t> initial_states;
+  int min_x;   /*!< Minimum reachable row index */
+  int max_x;   /*!< Maximum reachable row index */
+  int min_y;   /*!< Minimum reachable column index */
+  int max_y;   /*!< Maximum reachale column index */
+  size_t n_links; 
+  double* transition_matrix;         /*!< Transition matrix */
+  std::vector<std::vector <size_t> > goal_states;  /*!< List of states leading to G for each environment */
+  std::vector<std::vector <size_t> > starting_states;  /*!< List of states reachable from S for each environment */
   std::vector <double> goal_rewards;
   static std::default_random_engine generator;
 
-  
   /*! \brief Given an environment e, state s1, action a and state s2 (suffix),
    * returns the corresponding index in an 1D array.
    */
-  int index(size_t env, size_t s, size_t a, size_t link) const;
-
+  int index(size_t env, size_t s1, size_t a, size_t s2_link) const;
 
   /*! \brief Returns the index of the state corresponding to a given position and orientation.
    *
@@ -49,7 +46,6 @@ private:
    */
   size_t state_to_id(int x, int y, int orientation) const;
 
-
   /*! \brief Returns the index of the state corresponding to a given position and orientation.
    *
    * \param id state index.
@@ -59,6 +55,40 @@ private:
    */
   std::tuple<int, int, int> id_to_state(size_t state) const;
 
+  /*! \brief Given two states s1 and s2, return the link L such that s2 = s1.L if it exists,
+   * or the value ``n_links`` otherwise.
+   *
+   * \param s1 unique state index.
+   * \param s2 unique state index
+   *
+   * \return link a valid link index if s1 and s2 can be connected, n_links otherwise. In practice Left (0), Right (1), Forward (2), No Move (3).
+   */
+  size_t is_connected(size_t s1, size_t s2) const;
+
+  /*! \brief Given a state and chosen action, return the next logical user state (if no mistake).
+   *
+   * \param state unique state index.
+   * \param direction Left(0), Right(1), Forward(2).
+   *
+   * \return next_state index of the state corresponding to the agent applying ``direction`` in ``state``.
+   */
+  size_t next_state(size_t state, size_t direction) const;
+
+  /*! \brief Returns whether a state is a goal state in its environment (-> G).
+   *
+   * \param s state
+   *
+   * \return whether the state s is final or not.
+   */
+  bool isGoal(size_t s) const;
+
+  /*! \brief Returns whether a state is a starting state in its environment (S ->).
+   *
+   * \param s state
+   *
+   * \return whether the state s is final or not.
+   */
+  bool isStarting(size_t s) const;
 
 
 public:
@@ -66,18 +96,15 @@ public:
    */
   Mazemodel(std::string sfile, double discount_);
 
-
   /*! \brief Destructor
    */
   ~Mazemodel();
-
 
   /*! \brief Load rewards of the model from file
    *
    * \param rfile Rewards file
    */
   void load_rewards(std::string rfile);
-
 
   /*! \brief Load transitions of the model from file
    *
@@ -86,7 +113,6 @@ public:
    * \param precision If true, precise normalization is enabled.
    */
   void load_transitions(std::string tfile, bool precision=false);
-
 
   /*! \brief Returns a given transition probability.
    *
@@ -98,7 +124,6 @@ public:
    */
   double getTransitionProbability(size_t s1, size_t a, size_t s2) const;
 
-
   /*! \brief Returns a given reward.
    *
    * \param s1 origin state.
@@ -109,7 +134,6 @@ public:
    */
   double getExpectedReward(size_t s1, size_t a, size_t s2) const;
 
-
   /*! \brief Sample a state and reward given an origin state and chosen acion.
    *
    * \param s origin state.
@@ -117,18 +141,7 @@ public:
    *
    * \return s2 such that s -a-> s2, and the associated reward R(s, a, s2).
    */
-  virtual std::tuple<size_t, double> sampleSR(size_t s,size_t a) const;
-
-
-  /*! \brief Sample a state and reward given an origin state and chosen acion.
-   *
-   * \param s origin state.
-   * \param a chosen action.
-   *
-   * \return s2 such that s -a-> s2, and the associated reward R(s, a, s2).
-   */
-  virtual std::tuple<size_t, size_t, double> sampleSOR(size_t s, size_t a) const;
-
+  std::tuple<size_t, double> sampleSR(size_t s,size_t a) const;
 
   /*! \brief Rwturns whether a state is terminal or not.
    *
@@ -138,24 +151,13 @@ public:
    */
   bool isTerminal(size_t s) const;
 
-
-  /*! \brief Rwturns whether a state is initial or not.
+  /*! \brief Returns whether a state is initial or not.
    *
    * \param s state
    *
    * \return whether the state s is initial or not.
    */
   bool isInitial(size_t s) const;
-
-
-  /*! \brief Rwturns whether a state is final or not (ie if it precedes the absorbing goal state G).
-   *
-   * \param s state
-   *
-   * \return whether the state s is final or not.
-   */
-  bool isGoal(size_t s) const;
-
 
   /*! \brief Given a state, returns all its predecessors.
    *
@@ -165,28 +167,13 @@ public:
    */
   std::vector<size_t> previous_states(size_t state) const;
 
-
-  /*! \brief Given a state and choice (e.g. item, direction) , return the next user state.
+  /*! \brief Given a state, returns all its possible successors.
    *
    * \param state unique state index.
-   * \param direction Left(0), Right(1), Forward(2).
    *
-   * \return next_state index of the state corresponding to the agent applying ``direction`` in ``state``.
+   * \return reachable_states the state's possible successors.
    */
-  size_t next_state(size_t state, size_t direction) const;
-
-  /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
-   * or the value ``n_actions`` otherwise.
-   *
-   * \param s1 unique state index.
-   * \param s2 unique state index
-   *
-   * \return link a valid action index [0 to n_actions - 1] if s1 and s2 can be connected, n_actions otherwise.
-   */
-  size_t is_connected(size_t s1, size_t s2) const;
-
   std::vector<size_t> reachable_states(size_t state) const;
-
 };
 
 #endif
