@@ -53,10 +53,22 @@ namespace AIToolbox {
             beliefs.emplace_back(S);
             beliefs.back().fill(1.0/S);
 
+	    /*
             for ( size_t s = 0; s < S && s < beliefNumber; ++s ) {
                 beliefs.emplace_back(S);
                 beliefs.back().fill(0.0); beliefs.back()(s) = 1.0;
             }
+	    */
+
+	    // OPT: Belief over the environments rather than states
+	    double p = 1. / model_.getE();
+	    for ( size_t o = 0; o < model_.getO() && o < beliefNumber; ++o) {
+                beliefs.emplace_back(S);
+                beliefs.back().fill(0.0);
+		for (size_t e = 0; e < model_.getE(); e++) {
+		  beliefs.back()(e * model_.getO() + o) = p;	
+		}
+	    }
 
             this->operator()(beliefNumber, &beliefs);
 
@@ -84,8 +96,29 @@ namespace AIToolbox {
                         if ( currentSize == beliefNumber ) break;
                     }
                 }
+		/*
                 for ( size_t i = 0; currentSize < beliefNumber && i < (beliefNumber/20); ++i, ++currentSize )
                     beliefs.emplace_back(makeRandomBelief(S, rand_));
+		*/
+		// OPT: Make random beliefs over the environments rather than the states
+		// RK: No indecision over the state/observation, only over the state/environment		
+		for ( size_t i = 0; currentSize < beliefNumber && i < (beliefNumber/20); ++i, ++currentSize ) {	
+		  // Set belief distribution
+		  beliefs.emplace_back(S);
+		  beliefs.back().fill(0.0);
+		  double sum = 0.;
+		  size_t o = rand() % (int)(model_.getO());
+		  static std::uniform_real_distribution<double> sampleDistribution(0.0, 1.0);
+		  for (size_t e = 0; e < model_.getE(); e++) {
+		    beliefs.back()(e * model_.getO() + o) = sampleDistribution(rand_);
+		    sum += beliefs.back()(e * model_.getO() + o);
+		  }
+		  if ( checkEqualSmall(sum, 0.0) ) {
+		    beliefs.back()(0) = 1.0;
+		  } else {
+		    beliefs.back() /= sum;
+		  }
+		}
             }
         }
 
