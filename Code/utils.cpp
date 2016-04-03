@@ -209,22 +209,25 @@ void evaluate_policyMDP(std::string sfile,
 
     // Reset
     accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
-    cdiscount = model.getDiscount();
+    cdiscount = 1.;
 
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      // Predict
+      // Update reward
+      if (!model.isInitial(std::get<0>(*it2)) && (prediction == action)) {
+	double r = model.getExpectedReward(state, prediction, std::get<0>(*it2));
+	total_reward += r;
+	discounted_reward += cdiscount * r;
+      }
+      cdiscount *= model.getDiscount();
+
+      // Predict next
       std::tie(state, action) = *it2;
       std::vector< double > action_scores = policy.getStatePolicy(state);
       prediction = get_prediction(action_scores);
 
-      // Evaluate
+      // Evaluate accuracy
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
-      //total_reward += model.getExpectedReward(state, prediction, model.next_state(state, action));
-      //discounted_reward += cdiscount * model.getExpectedReward(state, prediction, model.next_state(state, action));
-
-      // Update
-      cdiscount *= model.getDiscount();
     }
 
     mean_accuracy[cluster] += accuracy / session_length;
@@ -290,7 +293,7 @@ void evaluate_policyMEMDP(std::string sfile,
 			  bool verbose /* =false */,
 			  bool supervised /* =true */) {
   // Aux variables
-  size_t id, prediction, action;
+  size_t id, prediction, action, observation;
   int cluster, session_length, chorizon, user = 0;
   double cdiscount, accuracy, total_reward, discounted_reward,identity, identity_precision;
 
@@ -325,12 +328,17 @@ void evaluate_policyMEMDP(std::string sfile,
     // For each (state, action) in the session
     std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      // Update
+      // Update Reward
+      if (!model.isInitial(std::get<0>(*it2)) && (prediction == action)) {
+	double r = model.getExpectedReward(cluster * model.getO() + observation, prediction, cluster * model.getO() + std::get<0>(*it2));
+	total_reward += r;
+	discounted_reward += cdiscount * r;
+      }
       cdiscount *= model.getDiscount();
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1);
 
       // Predict
-      size_t observation = std::get<0>(*it2);
+      observation = std::get<0>(*it2);
       if (!model.isInitial(observation)) {
 	belief = (supervised ? update_belief(belief, action, observation, model) : update_belief(belief, prediction, observation, model));
 	std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
@@ -339,16 +347,13 @@ void evaluate_policyMEMDP(std::string sfile,
 
       // Evaluate
       accuracy += accuracy_score(prediction, action);
-      // TODO STATE RATHER THAN OBSEVRATION
-      //total_reward += model.getExpectedReward(observation, prediction, model.next_state(observation, action));
-      //discounted_reward += cdiscount * model.getExpectedReward(observation, prediction, model.next_state(observation, action));
       auto aux = identification_score_belief(belief, observation, cluster, model.getE(), model.getO());
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
     }
 
     mean_accuracy[cluster] += accuracy / session_length;
-    mean_total_reward[cluster] += total_reward / session_length;
+    mean_total_reward[cluster] += total_reward / (session_length - 1);
     mean_discounted_reward[cluster] += discounted_reward;
     mean_identification[cluster] += identity / session_length;
     mean_identification_precision[cluster] += identity_precision / session_length;
