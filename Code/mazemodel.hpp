@@ -25,10 +25,10 @@ private:
   int min_y;   /*!< Minimum reachable column index */
   int max_y;   /*!< Maximum reachale column index */
   size_t n_links; 
-  double* transition_matrix;         /*!< Transition matrix */
+  double* transition_matrix;         /*!< Transition matrix. Ignore S-> and absorbing transitions */
   std::vector<std::vector <size_t> > goal_states;  /*!< List of states leading to G for each environment */
   std::vector<std::vector <size_t> > starting_states;  /*!< List of states reachable from S for each environment */
-  std::vector <double> goal_rewards;
+  std::vector <std::vector <double> > goal_rewards;  /*!< Associate a (goal state, input action) to the corresponding reward */
   static std::default_random_engine generator;
 
   /*! \brief Given an environment e, state s1, action a and state s2 (suffix),
@@ -42,7 +42,7 @@ private:
    * \param y column index of the state.
    * \param orientation North(0), East(1), South(2) or West(3).
    *
-   * \return the unique index representing the given state in the model.
+   * \return the unique index representing the given state in the model. In particular, 0 = S, 1 = G, 2 = T.
    */
   size_t state_to_id(int x, int y, int orientation) const;
 
@@ -89,6 +89,14 @@ private:
    * \return whether the state s is final or not.
    */
   bool isStarting(size_t s) const;
+
+  /*! \brief Returns whether a trap state T can be reached from the given state.
+   *
+   * \param s state
+   *
+   * \return whether the state s can reach T.
+   */
+  bool MayTrap(size_t s) const;
 
 
 public:
