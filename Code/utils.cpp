@@ -234,7 +234,6 @@ void evaluate_policyMDP(std::string sfile,
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
     mean_discounted_reward[cluster] += discounted_reward;
-    std::cout << user << " " << cluster << " " << accuracy / session_length << "\n";
   }
 
   // Print results for each environment, as well as global result

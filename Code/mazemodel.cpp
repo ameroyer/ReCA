@@ -119,8 +119,8 @@ size_t Mazemodel::is_connected(size_t s1, size_t s2) const {
   }
   // Others
   int x1, y1, o1, x2, y2, o2;
-  std::tie(x1, y1, o1) = id_to_state(s1);
-  std::tie(x2, y2, o2) = id_to_state(s2);
+  std::tie(x1, y1, o1) = id_to_state(get_rep(s1));
+  std::tie(x2, y2, o2) = id_to_state(get_rep(s2));
   // If change in orentation (left or right)
   if (x1 == x2 && y1 == y2) {
     // Left
@@ -139,19 +139,19 @@ size_t Mazemodel::is_connected(size_t s1, size_t s2) const {
   // If change in position (forward)
   else if (o1 == o2) {
     // North
-    if (o1 == 0 && x2 == x1 - 1) {
+    if (o1 == 0 && x2 == x1 - 1 && y1 == y2) {
       return 2;
     }
     // East
-    else if (o1 == 1 && y2 == y1 + 1) {
+    else if (o1 == 1 && y2 == y1 + 1 && x1 == x2) {
       return 2;
     }
     // South
-    else if (o1 == 2 && x2 == x1 + 1) {
+    else if (o1 == 2 && x2 == x1 + 1 && y1 == y2) {
       return 2;
     }
     // West
-    else if (o1 == 3 && y2 == y1 - 1) {
+    else if (o1 == 3 && y2 == y1 - 1 && x1 == x2) {
       return 2;
     }
     // No connections
@@ -289,7 +289,8 @@ int string_to_action(std::string s) {
 /**
  * STRING_TO_ORIENTATION
  */
-int string_to_orientation(std::string s) {
+int string_to_orientation(char c) {
+  std::string s(1, c);
   if (!s.compare("N")) {
     return 0;
   } else if (!s.compare("E")) {
@@ -313,7 +314,7 @@ void Mazemodel::load_rewards(std::string rfile) {
   std::istringstream iss;
   std::string s1, a, s2;
   int x, y, env = 0;
-  char o[1];
+  char o;
   double v;
 
   infile.open(rfile, std::ios::in);
@@ -325,7 +326,7 @@ void Mazemodel::load_rewards(std::string rfile) {
       continue;
     }
     assert(("Unvalid reward entry", !s2.compare("G")));
-    sscanf(s1.c_str(), "%dx%dx%s", &x, &y, &o);
+    sscanf(s1.c_str(), "%dx%dx%c", &x, &y, &o);
     // Initialize env
     size_t sg = env * n_observations + state_to_id(x, y, string_to_orientation(o));
     if (goal_states.size() <= env) {
@@ -336,7 +337,7 @@ void Mazemodel::load_rewards(std::string rfile) {
     if (!isGoal(sg)) {
       goal_states.at(env).push_back(sg);
       std::vector <double> aux2 (n_actions, 0);
-      goal_rewards.at(sg) = aux2;
+      goal_rewards[sg] = aux2;
     }
     goal_rewards.at(sg).at(string_to_action(a)) = v;
   }
@@ -351,8 +352,8 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
   std::string line;
   std::istringstream iss;
   std::string s1, a, s2;
-  int env = 0;
-  char o[1];
+  int x, y, env = 0;
+  char o;
   double v;
 
   // Load transitions
@@ -376,8 +377,7 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
 
     // Find starting states for current environment
     if (!s1.compare("S")) {
-      int x, y;
-      sscanf(s2.c_str(), "%dx%dx%s", &x, &y, &o);
+      sscanf(s2.c_str(), "%dx%dx%c", &x, &y, &o);
       size_t s = env * n_observations + state_to_id(x, y, string_to_orientation(o));
       if (starting_states.size() <= env) {
 	std::vector<size_t> aux;
@@ -390,23 +390,21 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
     }
 
     // Parse input states
-    int x, y;
-    sscanf(s1.c_str(), "%dx%dx%s", &x, &y, &o);
-    size_t state1 = state_to_id(x, y, string_to_orientation(o));
+    sscanf(s1.c_str(), "%dx%dx%c", &x, &y, &o);
+    size_t state1 = env * n_observations + state_to_id(x, y, string_to_orientation(o));
     size_t state2 = env * n_observations + 2;
     if (s2.compare("T")) {
-      sscanf(s2.c_str(), "%dx%dx%s", &x, &y, &o);
-      state2 = state_to_id(x, y, string_to_orientation(o));
+      sscanf(s2.c_str(), "%dx%dx%c", &x, &y, &o);
+      state2 = env * n_observations + state_to_id(x, y, string_to_orientation(o));
     }
     // Add transition
     size_t action = string_to_action(a);
     size_t link = is_connected(state1, state2);
     assert(("Unfeasible transition with >0 probability", link < n_links || !s2.compare("T")));
-    transition_matrix[index(env, state1, action, link)] = v;
+    transition_matrix[index(env, get_rep(state1), action, link)] = v;
   }
   assert(("Missing profiles in .transitions file", env == n_environments));
   infile.close();
-
   // Normalization
   double nrm;
   for (int p = 0; p < n_environments; p++) {
