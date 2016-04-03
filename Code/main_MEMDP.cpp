@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   // MEMCP
   // TODO MEMCP remove model.getE pqrqmeter
   else if (!algo.compare("memcp")) {
-    AIToolbox::POMDP::MEMCP<Recomodel> solver( model, model.getE(), beliefSize, steps, exp);
+    AIToolbox::POMDP::MEMCP<Recomodel> solver( model, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";

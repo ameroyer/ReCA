@@ -53,7 +53,7 @@ namespace AIToolbox {
        * @param iterations The number of episodes to run before completion.
        * @param exp The exploration constant. This parameter is VERY important to determine the final POMCP performance.
        */
-      MEMCP(const M& m, size_t n_environments, size_t beliefSize, unsigned iterations, double exp);
+      MEMCP(const M& m, size_t beliefSize, unsigned iterations, double exp);
 
       /**
        * @brief This function resets the internal graph and samples
@@ -289,7 +289,7 @@ namespace AIToolbox {
     };
 
     template <typename M>
-    MEMCP<M>::MEMCP(const M& m, size_t n_environments, size_t beliefSize, unsigned iter, double exp) : model_(m), S(model_.getS()), A(model_.getA()), O(model_.getO()), E(n_environments), beliefSize_(beliefSize), iterations_(iter),
+    MEMCP<M>::MEMCP(const M& m, size_t beliefSize, unsigned iter, double exp) : model_(m), S(model_.getS()), A(model_.getA()), O(model_.getO()), E(model_.getE()), beliefSize_(beliefSize), iterations_(iter),
 												       exploration_(exp), graph_(), rand_(Impl::Seeder::getSeed()) {}
 
     template <typename M>
