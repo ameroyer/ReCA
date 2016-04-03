@@ -78,10 +78,10 @@ bool Mazemodel::MayTrap(size_t state) const {
   int env = get_env(state);
   for (int a = 0; a < n_actions; a++) {
     if (transition_matrix[index(env, get_rep(state), a, n_links - 1)] > 0) {
-      return True;
+      return true;
     }
   }
-  return False;
+  return false;
 }
 
 /**
@@ -189,11 +189,11 @@ size_t Mazemodel::next_state(size_t s, size_t link) const {
       return get_env(s) * n_observations + 1;
     }
     // Else
-    if (direction == 0) {
+    if (link == 0) {
       orientation = (orientation + 1) % 4;
-    } else if (direction == 1) {
+    } else if (link == 1) {
       orientation = (orientation + 3) % 4;
-    } else if (direction == 2) {
+    } else if (link == 2) {
       if (orientation == 0) {
 	x = ((x > min_x) ? x - 1 : min_x);
       } else if (orientation == 1) {
@@ -335,10 +335,10 @@ void Mazemodel::load_rewards(std::string rfile) {
     // Initialize state
     if (!isGoal(sg)) {
       goal_states.at(env).push_back(sg);
-      std::vector <size_t> aux2 (n_actions) = {0};
-      goal_rewards.at(sg).push_back(aux2);
+      std::vector <double> aux2 (n_actions, 0);
+      goal_rewards.at(sg) = aux2;
     }
-    goal_rewards.at(sg).at(a) = v;
+    goal_rewards.at(sg).at(string_to_action(a)) = v;
   }
   infile.close();
 }
@@ -376,6 +376,7 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
 
     // Find starting states for current environment
     if (!s1.compare("S")) {
+      int x, y;
       sscanf(s2.c_str(), "%dx%dx%s", &x, &y, &o);
       size_t s = env * n_observations + state_to_id(x, y, string_to_orientation(o));
       if (starting_states.size() <= env) {
@@ -402,7 +403,6 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
     size_t link = is_connected(state1, state2);
     assert(("Unfeasible transition with >0 probability", link < n_links || !s2.compare("T")));
     transition_matrix[index(env, state1, action, link)] = v;
-    transitions_found++;
   }
   assert(("Missing profiles in .transitions file", env == n_environments));
   infile.close();
@@ -539,7 +539,7 @@ std::vector<size_t> Mazemodel::previous_states(size_t state) const {
     return aux;
   } // Goal state
   else if (get_rep(state) == 1) {
-    std::vector<size_t> aux = goal_states.at(env);
+    std::vector<size_t> aux = goal_states.at(get_env(state));
     aux.push_back(state);
     return aux;
   } // Trap state

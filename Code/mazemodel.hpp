@@ -15,6 +15,7 @@
 #include <random>
 #include <string>
 #include <ctime>
+#include <map>
 
 
 class Mazemodel: public Model {
@@ -28,7 +29,7 @@ private:
   double* transition_matrix;         /*!< Transition matrix. Ignore S-> and absorbing transitions */
   std::vector<std::vector <size_t> > goal_states;  /*!< List of states leading to G for each environment */
   std::vector<std::vector <size_t> > starting_states;  /*!< List of states reachable from S for each environment */
-  std::vector <std::vector <double> > goal_rewards;  /*!< Associate a (goal state, input action) to the corresponding reward */
+  std::map<size_t, std::vector <double> > goal_rewards;  /*!< Associate a (goal state, input action) to the corresponding reward */
   static std::default_random_engine generator;
 
   /*! \brief Given an environment e, state s1, action a and state s2 (suffix),

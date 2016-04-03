@@ -26,10 +26,10 @@ private:
   int* acpows;               /*!< Cumulative exponents for conversion from base n_items */
   static std::default_random_engine generator;
 
-  /*! \brief Given an environment e, state s1, action a and state s2 (suffix),
+  /*! \brief Given an environment e, state s1, action a and state s2 (suffix item),
    * returns the corresponding index in the 1D transition matrix.
    */
-  int index(size_t env, size_t s, size_t a, size_t link) const;
+  int index(size_t env, size_t s1, size_t a, size_t s2_link) const;
 
   /*! \brief Returns the index of the state corresponding to a given sequence of item selections.
    * Note 1: Items indices have a +1 shift (0 is the empty selection).
