@@ -268,7 +268,7 @@ Mazemodel::Mazemodel(std::string sfile, double discount_) {
  * DESTRUCTOR
  */
 Mazemodel::~Mazemodel() {
-  delete []transition_matrix;
+  //delete []transition_matrix;
 }
 
 /**

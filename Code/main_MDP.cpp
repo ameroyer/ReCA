@@ -20,8 +20,7 @@
 
 
 template <typename M>
-void mainMDP(M model, std::string datafile_base, int steps, float epsilon, bool precision,bool verbose)
-{
+void mainMDP(M model, std::string datafile_base, int steps, float epsilon, bool precision,bool verbose) {
   assert(("Model does not enable MDP mode", model.mdp_enabled()));
   // Solve Model
   auto start = std::chrono::high_resolution_clock::now();
@@ -49,7 +48,6 @@ void mainMDP(M model, std::string datafile_base, int steps, float epsilon, bool 
   std::cout << "\n" << current_time_str() << " - Saving policy\n";
   std::ofstream output(datafile_base + ".mdppolicy");
   output << policy;
-  return;
 }
 
 

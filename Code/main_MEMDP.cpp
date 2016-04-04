@@ -18,13 +18,69 @@
 #include "AIToolBox/PBVI.hpp"
 
 
+template <typename M>
+void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon, int steps, float epsilon, int beliefSize, float exp, bool precision,bool verbose) {
+  // Training
+  double training_time, testing_time;
+  auto start = std::chrono::high_resolution_clock::now();
+  std::cout << "\n" << current_time_str() << " - Starting " << algo << " solver...!\n";
+
+  // Evaluation
+  // POMCP
+  if (!algo.compare("pomcp")) {
+    AIToolbox::POMDP::POMCP<decltype(model)> solver( model, beliefSize, steps, exp);
+    training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+    start = std::chrono::high_resolution_clock::now();
+    std::cout << current_time_str() << " - Starting evaluation!\n";
+    evaluate_pomcp(datafile_base + ".test", model, solver, horizon, verbose);
+    testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+  }
+  // MEMCP
+  else if (!algo.compare("memcp")) {
+    AIToolbox::POMDP::MEMCP<decltype(model)> solver( model, beliefSize, steps, exp);
+    training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+    start = std::chrono::high_resolution_clock::now();
+    std::cout << current_time_str() << " - Starting evaluation!\n";
+    evaluate_memcp(datafile_base + ".test", model, solver, horizon, verbose);
+    testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+  }
+  // PBVI
+  else if (!algo.compare("pbvi")) {
+    AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
+    auto solution = solver(model);
+    if (!verbose) {std::cerr.clear();}
+    std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
+    std::chrono::high_resolution_clock::now() - start;
+    training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+
+    // Build and Evaluate Policy
+    start = std::chrono::high_resolution_clock::now();
+    std::cout << "\n" << current_time_str() << " - Evaluation results\n";
+    AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
+    evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
+    testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+  }
+
+  // Output Times
+  std::cout << current_time_str() << " - Timings\n";
+  std::cout << "   > Training : " << training_time << "s\n";
+  std::cout << "   > Testing : " << testing_time << "s\n";
+
+  // Save policy or pomcp seach tree in file
+  /*
+   * TODO
+   */
+}
+
+
 /**
  * MAIN ROUTINE
  */
 int main(int argc, char* argv[]) {
 
   // Parse input arguments
-  assert(("Usage: ./main file_basename data_mode [solver] [discount] [nsteps] [precision]", argc >= 3));  
+  assert(("Usage: ./main file_basename data_mode [solver] [discount] [nsteps] [precision]", argc >= 3));
   std::string data = argv[2];
   assert(("Unvalid data mode", !(data.compare("reco") && data.compare("maze"))));
   std::string algo = ((argc > 3) ? argv[3] : "pbvi");
@@ -46,82 +102,19 @@ int main(int argc, char* argv[]) {
   bool verbose = ((argc > 11) ? (atoi(argv[11]) == 1) : false);
 
   // Create model
-  auto start = std::chrono::high_resolution_clock::now();
   std::string datafile_base = std::string(argv[1]);
-  //Recomodel model = NULL;
-  //if (!data.compare("reco")) {
-    Recomodel model(datafile_base + ".summary", discount, false);
+  std::cout << "\n" << current_time_str() << " - Loading appropriate model\n";
+  if (!data.compare("reco")) {
+    Recomodel model (datafile_base + ".summary", discount, false);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
-    //model = m;
-    //} else if (!data.compare("maze")) {
-    //Mazemodel m(datafile_base + ".summary", discount);
-    //m.load_rewards(datafile_base + ".rewards");
-    //m.load_transitions(datafile_base + ".transitions", precision);
-    //model = &m;
-    // TODO
-    //}
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  double loading_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
-  //std::cout << model->mdp_enabled() << "\n";
-  // return 0;
-
-  // Training
-  double training_time, testing_time;
-  start = std::chrono::high_resolution_clock::now();
-  std::cout << "\n" << current_time_str() << " - Starting " << algo << " solver...!\n";
-
-  // Evaluation
-  // POMCP
-  if (!algo.compare("pomcp")) {
-    AIToolbox::POMDP::POMCP<Model> solver( model, beliefSize, steps, exp);
-    training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-    start = std::chrono::high_resolution_clock::now();
-    std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_pomcp(datafile_base + ".test", model, solver, horizon, verbose);
-    testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
+    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
+  } else if (!data.compare("maze")) {
+    Mazemodel model(datafile_base + ".summary", discount);
+    model.load_rewards(datafile_base + ".rewards");
+    model.load_transitions(datafile_base + ".transitions", precision);
+    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
   }
-  // MEMCP
-  // TODO MEMCP remove model.getE pqrqmeter
-  else if (!algo.compare("memcp")) {
-    AIToolbox::POMDP::MEMCP<Recomodel> solver( model, beliefSize, steps, exp);
-    training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-    start = std::chrono::high_resolution_clock::now();
-    std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_memcp(datafile_base + ".test", model, solver, horizon, verbose);
-    testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-  }
-  // Incremental Pruning
-  else if (!algo.compare("pbvi")) {
-    // TODO DEBUG PBVI //nBelef = n observations ?
-    AIToolbox::POMDP::PBVI solver(beliefSize, horizon, epsilon);    
-    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
-    auto solution = solver(model);
-    if (!verbose) {std::cerr.clear();}
-    std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
-    std::chrono::high_resolution_clock::now() - start;
-    training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-
-    // Build and Evaluate Policy
-    start = std::chrono::high_resolution_clock::now();
-    std::cout << "\n" << current_time_str() << " - Evaluation results\n";
-    AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
-    evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
-    testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
-  }
-
-  // Output Times
-  std::cout << current_time_str() << " - Timings\n";
-  std::cout << "   > Loading : " << loading_time << "s\n";
-  std::cout << "   > Training : " << training_time << "s\n";
-  std::cout << "   > Testing : " << testing_time << "s\n";
-
-  // Save policy or pomcp seach tree in file
-  /*
-   * TODO
-   */
-
-  // End
   return 0;
 
 }
