@@ -254,7 +254,7 @@ Mazemodel::Mazemodel(std::string sfile, double discount_) {
   n_links = 5;    // Left, Right, Forward, No Move, s->T
   n_observations = 3 + (max_x - min_x + 1) * (max_y - min_y + 1) * 4;
   n_states = n_environments * n_observations;
-  transition_matrix = new double[n_environments * (n_observations - 2) * n_actions * n_links]();
+  transition_matrix = new double[n_environments * (n_observations - 3) * n_actions * n_links]();
 
 
   //********** Summary of model parameters
@@ -408,7 +408,7 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
   // Normalization
   double nrm;
   for (int p = 0; p < n_environments; p++) {
-    for (size_t state1 = 2; state1 < n_observations; state1++) {
+    for (size_t state1 = 3; state1 < n_observations; state1++) {
       for (size_t action = 0; action < n_actions; action++) {
 	nrm = 0.0;
 	// If asking for precision, use kahan summation [slightly slower]
@@ -550,6 +550,7 @@ std::vector<size_t> Mazemodel::previous_states(size_t state) const {
 	aux.push_back(env * n_observations + s);
       }
     }
+    return aux;
   }
   // others
   else {
@@ -576,6 +577,7 @@ std::vector<size_t> Mazemodel::previous_states(size_t state) const {
     if (isStarting(state)) {
       aux.push_back(get_env(state) * n_observations + 0);
     }
+    return aux;
   }
 }
 

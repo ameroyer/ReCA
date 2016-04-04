@@ -109,7 +109,7 @@ namespace AIToolbox {
     typename Projecter<M>::ProjectionsRow Projecter<M>::operator()(const VList & w, size_t a) {
       ProjectionsRow projections( boost::extents[O] );
 
-      // Other (valid) observations
+      // For all observations
       for ( size_t o = 0; o < O; ++o ) {
 	// OPT: We only consider the subset of pairs (s, s1) such that
 	// - Obs(s1) = o
@@ -136,7 +136,6 @@ namespace AIToolbox {
 	  projections[o].emplace_back(vproj * discount_ + immediateRewards_.row(a).transpose(), a, VObs(1,i));
 	}
       }
-
       return projections;
     }
 
