@@ -172,8 +172,8 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
 Recomodel::~Recomodel() {
   //delete []transition_matrix;
   //delete []rewards;
-  delete []pows;
-  delete []acpows;
+  //delete []pows;
+  //delete []acpows;
 }
 
 /**

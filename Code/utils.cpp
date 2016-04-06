@@ -364,3 +364,69 @@ void evaluate_policyMEMDP(std::string sfile,
   std::vector<double*> results {mean_accuracy, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
   print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
+
+
+
+/**
+ * EVALUATE_POLICYMEMDP
+ */
+void evaluate_policy_interactiveMEMDP(int n_sessions,
+				      const Model& model,
+				      AIToolbox::POMDP::Policy policy,
+				      unsigned int horizon,
+				      bool verbose /* =false */,
+				      bool supervised /* =true */) {
+  // Aux variables
+  size_t id, prediction, observation, state;
+  int cluster, chorizon = 0;
+  double cdiscount, reward;
+  double steps = 0, identity = 0, identity_precision = 0;
+
+  int set_lengths [model.getE()] = {0};
+  double mean_steps [model.getE()] = {0};
+  double mean_identification [model.getE()] = {0};
+  double mean_identification_precision [model.getE()] = {0};
+
+  for (int run = 0; run < n_sessions; run++) {
+    // Identity
+    cluster = rand() % (int)(model.getE());
+    set_lengths[cluster] += 1;
+
+    // Reset
+    steps = 0, identity = 0, identity_precision = 0;
+    cdiscount = 1.;
+    chorizon = horizon;
+    std::cerr << "\r     User " << run << "/" << n_sessions << std::flush;
+
+    // Initial belief and first action
+    observation = 0;
+    state = cluster * model.getO() + 0;
+    std::vector< double > action_scores(model.getA(), 0);
+    AIToolbox::POMDP::Belief belief = build_belief(observation, model.getS(), model.getO(), model.getE());
+    std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
+
+    // Run
+    while(!model.isTerminal(state)) {
+      // Sample next state
+      std::tie(state, observation, reward) = model.sampleSOR(state, prediction);
+      belief = update_belief(belief, prediction, observation, model);
+      // Sample next action
+      std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
+      // Evalueate identification accuracy
+      auto aux = identification_score_belief(belief, observation, cluster, model.getE(), model.getO());
+      identity += std::get<0>(aux);
+      identity_precision += std::get<1>(aux);
+      steps++;
+      //std::cout << model.get_rep(state) << "\n";
+    }
+    mean_steps[cluster] += steps;
+    mean_identification[cluster] += identity / steps;
+    mean_identification_precision[cluster] += identity_precision / steps;
+  }
+
+  // Print results for each environment, as well as global result
+  std::cout << "\n\n";
+  std::vector<std::string> titles {"steps", "idac", "idpr"};
+  std::vector<double*> results {mean_steps, mean_identification, mean_identification_precision};
+  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+}

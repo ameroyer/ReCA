@@ -133,6 +133,13 @@ void evaluate_policyMEMDP(std::string sfile,
 			  bool verbose /* =false */,
 			  bool supervised /* =true */);
 
+void evaluate_policy_interactiveMEMDP(int n_sessions,
+				      const Model& model,
+				      AIToolbox::POMDP::Policy policy,
+				      unsigned int horizon,
+				      bool verbose /* =false */,
+				      bool supervised /* =true */);
+
 
 /*! \brief Evaluates the sequence of actions recommended by POMCP.
  *

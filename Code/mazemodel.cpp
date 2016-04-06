@@ -401,6 +401,9 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
     size_t action = string_to_action(a);
     size_t link = is_connected(state1, state2);
     assert(("Unfeasible transition with >0 probability", link < n_links || !s2.compare("T")));
+    if (!s2.compare("T")) {
+      link = n_links - 1; // transition matrix not yet initialized
+    }
     transition_matrix[index(env, get_rep(state1), action, link)] = v;
   }
   assert(("Missing profiles in .transitions file", env == n_environments));
@@ -427,6 +430,9 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
 				&transition_matrix[index(p, state1, action, n_links)], 0.);
 	}
 	// Normalize
+	if (nrm < 0.01) {
+	  std::cout << state1 << " " << action << "\n";
+	}
 	std::transform(&transition_matrix[index(p, state1, action, 0)],
 		       &transition_matrix[index(p, state1, action, n_links)],
 		       &transition_matrix[index(p, state1, action, 0)],
@@ -491,7 +497,7 @@ std::tuple<size_t, double> Mazemodel::sampleSR(size_t s, size_t a) const {
   // Start state
   if (get_rep(s) == 0) {
     int env = get_env(s);
-    size_t s2 = env * n_observations + starting_states.at(env).at(rand() % starting_states.at(env).size());
+    size_t s2 = starting_states.at(env).at(rand() % starting_states.at(env).size());
     return std::make_tuple(s2, 0);
   }
   // Absorbing state
@@ -508,6 +514,7 @@ std::tuple<size_t, double> Mazemodel::sampleSR(size_t s, size_t a) const {
     std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_links)]);
     size_t link = distribution(generator);
     // Return values
+    //std::cout << transition_matrix[index(get_env(s), get_rep(s), a, n_links - 1)] << "\n";
     size_t s2 = next_state(s, link);
     return std::make_tuple(s2, 0.);
   }

@@ -274,8 +274,7 @@ if __name__ == "__main__":
     print "   %d States in the database" % n_states
     print "   %d Actions in the database" % n_items
     epsilon = 1
-    js_count_init = np.zeros((n_states, n_items), dtype=int) # js[s1, a] = P(s1.a, s1)
-    #js_count_init = np.zeros((n_states, n_states), dtype=int)  # P(s2 | s1)
+    js_count_init = np.zeros((n_states, n_items), dtype=int) # js[s1, a] = P(s1.a | s1)
     with open("%s.rewards" % output_base, 'w') as f:
         for s1 in xrange(get_nstates(n_items, args.history)):
             for item in actions:
@@ -294,7 +293,6 @@ if __name__ == "__main__":
             for item in session[args.history + 1:]:
                 s2 = get_next_state_id(s1, item)
                 js_count[clusterID, s1, item - 1] += 1
-                #js_count[clusterID, s1, s2] += 1
                 s1 = s2
 
 
