@@ -34,7 +34,7 @@ ctest -V
      * ``[5]`` Proportion of the dataset to keep for parameter inference (Defaults to 0.8).
      * ``[6]`` Path to the Foodmart dataset (either ``tar.gz`` archive or ``Foodmart/data`` directory).
      * ``[7]`` Path to the main output directory (Defaults to ``../Code/Models``).
-     * ``[--norm]`` If present, normalize the transition probabilities. (*Note*: Do not use this option for this code, as the transition probabilities are normalized in the C routines anyway).
+     * ``[--norm]`` If present, normalize the transition probabilities. (*Note*: Transition probabilities are already normalized in the main C routines).
      * ``[--help]`` displays help about this command
 
 **Example** *(6 environments, 3 actions, 13 states)* :  ``python prepare_foodmart.py -d Foodmart.tar.gz -pl 4 -k 2``
@@ -51,7 +51,7 @@ ctest -V
      * ``[2]`` History length (Defaults to 2). Must be strictly greater than 1.
      * ``[3]`` Number of test sessions to generate according to the synthetic distribution (Defaults to 2000).
      * ``[4]`` Path to the output directory (Defaults to ``../Code/Models``).
-     * ``[--norm]`` If present, normalize the transition probabilities. (*Note*: Do not use this option for this code, as the transition probabilities are normalized in the C routines anyway).
+     * ``[--norm]`` If present, normalize the transition probabilities. (*Note*: Transition probabilities are already normalized in the main C routines).
      * ``[--help]`` displays help about this command
 
 **Example** *(3 environments, 3 actions, 13 states)* :  ``python prepare_synth.py -n 3 -k 2``

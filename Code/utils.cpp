@@ -8,7 +8,6 @@
 
 #include "utils.hpp"
 
-
 /**
  * CURRENT_TIME_STR
  */
@@ -201,7 +200,7 @@ void evaluate_policyMDP(std::string sfile,
   for (auto it = begin(aux); it != end(aux); ++it) {
     // Identity
     user++;
-    std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
+    //std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
     cluster = std::get<0>(*it);
     set_lengths[cluster] += 1;
     session_length = std::get<1>(*it).size();
@@ -229,7 +228,6 @@ void evaluate_policyMDP(std::string sfile,
       accuracy += accuracy_score(prediction, action);
       precision += avprecision_score(action_scores, action);
     }
-
     mean_accuracy[cluster] += accuracy / session_length;
     mean_precision[cluster] += precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;

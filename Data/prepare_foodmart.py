@@ -176,7 +176,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
         product_clusterID = product_to_cluster[int(sale[0])]
         product_profit[product_clusterID] += float(sale[5]) - float(sale[6])
         product_profit_nrm[product_clusterID] += 1
-        for _ in xrange(int(sale[7])):
+        for _ in xrange(1):#int(sale[7])):
             user_sessions[customer_to_cluster[int(sale[2])]][int(sale[2])].append(product_clusterID)
     f.close()
 
@@ -299,8 +299,10 @@ if __name__ == "__main__":
     ###### 5. Add a positive factor for the recommended action transition
     print "\n\033[91m-----> Probability inference\033[0m"
     max_upscale = 0.9995
+    old_probs, probs = [], []
     with open("%s.transitions" % output_base, 'w') as f:
         for user_profile in xrange(js_count.shape[0]):
+            probs = []
             print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, js_count.shape[0]),
             sys.stderr.flush()
             # For fixed s1
@@ -319,11 +321,18 @@ if __name__ == "__main__":
                     # Negative (s1, b, s1.a)
                     beta = float(nrm - new_count) / (nrm - count)
                     assert(beta > 0 and beta <= 1), "AssertionError: Beta out of range"
+                    probs.append(new_count)
                     for b, count in enumerate(s1_counts):
                         if a - 1 != b:
                             s2 = get_next_state_id(s1, b + 1)
                             f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / nrm))
+                            probs.append(beta * count)
             f.write("\n")
+            from scipy.stats import pearsonr
+            if len(old_probs) > 0:
+                print pearsonr(old_probs, probs)
+            old_probs = list(probs)
+            args.alpha += 0.1
 
 
     print "\n\n\033[92m-----> End\033[0m"

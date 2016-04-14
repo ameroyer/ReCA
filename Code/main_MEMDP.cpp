@@ -58,8 +58,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
-    evaluate_policy_interactiveMEMDP(500, model, policy, horizon, verbose, true);
-    //evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
+    //evaluate_policy_interactiveMEMDP(500, model, policy, horizon, verbose, true);
+    evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 
