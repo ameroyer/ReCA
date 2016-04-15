@@ -58,8 +58,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
-    //evaluate_policy_interactiveMEMDP(500, model, policy, horizon, verbose, true);
-    evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
+    evaluate_policy_interactiveMEMDP(10, model, policy, horizon, verbose, true);
+    //evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
   std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
   assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("memcp"))));
   double discount = ((argc > 4) ? std::atof(argv[4]) : 0.95);
-  assert(("Unvalid discount parameter", discount > 0 && discount < 1));
+  assert(("Unvalid discount parameter", discount > 0 && discount <= 1));
   int steps = ((argc > 5) ? std::atoi(argv[5]) : 1000000);
   assert(("Unvalid steps parameter", steps > 0));
   unsigned int horizon = ((argc > 6) ? std::atoi(argv[6]) : 1);
@@ -114,6 +114,7 @@ int main(int argc, char* argv[]) {
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision);
+    //return 0;
     mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
   }
   return 0;

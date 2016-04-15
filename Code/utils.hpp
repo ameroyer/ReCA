@@ -343,4 +343,74 @@ void evaluate_memcp(std::string sfile,
   print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
 
+
+/**
+
+template<typename M>
+void evaluate_memcp_interactive(int n_sessions,
+		    const Model& model,
+		    AIToolbox::POMDP::MEMCP<M> memcp,
+		    unsigned int horizon,
+		    bool verbose=false,
+		    bool supervised=true)
+{
+  // Aux variables
+  size_t observation, action, prediction, state;
+  int cluster, session_length, chorizon, user = 0;
+  double cdiscount, reward;
+  double steps = 0, identity = 0, identity_precision = 0;
+
+  // Initialize arrays
+  std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
+  int set_lengths [model.getE()] = {0};
+  double mean_steps [model.getE()] = {0};
+  double mean_identification [model.getE()] = {0};
+  double mean_identification_precision [model.getE()] = {0};
+
+  // Init belief over the environments
+  AIToolbox::POMDP::Belief env_belief = AIToolbox::POMDP::Belief(model.getE());
+  env_belief.fill(1.0 / model.getE());
+  size_t init_state = 0;
+
+  for (int run = 0; run < n_sessions; run++) {
+    // Identity
+    cluster = rand() % (int)(model.getE());
+    set_lengths[cluster] += 1;
+    steps = 0
+    user++;
+
+    // Reset
+    steps = 0, identity = 0, identity_precision = 0;
+    cdiscount = 1.;
+    chorizon = horizon;
+    std::cerr << "\r     User " << run << "/" << n_sessions << std::flush;
+
+    // Init
+    std::vector< double > action_scores(model.getA(), 0);
+    prediction =  memcp.sampleAction(env_belief, init_state, chorizon, true);
+    state = cluster * model.getO() + 0;
+
+    // Run
+    while(!model.isTerminal(state)) {
+      std::tie(state, observation, reward) = model.sampleSOR(state, prediction);
+      prediction = memcp.sampleAction(prediction, observation, chorizon);
+      auto aux = identification_score_particles(memcp.getGraph().belief, cluster, model);
+      identity += std::get<0>(aux);
+      identity_precision += std::get<1>(aux);
+      steps++;
+    }
+
+  // Print results for each environment, as well as global result
+    mean_steps[cluster] += steps;
+    mean_identification[cluster] += identity / steps;
+    mean_identification_precision[cluster] += identity_precision / steps;
+  }
+
+  // Print results for each environment, as well as global result
+  std::cout << "\n\n";
+  std::vector<std::string> titles {"steps", "idac", "idpr"};
+  std::vector<double*> results {mean_steps, mean_identification, mean_identification_precision};
+  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  }*/
+
 #endif //UTILS_H_

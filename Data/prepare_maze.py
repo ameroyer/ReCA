@@ -6,7 +6,6 @@ import argparse
 
 left = {'N':'W','W':'S','S':'E','E':'N'}
 right = {'N':'E','E':'S','S':'W','W':'N'}
-
 changeMap = {'N':[-1,0],'S':[1,0],'E':[0,1],'W':[0,-1]}
 
 

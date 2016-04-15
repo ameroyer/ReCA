@@ -98,6 +98,8 @@ private:
    * \return whether the state s can reach T.
    */
   bool MayTrap(size_t s) const;
+  bool isTrap(size_t s) const;
+  void print_maze()  const;
 
 
 public:

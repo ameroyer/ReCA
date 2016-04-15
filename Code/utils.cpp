@@ -364,6 +364,25 @@ void evaluate_policyMEMDP(std::string sfile,
 }
 
 
+ 
+std::tuple<int, int, int> id_to_state(size_t state) {
+  int min_x = 1, min_y = 1, max_x = 3, max_y = 2;
+  // Special observations (0, 1, 2)
+  if (state == 0) {
+    return std::make_tuple(0, -1, -1);
+  } else if (state == 1) {
+    return std::make_tuple(1, -1, -1);
+  } else if (state == 2) {
+    return std::make_tuple(2, -1, -1);
+  }
+  // Others
+  else {
+    int y = (state - 3) % (max_y - min_y + 1);
+    int x = ((state - 3 - y) / (max_y - min_y + 1)) % (max_x - min_x + 1);
+    int orientation = ((state - 3) / (max_y - min_y + 1)) / (max_x - min_x + 1);
+    return std::make_tuple(x + min_x, y + min_y, orientation);
+  }
+}
 
 /**
  * EVALUATE_POLICYMEMDP
@@ -382,6 +401,7 @@ void evaluate_policy_interactiveMEMDP(int n_sessions,
 
   int set_lengths [model.getE()] = {0};
   double mean_steps [model.getE()] = {0};
+  double mean_success [model.getE()] = {0};
   double mean_identification [model.getE()] = {0};
   double mean_identification_precision [model.getE()] = {0};
 
@@ -394,7 +414,7 @@ void evaluate_policy_interactiveMEMDP(int n_sessions,
     steps = 0, identity = 0, identity_precision = 0;
     cdiscount = 1.;
     chorizon = horizon;
-    std::cerr << "\r     User " << run << "/" << n_sessions << std::flush;
+    std::cerr << "\r     User " << run << "/" << n_sessions << " cluster " << cluster << std::flush;
 
     // Initial belief and first action
     observation = 0;
@@ -402,11 +422,17 @@ void evaluate_policy_interactiveMEMDP(int n_sessions,
     std::vector< double > action_scores(model.getA(), 0);
     AIToolbox::POMDP::Belief belief = build_belief(observation, model.getS(), model.getO(), model.getE());
     std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
+    double r = 0.;
+      std::cout << "\n" << observation << " ";
+      int x, y, o;
+      std::tie(x, y, o) = id_to_state(observation);
+      std::cout << "(" << x << ", " << y << ", " << o << ") " << prediction << " -- ";
 
     // Run
     while(!model.isTerminal(state)) {
       // Sample next state
       std::tie(state, observation, reward) = model.sampleSOR(state, prediction);
+      r += reward;
       belief = update_belief(belief, prediction, observation, model);
       // Sample next action
       std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
@@ -415,16 +441,29 @@ void evaluate_policy_interactiveMEMDP(int n_sessions,
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
       steps++;
+      std::cout << "\n" << observation << " ";
+      int x, y, o;
+      std::tie(x, y, o) = id_to_state(observation);
+      std::cout << "(" << x << ", " << y << ", " << o << ") " << prediction << " -- ";
       //std::cout << model.get_rep(state) << "\n";
+      //if (steps > 6) {
+      //	break;
+      //}
+    }
+    std::cout << "\n";
+    //std::cout << observation << " " << r << "\n";
+    if (observation == 1) {
+      std::cout << "Reward " << r << "\n";
     }
     mean_steps[cluster] += steps;
+    mean_success[cluster] += (state % model.getO() == 1) ? 1 : 0;
     mean_identification[cluster] += identity / steps;
     mean_identification_precision[cluster] += identity_precision / steps;
   }
 
   // Print results for each environment, as well as global result
   std::cout << "\n\n";
-  std::vector<std::string> titles {"steps", "idac", "idpr"};
-  std::vector<double*> results {mean_steps, mean_identification, mean_identification_precision};
+  std::vector<std::string> titles {"steps", "idac", "idpr", "scr"};
+  std::vector<double*> results {mean_steps, mean_identification, mean_identification_precision, mean_success};
   print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
