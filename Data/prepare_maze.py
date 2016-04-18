@@ -90,16 +90,23 @@ if __name__ == "__main__":
     maze = []
     min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
     with open(args.fin, 'r') as fIn:
-        for line in fIn.readlines():
+        for line in fIn.read().splitlines():
             if not line.strip():
                 # Change env
                 mazes.append(maze)
                 x1, x2, y1, y2 = mazeBoundaries(maze)
                 min_x = min(min_x, x1); max_x = max(max_x, x2);
-                min_y = min(min_y, y1); max_x = max(max_y, y2);
+                min_y = min(min_y, y1); max_y = max(max_y, y2);
                 maze = []
             else:
                 maze.append(line.split())
+    # Add last maze if not done
+    if len(maze) > 1:
+        mazes.append(maze)
+        x1, x2, y1, y2 = mazeBoundaries(maze)
+        min_x = min(min_x, x1); max_x = max(max_x, x2);
+        min_y = min(min_y, y1); max_y = max(max_y, y2);
+
 
     # Check tha mazes shape are consisten
     aux = [(len(maze), len(maze[0])) for maze in mazes]
