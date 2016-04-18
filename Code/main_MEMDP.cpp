@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision);
-    //return 0;
+    return 0;
     mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
   }
   return 0;

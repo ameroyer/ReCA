@@ -38,13 +38,9 @@ size_t Mazemodel::state_to_id(int x, int y, int orientation) const {
  * ID_TO_STATE
  */
 std::tuple<int, int, int> Mazemodel::id_to_state(size_t state) const {
-  // Special observations (0, 1, 2)
-  if (state == 0) {
-    return std::make_tuple(0, -1, -1);
-  } else if (state == 1) {
-    return std::make_tuple(1, -1, -1);
-  } else if (state == 2) {
-    return std::make_tuple(2, -1, -1);
+  // Special observations
+  if (get_rep(state) == S || get_rep(state) == T || get_rep(state) == G) {
+    return std::make_tuple(get_rep(state), -1, -1);
   }
   // Others
   else {
@@ -72,12 +68,12 @@ bool Mazemodel::isStarting(size_t state) const {
 }
 
 /**
- * MAYTRAP
+ * ISTRAP
  */
-bool Mazemodel::MayTrap(size_t state) const {
+bool Mazemodel::isTrap(size_t state) const {
   int env = get_env(state);
   for (int a = 0; a < n_actions; a++) {
-    if (transition_matrix[index(env, get_rep(state), a, n_links - 1)] > 0) {
+    if (transition_matrix[index(env, get_rep(state), a, trap_link)] > 0) {
       return true;
     }
   }
@@ -93,73 +89,81 @@ size_t Mazemodel::is_connected(size_t s1, size_t s2) const {
   if (env != get_env(s2)) {
     return n_links;
   }
-  // No Move
+  // No Move + Absorbing states
   else if (s1 == s2) {
-    return n_links - 2;
+    return nomove_link;
   }
   // Trap
-  else if (get_rep(s2) == 2 && MayTrap(s1)) {
-    return n_links - 1;
+  else if (get_rep(s2) == T) {
+    if (isTrap(s1)) {
+      return trap_link;
+    } else {
+      return n_links;
+    }
   }
-  // -> S
-  else if (get_rep(s2) == 0) {
+  // Goal
+  else if (get_rep(s2) == G) {
+    if (isGoal(s1)) {
+      return goal_link;
+    } else {
+      return n_links;
+    }
+  }
+  // -> Start
+  else if (get_rep(s2) == S) {
     return n_links;
   }
-  // S ->
-  if (get_rep(s1) == 0) {
+  // Start ->
+  else if (get_rep(s1) == S) {
     return (isStarting(s2) ? 2 : n_links);
   }
-  // Absorbing states
-  if (get_rep(s1) == 1 || get_rep(s1) == 2) {
-    return ((s1 == s2) ? n_links - 2 : n_links);
-  }
-  // Final state
-  if (isGoal(s1)) {
-    return (get_rep(s2) == 1) ? 2 : n_links;
-  }
   // Others
-  int x1, y1, o1, x2, y2, o2;
-  std::tie(x1, y1, o1) = id_to_state(get_rep(s1));
-  std::tie(x2, y2, o2) = id_to_state(get_rep(s2));
-  // If change in orentation (left or right)
-  if (x1 == x2 && y1 == y2) {
-    // Left
-    if (o2 == (o1 + 3) % 4) {
-      return 0;
+  else {
+    int x1, y1, o1, x2, y2, o2;
+    std::tie(x1, y1, o1) = id_to_state(get_rep(s1));
+    std::tie(x2, y2, o2) = id_to_state(get_rep(s2));
+    // If change in orentation (left or right)
+    if (x1 == x2 && y1 == y2) {
+      // Left
+      if (o2 == (o1 + 3) % 4) {
+	return 0;
+      }
+      // Right
+      else if ( o2 == (o1 + 1) % 4) {
+	return 1;
+      }
+      // No connection
+      else {
+	return n_links;
+      }
     }
-    // Right
-    else if ( o2 == (o1 + 1) % 4) {
-      return 1;
+    // If change in position (forward)
+    else if (o1 == o2) {
+      // North
+      if (o1 == 0 && x2 == x1 - 1 && y1 == y2) {
+	return 2;
+      }
+      // East
+      else if (o1 == 1 && y2 == y1 + 1 && x1 == x2) {
+	return 2;
+      }
+      // South
+      else if (o1 == 2 && x2 == x1 + 1 && y1 == y2) {
+	return 2;
+      }
+      // West
+      else if (o1 == 3 && y2 == y1 - 1 && x1 == x2) {
+	return 2;
+      }
+      // No connections
+      else {
+	return n_links;
+      }
     }
-    // No connection
-    else {
-      return n_actions + 1;
-    }
-  }
-  // If change in position (forward)
-  else if (o1 == o2) {
-    // North
-    if (o1 == 0 && x2 == x1 - 1 && y1 == y2) {
-      return 2;
-    }
-    // East
-    else if (o1 == 1 && y2 == y1 + 1 && x1 == x2) {
-      return 2;
-    }
-    // South
-    else if (o1 == 2 && x2 == x1 + 1 && y1 == y2) {
-      return 2;
-    }
-    // West
-    else if (o1 == 3 && y2 == y1 - 1 && x1 == x2) {
-      return 2;
-    }
-    // No connections
+    // No possible connections
     else {
       return n_links;
     }
-  } else {
-    return n_links;
   }
 }
 
@@ -167,28 +171,24 @@ size_t Mazemodel::is_connected(size_t s1, size_t s2) const {
  * NEXT_STATE
  */
 size_t Mazemodel::next_state(size_t s, size_t link) const {
+  assert(("Use reachable states for successors of S", get_rep(s) != S));
   // No Move
-  if (link == n_links - 2) {
+  if (link == nomove_link) {
     return s;
   }
   // Trap
-  else if (link == n_links - 1) {
-    return get_env(s) * n_observations + 2;
+  else if (link == trap_link) {
+    return get_env(s) * n_observations + T;
+  }
+  // Goal
+  else if (link == goal_link) {
+    return get_env(s) * n_observations + G;
   }
   // Directions
   else {
     size_t state = get_rep(s);
     size_t x, y, orientation;
     std::tie(x, y, orientation) = id_to_state(state);
-    // Absorbing state
-    if (y < 0 && orientation < 0) {
-      return s;
-    }
-    // Final state go to G no matter the action
-    if (isGoal(s)) {
-      return get_env(s) * n_observations + 1;
-    }
-    // Else
     if (link == 0) {
       orientation = (orientation + 3) % 4;
     } else if (link == 1) {
@@ -251,7 +251,6 @@ Mazemodel::Mazemodel(std::string sfile, double discount_) {
   is_mdp = false;
   discount = discount_;
   n_actions = 3;  // Left, Right, Forward
-  n_links = 5;    // Left, Right, Forward, No Move, s->T
   n_observations = 3 + (max_x - min_x + 1) * (max_y - min_y + 1) * 4;
   n_states = n_environments * n_observations;
   transition_matrix = new double[n_environments * (n_observations - 3) * n_actions * n_links]();
@@ -304,44 +303,63 @@ int string_to_orientation(char c) {
   }
 }
 
-bool Mazemodel::isTrap(size_t state) const {
+/**
+ * ISTRAP
+ */
+bool Mazemodel::isWall(size_t state) const {
   int env = get_env(state);
-  if (isGoal(state)) {
+  if (get_rep(state) == S || get_rep(state) == G || get_rep(state) == T) {
     return false;
   }
+  // Check if the state can be escaped
   for (int a = 0; a < n_actions; a++) {
-    for (int l = 0; l < n_links; l++) {
-    if (transition_matrix[index(env, get_rep(state), a, l)] > 0) {
-      return false;
+    for (int l = 0; l < n_links - 1; l++) {
+      if (transition_matrix[index(env, get_rep(state), a, l)] > 0) {
+	return false;
+      }
     }
-  }
   }
   return true;
 }
 
+/**
+ * PRINT_MAZE
+ */
 void Mazemodel::print_maze() const {
   for (size_t e = 0; e < n_environments; e++) {
     std::cout << "Env " << e << "\n";
     for (int x = min_x; x <= max_x; x++) {
       for (int y = min_y; y <= max_y; y++) {
+	// Representative
 	size_t s = e * n_observations + state_to_id(x, y, 0);
-	if (isStarting(s)) {
-	  std::cout << "+ ";
-	} else if (isTrap(s)) {
+	// Wall
+	if (isWall(s)) {
 	  std::cout << "x ";
-	} else if (isGoal(s)) {
-	  std::cout << "G "; 
-	} else {
-	  std::cout << "o ";
+	}
+	// Goal
+	else if (isGoal(s)) {
+	  std::cout << "g ";
+	}
+	// Others
+	else {
+	  // Start with correct orientation
+	  if (isStarting(e * n_observations + state_to_id(x, y, 0))) {
+	    std::cout << "^ ";
+	  } else if (isStarting(e * n_observations + state_to_id(x, y, 1))) {
+	    std::cout << "> ";
+	  } else if (isStarting(e * n_observations + state_to_id(x, y, 2))) {
+	    std::cout << "v ";
+	  } else if (isStarting(e * n_observations + state_to_id(x, y, 3))) {
+	    std::cout << "< ";
+	  } else {
+	    std::cout << "o ";
+	  }
 	}
       }
       std::cout << "\n";
     }
     std::cout << "\n\n";
   }
-
-  // DEBUG
-  std::cout << transition_matrix[index(0, state_to_id(2, 1, 2), 0, 0)] << "\n";
 }
 
 /**
@@ -366,13 +384,13 @@ void Mazemodel::load_rewards(std::string rfile) {
     }
     assert(("Unvalid reward entry", !s2.compare("G")));
     sscanf(s1.c_str(), "%dx%dx%c", &x, &y, &o);
-    // Initialize env
+    // Initialize goal states for this environment
     size_t sg = env * n_observations + state_to_id(x, y, string_to_orientation(o));
     if (goal_states.size() <= env) {
       std::vector <size_t> aux;
       goal_states.push_back(aux);
     }
-    // Initialize state
+    // Add state to the list of goal states
     if (!isGoal(sg)) {
       goal_states.at(env).push_back(sg);
       std::vector <double> aux2 (n_actions, 0);
@@ -409,8 +427,8 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
       continue;
     }
 
-    // Ignore T and G states, already taken into account
-    if (!s1.compare("T") || !s1.compare("G") || !s2.compare("G")) {
+    // Ignore absorbing transitions if given
+    if (!s1.compare("T") || !s1.compare("G")) {
       continue;
     }
 
@@ -418,35 +436,43 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
     if (!s1.compare("S")) {
       sscanf(s2.c_str(), "%dx%dx%c", &x, &y, &o);
       size_t s = env * n_observations + state_to_id(x, y, string_to_orientation(o));
+      // Initialize list of starting states for the current environment
       if (starting_states.size() <= env) {
 	std::vector<size_t> aux;
 	starting_states.push_back(aux);
       }
+      // Add state to the list of starting states
       if (! isStarting(s)) {
 	starting_states.at(env).push_back(s);
       }
       continue;
     }
 
-    // Parse input states
+    // General case
+    // Parse first state
     sscanf(s1.c_str(), "%dx%dx%c", &x, &y, &o);
     size_t state1 = env * n_observations + state_to_id(x, y, string_to_orientation(o));
-    size_t state2 = env * n_observations + 2;
-    if (s2.compare("T")) {
+    size_t state2, link;
+    // Parse Second state
+    if (!s2.compare("T")) {
+      state2 = env * n_observations + T;
+      link = trap_link;
+    } else if (!s2.compare("G")) {
+      state2 = env * n_observations + G;
+      link = goal_link;
+    } else {
       sscanf(s2.c_str(), "%dx%dx%c", &x, &y, &o);
       state2 = env * n_observations + state_to_id(x, y, string_to_orientation(o));
+      link = is_connected(state1, state2);
     }
-    // Add transition
-    size_t link = is_connected(state1, state2);
+    // Add transition if it is valid
     size_t action = string_to_action(a);
-    assert(("Unfeasible transition with >0 probability", link < n_links || !s2.compare("T")));
-    if (!s2.compare("T")) {
-      link = n_links - 1; // transition matrix not yet initialized
-    }
+    assert(("Unfeasible transition with >0 probability", link < n_links));
     transition_matrix[index(env, get_rep(state1), action, link)] = v;
   }
   assert(("Missing profiles in .transitions file", env == n_environments));
   infile.close();
+
   // Normalization
   double nrm;
   for (int p = 0; p < n_environments; p++) {
@@ -468,17 +494,18 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
 	  nrm = std::accumulate(&transition_matrix[index(p, state1, action, 0)],
 				&transition_matrix[index(p, state1, action, n_links)], 0.);
 	}
-	// Normalize (note some states might be unreachable)
+	// Normalize (nrm 0 <-> unreachable wall states)
 	if (nrm > 0.00000001) {
-	std::transform(&transition_matrix[index(p, state1, action, 0)],
-		       &transition_matrix[index(p, state1, action, n_links)],
-		       &transition_matrix[index(p, state1, action, 0)],
-		       [nrm](const double t){ return t / nrm; }
-		       );
+	  std::transform(&transition_matrix[index(p, state1, action, 0)],
+			 &transition_matrix[index(p, state1, action, n_links)],
+			 &transition_matrix[index(p, state1, action, 0)],
+			 [nrm](const double t){ return t / nrm; }
+			 );
 	}
       }
     }
   }
+  // Print the resulting maze for debugging purposes
   print_maze();
 }
 
@@ -487,11 +514,12 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
  * GET_TRANSITION_PROBABILITY
  */
 double Mazemodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const {
-  // Start state
-  if (get_rep(s2) == 0) {
+  // -> S
+  if (get_rep(s2) == S) {
     return 0.;
   }
-  else if (get_rep(s1) == 0) {
+  // S ->
+  else if (get_rep(s1) == S) {
     int env = get_env(s1);
     if (env != get_env(s2) || !isStarting(s2)) {
       return 0.;
@@ -500,12 +528,8 @@ double Mazemodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
     }
   }
   // Absorbing transitions
-  else if (get_rep(s1) == 1 || get_rep(s1) == 2) {
+  else if (get_rep(s1) == G || get_rep(s1) == T) {
     return ((s1 == s2) ? 1.0 : 0.0);
-  }
-  // Goal state to G
-  else if (isGoal(s1)) {
-    return ((get_env(s1) == get_env(s2)) && get_rep(s2) == 1) ? 1. : 0.;
   }
   // Others
   else {
@@ -522,13 +546,16 @@ double Mazemodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
  * GET_EXPECTED_REWARD
  */
 double Mazemodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
-  if (get_rep(s2) == 2) {
+  // Trap
+  if (get_rep(s2) == T) {
     return -10;
   }
-  else if (!(get_rep(s2) == 1 && isGoal(s1))) {
-    //return 0.;
+  // Step
+  else if (!(get_rep(s2) == G && isGoal(s1))) {
     return -1.;
-  } else {
+  }
+  // Goal reached
+  else {
     return goal_rewards.at(s1).at(a);
   }
 }
@@ -538,40 +565,24 @@ double Mazemodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
  */
 std::tuple<size_t, double> Mazemodel::sampleSR(size_t s, size_t a) const {
   // Start state
-  if (get_rep(s) == 0) {
+  if (get_rep(s) == S) {
     int env = get_env(s);
     size_t s2 = starting_states.at(env).at(rand() % starting_states.at(env).size());
     double r = getExpectedReward(s, a, s2);
     return std::make_tuple(s2, r);
   }
   // Absorbing state
-  else if (get_rep(s) == 1 || get_rep(s) == 2) {
+  else if (get_rep(s) == G || get_rep(s) == T) {
     double r = getExpectedReward(s, a, s);
     return std::make_tuple(s, r);
-  }
-  // Goal state, get reward
-  else if (isGoal(s)) {
-    size_t s2 = get_env(s) * n_observations + 1;
-    double r = getExpectedReward(s, a, s2);
-    return std::make_tuple(s2, r);
   }
   // Others
   else {
     // Sample random transition
     std::discrete_distribution<int> distribution (&transition_matrix[index(get_env(s), get_rep(s), a, 0)], &transition_matrix[index(get_env(s), get_rep(s), a, n_links)]);
     size_t link = distribution(generator);
-    // Return values
-    //std::cout << transition_matrix[index(get_env(s), get_rep(s), a, n_links - 1)] << "\n";
     size_t s2 = next_state(s, link);
     double r = getExpectedReward(s, a, s2);
-    /*if (get_rep(s) == state_to_id(2, 1, 2)) {
-      int x1, y1, o1;
-      std::tie(x1, y1, o1) = id_to_state(get_rep(s));
-      int x, y, o;
-      std::tie(x, y, o) = id_to_state(get_rep(s2));
-      std::cout << "Sample (" << x1 << ", " << y1 << ", " << o1 << ") -" << a << "-> (" <<x << ", " << y << ", " << o << ") link: " << link << "\n"; 
-      // std::cout << "sampled " <<a << " " << link << " " << x << " " << y << " " <<  o << "\n";
-      }*/
     return std::make_tuple(s2, r);
   }
 }
@@ -580,14 +591,14 @@ std::tuple<size_t, double> Mazemodel::sampleSR(size_t s, size_t a) const {
  * ISTERMINAL
  */
 bool Mazemodel::isTerminal(size_t s) const {
-  return (get_rep(s) == 1) || (get_rep(s) == 2);
+  return (get_rep(s) == G) || (get_rep(s) == T);
 }
 
 /**
  * ISINITIAL
  */
 bool Mazemodel::isInitial(size_t s) const {
-  return get_rep(s) == 0;
+  return get_rep(s) == S;
 }
 
 /**
@@ -595,27 +606,27 @@ bool Mazemodel::isInitial(size_t s) const {
  */
 std::vector<size_t> Mazemodel::previous_states(size_t state) const {
   // Initial state
-  if (get_rep(state) == 0) {
+  if (get_rep(state) == S) {
     std::vector<size_t> aux;
     return aux;
   } // Goal state
-  else if (get_rep(state) == 1) {
+  else if (get_rep(state) == G) {
     std::vector<size_t> aux = goal_states.at(get_env(state));
     aux.push_back(state);
     return aux;
   } // Trap state
-  else if (get_rep(state) == 2) {
+  else if (get_rep(state) == T) {
     int env = get_env(state);
     std::vector<size_t> aux;
     aux.push_back(state);
     for (size_t s = 3; s < n_observations; s++) {
-      if (MayTrap(env * n_observations + s)) {
+      if (isTrap(env * n_observations + s)) {
 	aux.push_back(env * n_observations + s);
       }
     }
     return aux;
   }
-  // others
+  // Others
   else {
     int x, y, o;
     std::tie(x, y, o) = id_to_state(state);
@@ -638,7 +649,7 @@ std::vector<size_t> Mazemodel::previous_states(size_t state) const {
     aux.push_back(state);
     // Starting state if applicable
     if (isStarting(state)) {
-      aux.push_back(get_env(state) * n_observations + 0);
+      aux.push_back(get_env(state) * n_observations + S);
     }
     return aux;
   }
@@ -649,29 +660,28 @@ std::vector<size_t> Mazemodel::previous_states(size_t state) const {
  */
 std::vector<size_t> Mazemodel::reachable_states(size_t state) const {
   // Start state
-  if (get_rep(state) == 0) {
+  if (get_rep(state) == S) {
     return starting_states.at(get_env(state));
   } //Absorbing states
-  else if (get_rep(state) == 1 || get_rep(state == 2)) {
+  else if (get_rep(state) == G || get_rep(state == T)) {
     std::vector<size_t> result(1);
     result.at(0) = state;
     return result;
   } // Final state
   else if (isGoal(state)) {
     std::vector<size_t> result(1);
-    result.at(0) = get_env(state) * n_observations + 1;
+    result.at(0) = get_env(state) * n_observations + G;
     return result;
-  } // others
+  } // Others
   else {
     std::vector<size_t> aux (n_actions);
     for (int a = 0; a < n_actions; a++) {
       aux.at(a) = next_state(state, a);
     }
     aux.push_back(state);
-    if (MayTrap(state)) {
-      aux.push_back(get_env(state) * n_observations + 2);
+    if (isTrap(state)) {
+      aux.push_back(get_env(state) * n_observations + T);
     }
     return aux;
   }
 }
-
