@@ -121,7 +121,7 @@ public:
     double reward;
     std::tie(s2, reward) = sampleSR(s, a);
     return std::make_tuple(s2, get_rep(s2), reward);
-  }
+  };
 
   /*! \brief Rwturns whether a state is terminal or not.
    * @AIToolBox Model interface

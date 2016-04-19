@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Utilitary functions for data preprocessing
+Utilitary functions for state indices handling for recommendation datasets.
 """
 __author__ = "Amelie Royer"
 __email__ = "amelie.royer@ist.ac.at"

@@ -25,7 +25,13 @@ private:
   int max_x;   /*!< Maximum reachable row index */
   int min_y;   /*!< Minimum reachable column index */
   int max_y;   /*!< Maximum reachale column index */
-  size_t n_links; 
+  size_t n_links = 6;  /*< Link Targets: Left, right, forward, no change, G, T*/
+  size_t nomove_link = n_links - 3;
+  size_t goal_link = n_links - 2;
+  size_t trap_link = n_links - 1;
+  size_t S = 0; /*< Special observations */
+  size_t G = 1;
+  size_t T = 2;
   double* transition_matrix;         /*!< Transition matrix. Ignore S-> and absorbing transitions */
   std::vector<std::vector <size_t> > goal_states;  /*!< List of states leading to G for each environment */
   std::vector<std::vector <size_t> > starting_states;  /*!< List of states reachable from S for each environment */
@@ -37,7 +43,7 @@ private:
    */
   int index(size_t env, size_t s1, size_t a, size_t s2_link) const;
 
-  /*! \brief Returns the index of the state corresponding to a given position and orientation.
+  /*! \brief Returns the index of the observation corresponding to a given position and orientation.
    *
    * \param x line index of the state.
    * \param y column index of the state.
@@ -47,7 +53,7 @@ private:
    */
   size_t state_to_id(int x, int y, int orientation) const;
 
-  /*! \brief Returns the index of the state corresponding to a given position and orientation.
+  /*! \brief Returns the position and orientation corresponding to the index of a given observation.
    *
    * \param id state index.
    *
@@ -91,14 +97,28 @@ private:
    */
   bool isStarting(size_t s) const;
 
-  /*! \brief Returns whether a trap state T can be reached from the given state.
+  /*! \brief Returns True iff the trap state T can be reached from the given state.
    *
    * \param s state
    *
    * \return whether the state s can reach T.
    */
-  bool MayTrap(size_t s) const;
   bool isTrap(size_t s) const;
+
+  /*! \brief Returns True iff the given state can never be reached. Used for debugging and maze representation purposes.
+   *
+   * \param s state
+   *
+   * \return whether the state s is a wall or not.
+   */
+  bool isWall(size_t s) const;
+
+  /*! \brief Prints the maze of each environment. For debugging purposes.
+   *
+   * \param s state
+   *
+   * \return whether the state s is a wall or not.
+   */
   void print_maze()  const;
 
 

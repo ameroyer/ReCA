@@ -86,6 +86,10 @@ double avprecision_score(std::vector<double> action_scores, size_t action) {
 
 
 /**
+ * IDENTIFICATION_SCORE (For POMCP and MEMCP)
+ */
+
+/**
  * IDENTIFICATION_SCORE_PARTICLES
  */
 std::pair<double, double> identification_score_particles(std::vector<size_t> sampleBelief, int cluster, const Model& model) {
@@ -173,7 +177,6 @@ void print_evaluation_result(int* set_lengths,
   for (int j = 0; j < n_results; j++) {
     std::cout << "\n      > " << titles[j] << ": " << acc.at(j) / session_length;
   }
-  std::cout << "\n\n";
 }
 
 
@@ -238,10 +241,78 @@ void evaluate_policyMDP(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
   std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
-  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+}
+
+/**
+ * MAKE_INITIAL_PREDICTION (POMDP policy)
+ */
+std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model& model, AIToolbox::POMDP::Policy &policy, int horizon, std::vector<double> &action_scores) {
+  size_t init_observation = 0;
+  AIToolbox::POMDP::Belief belief = build_belief(init_observation, model.getS(), model.getO(), model.getE());
+  size_t id, prediction;
+  std::tie(prediction, id) = policy.sampleAction(belief, horizon);
+
+  return std::make_pair(belief, prediction);
+};
+
+/**
+ * MAKE_INITIAL_PREDICTION (MDP policy)
+ */
+std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model& model, AIToolbox::MDP::Policy &policy, int horizon, std::vector<double> &action_scores) {
+  size_t init_observation = 0;
+  AIToolbox::POMDP::Belief belief = build_belief(init_observation, 0, 0, 0);
+  action_scores = policy.getStatePolicy(init_observation);
+  size_t prediction = get_prediction(action_scores);
+
+  return std::make_pair(belief, prediction);
+};
+
+/**
+ * MAKE_PREDICTION (POMDP policy)
+ */
+size_t make_prediction(const Model& model, AIToolbox::POMDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+  b = update_belief(b, a, o, model);
+  size_t id, prediction;
+  std::tie(prediction, id) = policy.sampleAction(b, horizon);
+
+  return prediction;
+}
+
+/**
+ * MAKE_PREDICTION (MDP policy)
+ */
+size_t make_prediction(const Model& model, AIToolbox::MDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+  action_scores = policy.getStatePolicy(o);
+  return get_prediction(action_scores);
 }
 
 
+/**
+ * IDENTIFICATION_SCORE (POMDP policy)
+ */
+std::pair<double, double> identification_score(const Model& model, AIToolbox::MDP::Policy policy, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
+  return std::make_pair(-1., -1.);
+}
+
+/**
+ * IDENTIFICATION_SCORE (POMDP policy)
+ */
+std::pair<double, double> identification_score(const Model& model, AIToolbox::POMDP::Policy policy, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
+  std::vector<double> scores(model.getE());
+  for (int e = 0; e < model.getE(); e++) {
+    scores.at(e) = b(e * model.getO() + o);
+  }
+  double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
+  int rank = 1.;
+  double value = scores.at(cluster);
+  for (auto it = begin(scores); it != end(scores); ++it) {
+    if ( *it > value) {
+      rank += 1;
+    }
+  }
+  return std::make_pair(accuracy, 1.0 / rank);
+}
 
 /**
  * BUILD_BELIEF
@@ -360,7 +431,7 @@ void evaluate_policyMEMDP(std::string sfile,
   std::cout << "\n\n";
   std::vector<std::string> titles {"acc", "avgrw", "discrw", "idac", "idpr"};
   std::vector<double*> results {mean_accuracy, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
-  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
 
 
@@ -465,5 +536,5 @@ void evaluate_policy_interactiveMEMDP(int n_sessions,
   std::cout << "\n\n";
   std::vector<std::string> titles {"steps", "idac", "idpr", "scr"};
   std::vector<double*> results {mean_steps, mean_identification, mean_identification_precision, mean_success};
-  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }

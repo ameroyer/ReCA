@@ -32,7 +32,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_pomcp(datafile_base + ".test", model, solver, horizon, verbose);
+    evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
+    //evaluate_pomcp(datafile_base + ".test", model, solver, horizon, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // MEMCP
@@ -41,7 +42,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_memcp(datafile_base + ".test", model, solver, horizon, verbose);
+    evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
+    //evaluate_memcp(datafile_base + ".test", model, solver, horizon, verbose);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // PBVI
@@ -58,7 +60,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
-    evaluate_policy_interactiveMEMDP(10, model, policy, horizon, verbose, true);
+    evaluate_from_file(datafile_base + ".test", model, policy, horizon, verbose);
+    //evaluate_policy_interactiveMEMDP(10, model, policy, horizon, verbose, true);
     //evaluate_policyMEMDP(datafile_base + ".test", model, policy, horizon, verbose, true);
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
@@ -114,7 +117,6 @@ int main(int argc, char* argv[]) {
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision);
-    return 0;
     mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
   }
   return 0;
