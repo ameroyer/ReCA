@@ -21,7 +21,6 @@ std::string current_time_str() {
   return std::string(buffer);
 }
 
-
 /**
  * LOAD_TEST_SESSIONS
  */
@@ -50,7 +49,6 @@ std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > load_test
   return test_sessions;
 }
 
-
 /**
  * GET_PREDICTION
  */
@@ -61,14 +59,12 @@ size_t get_prediction(std::vector<double> action_scores) {
 		       );
 }
 
-
 /**
  * ACCURACY_SCORE
  */
 double accuracy_score(size_t predicted, size_t action) {
   return ((action == predicted) ? 1 : 0);
 }
-
 
 /**
  * AVPRECISION_SCORE
@@ -83,70 +79,6 @@ double avprecision_score(std::vector<double> action_scores, size_t action) {
   }
   return 1.0 / rank;
 }
-
-
-/**
- * IDENTIFICATION_SCORE (For POMCP and MEMCP)
- */
-
-/**
- * IDENTIFICATION_SCORE_PARTICLES
- */
-std::pair<double, double> identification_score_particles(std::vector<size_t> sampleBelief, int cluster, const Model& model) {
-
-  // Build scores per cluster
-  std::vector<int> scores(model.getE());
-  for (auto it = begin(sampleBelief); it != end(sampleBelief); ++it) {
-    scores.at(model.get_env(*it))++;
-  }
-
-  // Accuracy
-  double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
-  // Precision
-  int rank = 0.;
-  double value = scores.at(cluster);
-  for (auto it = begin(scores); it != end(scores); ++it) {
-    if ( *it >= value) {
-      rank += 1;
-    }
-  }
-
-  return std::make_pair(accuracy, 1.0 / rank);
-}
-
-
-/*! \brief Returns the accuracy and precision for the identification ability for a given belief.
- *
- * \param belief current belief of the model.
- * \param o last seen observatin.
- * \param cluster ground-truth identity o the current user.
- * \param n_environments total number of environments
- * \param n_observations total number of observations
- *
- * \return accuracy and average precision for the retrieved list.
- */
-std::pair<double, double> identification_score_belief(AIToolbox::POMDP::Belief b, size_t o, int cluster, size_t n_environments, size_t n_observations) {
-
-  // Build scores per cluster
-  std::vector<double> scores(n_environments);
-  for (int e = 0; e < n_environments; e++) {
-    scores.at(e) = b(e * n_observations + o);
-  }
-
-  // Accuracy
-  double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
-  // Precision
-  int rank = 1.;
-  double value = scores.at(cluster);
-  for (auto it = begin(scores); it != end(scores); ++it) {
-    if ( *it > value) {
-      rank += 1;
-    }
-  }
-
-  return std::make_pair(accuracy, 1.0 / rank);
-}
-
 
 /**
  * PRINT_EVALUATION_RESULT
@@ -177,71 +109,6 @@ void print_evaluation_result(int* set_lengths,
   for (int j = 0; j < n_results; j++) {
     std::cout << "\n      > " << titles[j] << ": " << acc.at(j) / session_length;
   }
-}
-
-
-/**
- * EVALUATE_POLICYMDP
- */
-void evaluate_policyMDP(std::string sfile,
-			const Model& model,
-			AIToolbox::MDP::Policy policy,
-			bool verbose /* = false*/) {
-  // Aux variables
-  size_t state, action, prediction;
-  int cluster, session_length, user = 0;
-  double cdiscount, accuracy, precision, total_reward, discounted_reward;
-
-  // Initialize arrays
-  std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
-  int set_lengths [model.getE()] = {0};
-  double mean_accuracy [model.getE()] = {0};
-  double mean_precision [model.getE()] = {0};
-  double mean_total_reward [model.getE()] = {0};
-  double mean_discounted_reward [model.getE()] = {0};
-
-  for (auto it = begin(aux); it != end(aux); ++it) {
-    // Identity
-    user++;
-    //std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
-    cluster = std::get<0>(*it);
-    set_lengths[cluster] += 1;
-    session_length = std::get<1>(*it).size();
-    assert(("Empty test user session", session_length > 0));
-
-    // Reset
-    accuracy = 0, precision = 0, total_reward = 0, discounted_reward = 0;
-    cdiscount = 1.;
-
-    for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      // Update reward
-      if (!model.isInitial(std::get<0>(*it2)) && (prediction == action)) {
-	double r = model.getExpectedReward(state, prediction, std::get<0>(*it2));
-	total_reward += r;
-	discounted_reward += cdiscount * r;
-      }
-      cdiscount *= model.getDiscount();
-
-      // Predict next
-      std::tie(state, action) = *it2;
-      std::vector< double > action_scores = policy.getStatePolicy(state);
-      prediction = get_prediction(action_scores);
-
-      // Evaluate accuracy
-      accuracy += accuracy_score(prediction, action);
-      precision += avprecision_score(action_scores, action);
-    }
-    mean_accuracy[cluster] += accuracy / session_length;
-    mean_precision[cluster] += precision / session_length;
-    mean_total_reward[cluster] += total_reward / session_length;
-    mean_discounted_reward[cluster] += discounted_reward;
-  }
-
-  // Print results for each environment, as well as global result
-  std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgpr", "avgrw", "discrw"};
-  std::vector<double*> results {mean_accuracy, mean_precision, mean_total_reward, mean_discounted_reward};
-  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
 
 /**
@@ -287,14 +154,6 @@ size_t make_prediction(const Model& model, AIToolbox::MDP::Policy &policy, AIToo
   return get_prediction(action_scores);
 }
 
-
-/**
- * IDENTIFICATION_SCORE (POMDP policy)
- */
-std::pair<double, double> identification_score(const Model& model, AIToolbox::MDP::Policy policy, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
-  return std::make_pair(-1., -1.);
-}
-
 /**
  * IDENTIFICATION_SCORE (POMDP policy)
  */
@@ -315,6 +174,13 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
 }
 
 /**
+ * IDENTIFICATION_SCORE (MDP policy)
+ */
+std::pair<double, double> identification_score(const Model& model, AIToolbox::MDP::Policy policy, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
+  return std::make_pair(-1., -1.);
+}
+
+/**
  * BUILD_BELIEF
  */
 AIToolbox::POMDP::Belief build_belief(size_t o, size_t n_states, size_t n_observations, size_t n_environments) {
@@ -325,12 +191,8 @@ AIToolbox::POMDP::Belief build_belief(size_t o, size_t n_states, size_t n_observ
   return belief;
 }
 
-
-/*! \brief Belief update for our particular MEMDP structure.
- *
- * \param b current belief.
- * \param a last action taken.
- * \param o observation seen after applying a.
+/**
+ * UPDATE_BELIEF
  */
 AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, size_t o, const Model& model) {
   AIToolbox::POMDP::Belief bp =  AIToolbox::POMDP::Belief::Zero(model.getS());
@@ -348,193 +210,4 @@ AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, siz
   }
   bp /= normalization;
   return bp;
-}
-
-
-/**
- * EVALUATE_POLICYMEMDP
- */
-void evaluate_policyMEMDP(std::string sfile,
-			  const Model& model,
-			  AIToolbox::POMDP::Policy policy,
-			  unsigned int horizon,
-			  bool verbose /* =false */,
-			  bool supervised /* =true */) {
-  // Aux variables
-  size_t id, prediction, action, observation;
-  int cluster, session_length, chorizon, user = 0;
-  double cdiscount, accuracy, total_reward, discounted_reward,identity, identity_precision;
-
-  // Initialize arrays
-  std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
-  int set_lengths [model.getE()] = {0};
-  double mean_accuracy [model.getE()] = {0};
-  double mean_total_reward [model.getE()] = {0};
-  double mean_discounted_reward [model.getE()] = {0};
-  double mean_identification [model.getE()] = {0};
-  double mean_identification_precision [model.getE()] = {0};
-
-  for (auto it = begin(aux); it != end(aux); ++it) {
-    // Identity
-    user++;
-    cluster = std::get<0>(*it);
-    set_lengths[cluster] += 1;
-    session_length = std::get<1>(*it).size();
-    assert(("Empty test user session", session_length > 0));
-
-    // Reset
-    accuracy = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
-    cdiscount = 1.;
-    chorizon = horizon;
-
-    // Initial belief and first action
-    size_t init_state = 0;
-    std::vector< double > action_scores(model.getA(), 0);
-    AIToolbox::POMDP::Belief belief = build_belief(init_state, model.getS(), model.getO(), model.getE());
-    std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
-
-    // For each (state, action) in the session
-    std::cerr << "\r     User " << user << "/" << aux.size() << std::flush;
-    for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
-      // Update Reward
-      if (!model.isInitial(std::get<0>(*it2)) && (prediction == action)) {
-	double r = model.getExpectedReward(cluster * model.getO() + observation, prediction, cluster * model.getO() + std::get<0>(*it2));
-	total_reward += r;
-	discounted_reward += cdiscount * r;
-      }
-      cdiscount *= model.getDiscount();
-      chorizon = ((chorizon > 1) ? chorizon - 1 : 1);
-
-      // Predict
-      observation = std::get<0>(*it2);
-      if (!model.isInitial(observation)) {
-	belief = (supervised ? update_belief(belief, action, observation, model) : update_belief(belief, prediction, observation, model));
-	std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
-      }
-      action = std::get<1>(*it2);
-
-      // Evaluate
-      accuracy += accuracy_score(prediction, action);
-      auto aux = identification_score_belief(belief, observation, cluster, model.getE(), model.getO());
-      identity += std::get<0>(aux);
-      identity_precision += std::get<1>(aux);
-    }
-
-    mean_accuracy[cluster] += accuracy / session_length;
-    mean_total_reward[cluster] += total_reward / (session_length - 1);
-    mean_discounted_reward[cluster] += discounted_reward;
-    mean_identification[cluster] += identity / session_length;
-    mean_identification_precision[cluster] += identity_precision / session_length;
-  }
-
-  // Print results for each environment, as well as global result
-  std::cout << "\n\n";
-  std::vector<std::string> titles {"acc", "avgrw", "discrw", "idac", "idpr"};
-  std::vector<double*> results {mean_accuracy, mean_total_reward, mean_discounted_reward, mean_identification, mean_identification_precision};
-  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
-}
-
-
- 
-std::tuple<int, int, int> id_to_state(size_t state) {
-  int min_x = 1, min_y = 1, max_x = 3, max_y = 2;
-  // Special observations (0, 1, 2)
-  if (state == 0) {
-    return std::make_tuple(0, -1, -1);
-  } else if (state == 1) {
-    return std::make_tuple(1, -1, -1);
-  } else if (state == 2) {
-    return std::make_tuple(2, -1, -1);
-  }
-  // Others
-  else {
-    int y = (state - 3) % (max_y - min_y + 1);
-    int x = ((state - 3 - y) / (max_y - min_y + 1)) % (max_x - min_x + 1);
-    int orientation = ((state - 3) / (max_y - min_y + 1)) / (max_x - min_x + 1);
-    return std::make_tuple(x + min_x, y + min_y, orientation);
-  }
-}
-
-/**
- * EVALUATE_POLICYMEMDP
- */
-void evaluate_policy_interactiveMEMDP(int n_sessions,
-				      const Model& model,
-				      AIToolbox::POMDP::Policy policy,
-				      unsigned int horizon,
-				      bool verbose /* =false */,
-				      bool supervised /* =true */) {
-  // Aux variables
-  size_t id, prediction, observation, state;
-  int cluster, chorizon = 0;
-  double cdiscount, reward;
-  double steps = 0, identity = 0, identity_precision = 0;
-
-  int set_lengths [model.getE()] = {0};
-  double mean_steps [model.getE()] = {0};
-  double mean_success [model.getE()] = {0};
-  double mean_identification [model.getE()] = {0};
-  double mean_identification_precision [model.getE()] = {0};
-
-  for (int run = 0; run < n_sessions; run++) {
-    // Identity
-    cluster = rand() % (int)(model.getE());
-    set_lengths[cluster] += 1;
-
-    // Reset
-    steps = 0, identity = 0, identity_precision = 0;
-    cdiscount = 1.;
-    chorizon = horizon;
-    std::cerr << "\r     User " << run << "/" << n_sessions << " cluster " << cluster << std::flush;
-
-    // Initial belief and first action
-    observation = 0;
-    state = cluster * model.getO() + 0;
-    std::vector< double > action_scores(model.getA(), 0);
-    AIToolbox::POMDP::Belief belief = build_belief(observation, model.getS(), model.getO(), model.getE());
-    std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
-    double r = 0.;
-      std::cout << "\n" << observation << " ";
-      int x, y, o;
-      std::tie(x, y, o) = id_to_state(observation);
-      std::cout << "(" << x << ", " << y << ", " << o << ") " << prediction << " -- ";
-
-    // Run
-    while(!model.isTerminal(state)) {
-      // Sample next state
-      std::tie(state, observation, reward) = model.sampleSOR(state, prediction);
-      r += reward;
-      belief = update_belief(belief, prediction, observation, model);
-      // Sample next action
-      std::tie(prediction, id) = policy.sampleAction(belief, chorizon);
-      // Evalueate identification accuracy
-      auto aux = identification_score_belief(belief, observation, cluster, model.getE(), model.getO());
-      identity += std::get<0>(aux);
-      identity_precision += std::get<1>(aux);
-      steps++;
-      std::cout << "\n" << observation << " ";
-      int x, y, o;
-      std::tie(x, y, o) = id_to_state(observation);
-      std::cout << "(" << x << ", " << y << ", " << o << ") " << prediction << " -- ";
-      //std::cout << model.get_rep(state) << "\n";
-      //if (steps > 6) {
-      //	break;
-      //}
-    }
-    std::cout << "\n";
-    //std::cout << observation << " " << r << "\n";
-    if (observation == 1) {
-      std::cout << "Reward " << r << "\n";
-    }
-    mean_steps[cluster] += steps;
-    mean_success[cluster] += (state % model.getO() == 1) ? 1 : 0;
-    mean_identification[cluster] += identity / steps;
-    mean_identification_precision[cluster] += identity_precision / steps;
-  }
-
-  // Print results for each environment, as well as global result
-  std::cout << "\n\n";
-  std::vector<std::string> titles {"steps", "idac", "idpr", "scr"};
-  std::vector<double*> results {mean_steps, mean_identification, mean_identification_precision, mean_success};
-  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
 }
