@@ -131,6 +131,14 @@ public:
    */
   ~Mazemodel();
 
+  /*! \brief Returns a string representation of the given state.
+   *
+   * \param s state index.
+   *
+   * \return str string representation of s.
+   */
+  std::string state_to_string(size_t s) const;
+
   /*! \brief Load rewards of the model from file
    *
    * \param rfile Rewards file

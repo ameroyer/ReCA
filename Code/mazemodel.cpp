@@ -52,6 +52,36 @@ std::tuple<int, int, int> Mazemodel::id_to_state(size_t state) const {
 }
 
 /**
+ * STATE_TO_STRING
+ */
+std::string Mazemodel::state_to_string(size_t s) const{
+  int x, y, o;
+  std::tie(x, y, o) = id_to_state(get_rep(s));
+  if (y == -1 && o == -1) {
+    if (x == S) {
+      return "S";
+    } else if (x == T) {
+      return "T";
+    } else {
+      return "G";
+    }
+  } else {
+    std::stringstream ss;
+    ss << x << "x" << y << "x";
+    if (o == 0) {
+      ss << "N";
+    } else if (o == 1) {
+      ss << "E";
+    } else if (o == 2) {
+      ss << "S";
+    } else {
+      ss << "W";
+    }
+    return ss.str();
+  }
+}
+
+/**
  * ISGOAL
  */
 bool Mazemodel::isGoal(size_t state) const{
@@ -548,7 +578,7 @@ double Mazemodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
 double Mazemodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
   // Trap
   if (get_rep(s2) == T) {
-    return -10;
+    return -10.;
   }
   // Step
   else if (!(get_rep(s2) == G && isGoal(s1))) {

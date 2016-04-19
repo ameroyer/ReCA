@@ -59,6 +59,23 @@ std::vector<size_t> Recomodel::id_to_state(size_t id) const {
 }
 
 /**
+ * STATE_TO_STRING
+ */
+std::string Recomodel::state_to_string(size_t s) const {
+  std::vector<size_t> items = id_to_state(s);
+  std::stringstream ss;
+  ss << "(";
+  for (int i = 0; i < items.size(); i++) {
+    ss << items.at(i);
+    if (i < items.size() - 1) {
+      ss << ", ";
+    }
+  }
+  ss << ")";
+  return ss.str();
+}
+
+/**
  * IS_CONNECTED
  */
 size_t Recomodel::is_connected(size_t s1, size_t s2) const {

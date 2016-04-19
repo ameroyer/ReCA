@@ -94,24 +94,6 @@ AIToolbox::POMDP::Belief build_belief(size_t o, size_t n_states, size_t n_observ
  */
 AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, size_t o, const Model& model);
 
-/*! \brief Evaluates a given policy (POMDP) on a sequence of test user sessions
- * and prints the score for each user profiles (environments).
- *
- * \param sfile full path to the base_name.test file.
- * \param policy AIToolbox POMDP::policy.
- * \param discount discount factor in the POMDP model.
- * \param horizon planning horizon for action sampling.
- * \param rewards stored reward values.
- * \param verbose if true, increases the verbosity. Defaults to false.
- */
-void evaluate_policy_interactiveMEMDP(int n_sessions,
-				      const Model& model,
-				      AIToolbox::POMDP::Policy policy,
-				      unsigned int horizon,
-				      bool verbose /* =false */,
-				      bool supervised /* =true */);
-
-
 /*! \brief Returns the initial prediction and belief for a given model and solver.
  *
  * \param model the underlying model.
@@ -255,9 +237,7 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
   return std::make_pair(accuracy, 1.0 / rank);
 }
 
-
-
-/*! \brief Evaluates a given solver using external test sequences stored in a file.
+/*! \brief Evaluates a given solver using external test sequences (sequence of (observation, action)) stored in a file.
  *
  * \param sfile full path to the base_name.test file.
  * \param model underlying MEMDP model.
@@ -315,7 +295,7 @@ void evaluate_from_file(std::string sfile,
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     for (auto it2 = begin(std::get<1>(*it)); it2 != end(std::get<1>(*it)); ++it2) {
       // Update
-      if (!model.isInitial(std::get<0>(*it2)) && (prediction == action)) {
+      if (!model.isInitial(std::get<0>(*it2))) {
 	double r = (model.mdp_enabled() ? model.getExpectedReward(observation, prediction, std::get<0>(*it2)) : model.getExpectedReward(cluster * model.getO() + observation, prediction, cluster * model.getO() + std::get<0>(*it2)));
 	total_reward += r;
 	discounted_reward += cdiscount * r;
@@ -349,7 +329,7 @@ void evaluate_from_file(std::string sfile,
   }
 
   // Only output relevant metrics
-  bool has_identity = (identity >= 0);    std::cout << "\n";
+  bool has_identity = (identity >= 0);
   bool has_total_reward = (model.getDiscount() < 1);
 
   // Output
@@ -369,4 +349,112 @@ void evaluate_from_file(std::string sfile,
   std::cout << "\n\n";
 }
 
+/*! \brief Evaluates a given solver on on-the-fly generated test sequences.
+ *
+ * \param sfile full path to the base_name.test file.
+ * \param model underlying MEMDP model.
+ * \param solver the solver to be evaluated.
+ * \param policy AIToolbox POMDP::policy.
+ * \param discount discount factor in the POMDP model.
+ * \param horizon planning horizon for action sampling.
+ * \param rewards stored reward values.
+ * \param verbose if true, increases the verbosity. Defaults to false.
+ */
+template<typename M>
+void evaluate_interactive(int n_sessions,
+			  const Model& model,
+			  M solver,
+			  unsigned int horizon,
+			  bool verbose=false,
+			  bool supervised=true,
+			  int session_length_max=10000) {
+  // Aux variables
+  size_t observation = 0, prev_observation, action, prediction;
+  size_t state, prev_state;
+  int cluster, chorizon;
+  double reward, cdiscount, session_length, total_reward, discounted_reward, identity, identity_precision;
+
+  // Initialize arrays
+  AIToolbox::POMDP::Belief belief;
+  std::vector< double > action_scores(model.getA(), 0);
+  int set_lengths [model.getE()] = {0};
+  double mean_session_length [model.getE()] = {0};
+  double mean_success [model.getE()] = {0};
+  double mean_total_reward [model.getE()] = {0};
+  double mean_discounted_reward [model.getE()] = {0};
+  double mean_identification [model.getE()] = {0};
+  double mean_identification_precision [model.getE()] = {0};
+
+  // Generate test sessions
+  for (int user = 0; user < n_sessions; user++) {
+    cluster = (model.mdp_enabled() ? 0 : rand() % (int)(model.getE()));
+    set_lengths[cluster] += 1;
+    std::cerr << "\r     User " << user << "/" << n_sessions << std::flush;
+
+    // Reset
+    cdiscount = 1.;
+    chorizon = horizon;
+    session_length = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
+    std::vector< double > action_scores(model.getA(), 0);
+
+    // Make initial guess
+    state = cluster * model.getO() + 0;
+    std::tie(belief, prediction) = make_initial_prediction(model, solver, chorizon, action_scores);
+    if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
+    while(!model.isTerminal(state) && session_length < session_length_max) {
+      // Sample next state
+      prev_state = state;
+      std::tie(state, observation, reward) = model.sampleSOR(state, prediction);
+
+      // Update
+      double r = model.getExpectedReward(prev_state, prediction, state);
+      total_reward += r;
+      discounted_reward += cdiscount * r;
+      cdiscount *= model.getDiscount();
+      chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
+
+      // Predict
+      prediction = make_prediction(model, solver, belief, model.get_rep(state), prediction, horizon, action_scores);
+
+      // Evaluate
+      session_length++;
+      auto aux = identification_score(model, solver, belief, model.get_rep(state), cluster);
+      identity += std::get<0>(aux);
+      identity_precision += std::get<1>(aux);
+    }
+
+    // Update scores
+    if (!verbose) {std::cerr.clear();}
+    if (!model.isTerminal(state)) {
+      std::cerr << "\nRun did not reach a terminal state. Ignored.\n";
+      set_lengths[cluster] -= 1;
+      continue;
+    }
+    mean_session_length[cluster] += session_length;
+    mean_success[cluster] += ((model.get_rep(state) == 1) ? 1. : 0.); // Goal in robot maze
+    mean_total_reward[cluster] += total_reward / session_length;
+    mean_discounted_reward[cluster] += discounted_reward;
+    mean_identification[cluster] += identity / session_length;
+    mean_identification_precision[cluster] += identity_precision / session_length;
+  }
+
+  // Only output relevant metrics
+  bool has_identity = (identity >= 0);
+  bool has_total_reward = (model.getDiscount() < 1);
+
+  // Output
+  std::cout << "\n\n";
+  std::vector<std::string> titles {"discrw", "avgllng", "avgsuc"}; std::vector<double*> results {mean_discounted_reward, mean_session_length, mean_success};
+
+  if (has_total_reward) {
+    titles.insert(titles.begin(), "avgrw");
+    results.insert(results.begin(), mean_total_reward);
+  }
+  if (has_identity) {
+    titles.push_back("idac"); titles.push_back("idpr");
+    results.push_back(mean_identification); results.push_back(mean_identification_precision);
+  }
+  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  std::cout << "\n\n";
+}
 #endif

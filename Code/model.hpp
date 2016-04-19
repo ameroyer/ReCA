@@ -24,6 +24,14 @@ public:
    */
   ~Model() {};
 
+  /*! \brief Returns a string representation of the given state.
+   *
+   * \param s state index.
+   *
+   * \return str string representation of s.
+   */
+  virtual std::string state_to_string(size_t s) const = 0;
+
   /*! \brief Returns true iff the model should be interpreted as as MDP.
    *
    * \return true if the model is in MDP mode (see Recomodel for instance).

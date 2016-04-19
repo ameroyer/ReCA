@@ -19,7 +19,7 @@
 
 
 template <typename M>
-void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon, int steps, float epsilon, int beliefSize, float exp, bool precision,bool verbose) {
+void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon, int steps, float epsilon, int beliefSize, float exp, bool precision, bool verbose, bool has_test) {
   // Training
   double training_time, testing_time;
   auto start = std::chrono::high_resolution_clock::now();
@@ -32,7 +32,11 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
+    if (has_test) {
+      evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
+    } else {
+      evaluate_interactive(2000, model, solver, horizon, verbose);
+    }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // MEMCP
@@ -41,7 +45,11 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
-    evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
+    if (has_test) {
+      evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
+    } else {
+      evaluate_interactive(2000, model, solver, horizon, verbose);
+    }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // PBVI
@@ -58,8 +66,11 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     start = std::chrono::high_resolution_clock::now();
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
-    evaluate_from_file(datafile_base + ".test", model, policy, horizon, verbose);
-    //evaluate_policy_interactiveMEMDP(10, model, policy, horizon, verbose, true);
+    if (has_test) {
+      evaluate_from_file(datafile_base + ".test", model, policy, horizon, verbose);
+    } else {
+      evaluate_interactive(2000, model, policy, horizon, verbose);
+    }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
 
@@ -109,12 +120,12 @@ int main(int argc, char* argv[]) {
     Recomodel model (datafile_base + ".summary", discount, false);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
-    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
+    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, true);
   } else if (!data.compare("maze")) {
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision);
-    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose);
+    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, false);
   }
   return 0;
 
