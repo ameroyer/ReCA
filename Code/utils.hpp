@@ -367,7 +367,7 @@ void evaluate_interactive(int n_sessions,
 			  unsigned int horizon,
 			  bool verbose=false,
 			  bool supervised=true,
-			  int session_length_max=10000) {
+			  int session_length_max=20) {
   // Aux variables
   size_t observation = 0, prev_observation, action, prediction;
   size_t state, prev_state;
@@ -377,6 +377,7 @@ void evaluate_interactive(int n_sessions,
   // Initialize arrays
   AIToolbox::POMDP::Belief belief;
   std::vector< double > action_scores(model.getA(), 0);
+  int n_failures = 0;
   int set_lengths [model.getE()] = {0};
   double mean_session_length [model.getE()] = {0};
   double mean_success [model.getE()] = {0};
@@ -389,7 +390,7 @@ void evaluate_interactive(int n_sessions,
   for (int user = 0; user < n_sessions; user++) {
     cluster = (model.mdp_enabled() ? 0 : rand() % (int)(model.getE()));
     set_lengths[cluster] += 1;
-    std::cerr << "\r     User " << user << "/" << n_sessions << std::flush;
+    std::cerr << "\r     User " << user + 1 << "/" << n_sessions << std::string(15, ' ');
 
     // Reset
     cdiscount = 1.;
@@ -426,8 +427,9 @@ void evaluate_interactive(int n_sessions,
     // Update scores
     if (!verbose) {std::cerr.clear();}
     if (!model.isTerminal(state)) {
-      std::cerr << "\nRun did not reach a terminal state. Ignored.\n";
+      std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       set_lengths[cluster] -= 1;
+      n_failures += 1;
       continue;
     }
     mean_session_length[cluster] += session_length;
@@ -455,6 +457,7 @@ void evaluate_interactive(int n_sessions,
     results.push_back(mean_identification); results.push_back(mean_identification_precision);
   }
   print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  std::cout << "\n      > " << n_failures << " / " << n_sessions << " reach failures\n";
   std::cout << "\n\n";
 }
 #endif

@@ -58,7 +58,9 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     auto solution = solver(model);
     if (!verbose) {std::cerr.clear();}
-    std::cout << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
+    std::cout << "\n" << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
+    int horizon_reached = std::get<2>(solution);
+    std::cout << "Horizon " << horizon_reached << " reached\n";
     std::chrono::high_resolution_clock::now() - start;
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
 
@@ -67,9 +69,9 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     std::cout << "\n" << current_time_str() << " - Evaluation results\n";
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
     if (has_test) {
-      evaluate_from_file(datafile_base + ".test", model, policy, horizon, verbose);
+      evaluate_from_file(datafile_base + ".test", model, policy, horizon_reached, verbose);
     } else {
-      evaluate_interactive(2000, model, policy, horizon, verbose);
+      evaluate_interactive(2000, model, policy, horizon_reached, verbose);
     }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }

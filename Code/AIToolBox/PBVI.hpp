@@ -104,10 +104,10 @@ namespace AIToolbox {
        *
        * @param model The POMDP model that needs to be solved.
        *
-       * @return True, and the computed ValueFunction up to the requested horizon.
+       * @return True, and the computed ValueFunction up to the requested horizon, as well as the maximal timestep that allows convergence.
        */
       template <typename M, typename std::enable_if<is_model<M>::value, int>::type = 0>
-      std::tuple<bool, ValueFunction> operator()(const M & model);
+      std::tuple<bool, ValueFunction, int> operator()(const M & model);
 
     private:
       /**
@@ -140,7 +140,7 @@ namespace AIToolbox {
     };
 
     template <typename M, typename std::enable_if<is_model<M>::value, int>::type>
-    std::tuple<bool, ValueFunction> PBVI::operator()(const M & model) {
+    std::tuple<bool, ValueFunction, int> PBVI::operator()(const M & model) {
       // Initialize "global" variables
       S = model.getS();
       A = model.getA();
@@ -166,7 +166,8 @@ namespace AIToolbox {
       bool useEpsilon = checkDifferentSmall(epsilon_, 0.0);
       double variation = epsilon_ * 2; // Make it bigger
       while ( timestep < horizon_ && ( !useEpsilon || variation > epsilon_ ) ) {
-	std::cout << "        Timestep " << timestep + 1 <<"/" << horizon_ << "\n";
+	std::cout << "\r        Timestep " << timestep + 1 <<"/" << horizon_;
+	std::cerr << "\n";
 	++timestep;
 
 	// Compute all possible outcomes, from our previous results.
@@ -209,7 +210,7 @@ namespace AIToolbox {
 	}
       }
 
-      return std::make_tuple(true, v);
+      return std::make_tuple(!useEpsilon || variation < epsilon_, v, timestep);
     }
 
     template <typename ProjectionsRow, typename M>
