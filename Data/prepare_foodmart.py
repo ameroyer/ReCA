@@ -254,7 +254,7 @@ if __name__ == "__main__":
             assert(len(sessions[x]) > args.history), "Empty user session %d" % x
             test_sessions[i] = [x, u, sessions[x]]
             i += 1
-            del user_sessions[u][x]
+            #del user_sessions[u][x]
 
     # Summary
     print "   %d training sessions" % sum(len(x) for x in user_sessions.itervalues())
