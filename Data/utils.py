@@ -64,7 +64,6 @@ def get_nstates(n_items, hlength):
 
 
 def assign_customer_cluster(user):
-    global l
     from random import randint
     """
     Assigns user profile given customer data from the foodmart dataset.
