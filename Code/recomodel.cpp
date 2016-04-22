@@ -268,6 +268,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
       transition_matrix[index(0, s1, a - 1, link)] += profiles_prop.at(profiles_found) * v;
     } else {
       transition_matrix[index(profiles_found, s1, a - 1, link)] = v;
+      //transition_matrix[index(n_environments - 1, s1, a - 1, link)] += profiles_prop.at(profiles_found) * v;
     }
     transitions_found++;
   }

@@ -74,9 +74,17 @@ def assign_customer_cluster(user):
     Returns:
      * ``cluster`` (*int*): Cluster ID
     """
+    return 0
     gender = int(user[19] == 'F')
     age_category = ((1997 - int(user[16].split('-', 1)[0])) / 10) / 3
-    return gender * 10 + age_category
+    n_children = 0 if int(user[20]) == 0 else 1 if int(user[20]) <= 2 else 2
+    income = int(''.join([c for c in user[18].split('-')[-1] if c.isdigit()]))
+    income_level = 0 if income <= 70 else 1
+    user_id = int(user[0])
+    card = 0 if user[24] == 'Bronze' else 1 if user[24] == 'Normal' else 2
+    return card * 10 + income_level
+
+    #return gender * 10 + age_category
 
 
 def print_customer_cluster(cluster):

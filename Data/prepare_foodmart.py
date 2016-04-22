@@ -199,7 +199,8 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     # Save profiles information
     if sv:
         with open("%s.profiles" % output_base, 'w') as f:
-            f.write('\n'.join("%d\t%d\t%.5f\t%s" %(tmp_index_u[k], k, 100 * float(len(user_sessions[tmp_index_u[k]])) /sum(len(z) for z in user_sessions.itervalues()), print_customer_cluster(k)) for k in sorted(tmp_index_u.keys(), key=lambda x: tmp_index_u[x])))
+            #f.write('\n'.join("%d\t%d\t%.5f\t%s" %(tmp_index_u[k], k, 100 * float(len(user_sessions[tmp_index_u[k]])) /sum(len(z) for z in user_sessions.itervalues()), print_customer_cluster(k)) for k in sorted(tmp_index_u.keys(), key=lambda x: tmp_index_u[x])))
+            f.write('\n'.join("%d\t%d\t%.5f\t%s" %(i, i, 1, "profile") for i in xrange(6)))
 
     # Return values
     return product_to_cluster, customer_to_cluster, user_sessions, product_profit, actions, output_base
@@ -246,15 +247,17 @@ if __name__ == "__main__":
     ###### 2. Split training and testing database
 
     print "\n\033[96m-----> Split training and testing database \033[0m"
-    test_sessions = [0] * sum(int((1 - args.train) * len(x)) for x in user_sessions.itervalues())
+    c = 0.25
+    test_sessions = [0] * sum(int(c * (1 - args.train) * len(x)) for x in user_sessions.itervalues())
     i = 0
     for u, sessions in user_sessions.iteritems():
         test_users = sorted(sessions, key=lambda k: random())[:int((1 - args.train) * len(sessions))]
-        for x in test_users:
+        for j, x in enumerate(test_users):
             assert(len(sessions[x]) > args.history), "Empty user session %d" % x
-            test_sessions[i] = [x, u, sessions[x]]
-            i += 1
-            #del user_sessions[u][x]
+            if j < int(c * len(test_users)):
+                test_sessions[i] = [x, u, sessions[x]]
+                i += 1
+            del user_sessions[u][x]
 
     # Summary
     print "   %d training sessions" % sum(len(x) for x in user_sessions.itervalues())
@@ -295,16 +298,19 @@ if __name__ == "__main__":
                 js_count[clusterID, s1, item - 1] += 1
                 s1 = s2
 
-
+    
     ###### 5. Add a positive factor for the recommended action transition
     print "\n\033[91m-----> Probability inference\033[0m"
     max_upscale = 0.9995
+    prob, old_prob = [], []
+    alphas = [0.01, 0.5, 1., 5., 10., 100.]
     with open("%s.transitions" % output_base, 'w') as f:
-        for user_profile in xrange(js_count.shape[0]):
+        for user_profile, alpha in enumerate(alphas):
             print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, js_count.shape[0]),
             sys.stderr.flush()
             # For fixed s1
-            for s1, s1_counts in enumerate(js_count[user_profile, :, :]):
+            prob = []
+            for s1, s1_counts in enumerate(js_count[0, :, :]):
                 sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
                 sys.stderr.flush()
                 nrm = np.sum(s1_counts)
@@ -314,20 +320,31 @@ if __name__ == "__main__":
                     # Positive (s1, a, s1.a)
                     s2 = get_next_state_id(s1, a)
                     count = s1_counts[a - 1]
-                    new_count = min(count * args.alpha, max(count, nrm * max_upscale))
+                    #new_count = min(count * alpha, max(count, nrm * max_upscale))
+                    new_count = min(count * alpha, max_upscale * nrm)
                     f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count if not args.norm else new_count / nrm))
+                    prob.append(new_count)
                     # Negative (s1, b, s1.a)
                     beta = float(nrm - new_count) / (nrm - count)
-                    assert(beta > 0 and beta <= 1), "AssertionError: Beta out of range"
+                    #print 
+                    #print nrm, new_count
+                    #print alpha, beta
+                    assert(beta > 0), "AssertionError: Beta out of range"
+                    #assert(beta > 0 and beta <= 1), "AssertionError: Beta out of range"
                     for b, count in enumerate(s1_counts):
                         if a - 1 != b:
                             s2 = get_next_state_id(s1, b + 1)
                             f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / nrm))
+                            prob.append(beta * count)
             f.write("\n")
+            if len(old_prob):
+                from scipy.stats import pearsonr
+                print pearsonr(old_prob, prob)
+            old_prob = prob
 
     print "\n\n\033[92m-----> End\033[0m"
     print "   All outputs are in %s" % output_base
     with open("%s.summary" % output_base, 'w') as f:
-        f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%f alpha\n%d product clustering level\n\n%s" % (n_states, n_items, len(user_sessions), args.history, args.alpha, args.plevel, logger.to_string()))
+        f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%f alpha\n%d product clustering level\n\n%s" % (n_states, n_items, len(alphas), args.history, args.alpha, args.plevel, logger.to_string()))
     print
     # End
