@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
     Recomodel model (datafile_base + ".summary", discount, false);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
-    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, false); // false also possible (auto test generation)
+    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, true); // false also possible (auto test generation)
   } else if (!data.compare("maze")) {
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
