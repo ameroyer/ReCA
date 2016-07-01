@@ -62,16 +62,6 @@ private:
    */
   std::tuple<int, int, int> id_to_state(size_t state) const;
 
-  /*! \brief Given two states s1 and s2, return the link L such that s2 = s1.L if it exists,
-   * or the value ``n_links`` otherwise.
-   *
-   * \param s1 unique state index.
-   * \param s2 unique state index
-   *
-   * \return link a valid link index if s1 and s2 can be connected, n_links otherwise. In practice Left (0), Right (1), Forward (2), No Move (3).
-   */
-  size_t is_connected(size_t s1, size_t s2) const;
-
   /*! \brief Given a state and chosen action, return the next logical user state (if no mistake).
    *
    * \param state unique state index.
@@ -213,6 +203,16 @@ public:
    * \return reachable_states the state's possible successors.
    */
   std::vector<size_t> reachable_states(size_t state) const;
+
+  /*! \brief Given two states s1 and s2, return the link L such that s2 = s1.L if it exists,
+   * or the value ``n_links`` otherwise.
+   *
+   * \param s1 unique state index.
+   * \param s2 unique state index
+   *
+   * \return link a valid link index if s1 and s2 can be connected, n_links otherwise. In practice Left (0), Right (1), Forward (2), No Move (3).
+   */
+  size_t is_connected(size_t s1, size_t s2) const;
 };
 
 #endif

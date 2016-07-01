@@ -372,7 +372,7 @@ void evaluate_interactive(int n_sessions,
   size_t observation = 0, prev_observation, action, prediction;
   size_t state, prev_state;
   int cluster, chorizon;
-  double reward, cdiscount, session_length, total_reward, discounted_reward, identity, identity_precision;
+  double r, cdiscount, session_length, total_reward, discounted_reward, identity, identity_precision;
 
   // Initialize arrays
   AIToolbox::POMDP::Belief belief;
@@ -405,21 +405,18 @@ void evaluate_interactive(int n_sessions,
     while(!model.isTerminal(state) && session_length < session_length_max) {
       // Sample next state
       prev_state = state;
-      std::tie(state, observation, reward) = model.sampleSOR(state, prediction);
-
+      std::tie(state, observation, r) = model.sampleSOR(state, prediction);
       // Update
-      double r = model.getExpectedReward(prev_state, prediction, state);
       total_reward += r;
       discounted_reward += cdiscount * r;
       cdiscount *= model.getDiscount();
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
-
       // Predict
-      prediction = make_prediction(model, solver, belief, model.get_rep(state), prediction, horizon, action_scores);
+      prediction = make_prediction(model, solver, belief, observation, (supervised ? model.is_connected(prev_state, state) : prediction), horizon, action_scores);
 
       // Evaluate
       session_length++;
-      auto aux = identification_score(model, solver, belief, model.get_rep(state), cluster);
+      auto aux = identification_score(model, solver, belief, observation, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
     }

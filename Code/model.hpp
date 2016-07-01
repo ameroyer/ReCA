@@ -141,7 +141,7 @@ public:
   virtual bool isTerminal(size_t s) const = 0;
 
 
-  /*! \brief Rwturns whether a state is initial or not.
+  /*! \brief Returns whether a state is initial or not.
    *
    * \param s state
    *
@@ -182,6 +182,16 @@ public:
    * \return reachable_states the state's possible successors.
    */
   virtual std::vector<size_t> reachable_states(size_t state) const = 0;
+
+  /*! \brief Given two states s1 and s2, return the action a such that s2 = s1.a if it exists,
+   * or the value ``n_actions`` otherwise.
+   *
+   * \param s1 unique state index.
+   * \param s2 unique state index
+   *
+   * \return link a valid action index [0 to n_actions - 1] if s1 and s2 can be connected, n_actions otherwise.
+   */
+  virtual size_t is_connected(size_t s1, size_t s2) const = 0;
 
 
 protected:

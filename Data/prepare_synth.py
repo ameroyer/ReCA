@@ -111,14 +111,18 @@ if __name__ == "__main__":
                 sys.stderr.flush()
                 # For fixed a
                 for a in actions:
+		    # Positive
                     count = exc if a == user_profile + 1 else 1
+                    new_count = args.alpha * count if not args.norm else args.alpha * count / total_count
+                    s2 = get_next_state_id(s1, a)
+                    f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count))
+		    # Negative
                     beta = (total_count - args.alpha * count) / (total_count - count)
                     # For every s2, sample T(s1, a, s2)
                     for s2_link in actions:
-                        s2 = get_next_state_id(s1, s2_link)
-                        if (s2_link == a):
-                            f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, args.alpha * count if not args.norm else args.alpha * count / total_count))
-                        else:
+                        if (s2_link != a):
+                            s2 = get_next_state_id(s1, s2_link)
+			    count = exc if s2_link == user_profile + 1 else 1
                             f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count))
             f.write("\n")
 

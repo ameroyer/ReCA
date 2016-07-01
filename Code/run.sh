@@ -1,12 +1,16 @@
 #!/bin/bash
 
 # PATHES (if local installation)
-AIBUILD="/home/amelie/Libs/AI-Toolbox/build"
-AIINCLUDE="/home/amelie/Libs/AI-Toolbox/include"
+AIBUILD="/home/aroyer/Libs/AI-Toolbox/build"
+AIINCLUDE="/home/aroyer/Libs/AI-Toolbox/include"
 EIGEN="/usr/local/include/eigen3/"
 LPSOLVE="/usr/local/lib/"
-GCC="/usr/local/bin/gcc-4.9.0/bin/g++"
-STDLIB="/usr/local/bin/gcc-4.9.0/lib64"
+GCC="/usr/bin/g++-4.9"
+STDLIB="/usr/lib/gcc/x86_64-linux-gnu/4.9.3/"
+#AIBUILD="/home/amelie/Libs/AI-Toolbox/build"
+#AIINCLUDE="/home/amelie/Libs/AI-Toolbox/include"
+#GCC="/usr/local/bin/gcc-4.9.0/bin/g++"
+#STDLIB="/usr/local/bin/gcc-4.9.0/lib64"
 
 # DEFAULT ARGUMENTS
 MODE="mdp"
