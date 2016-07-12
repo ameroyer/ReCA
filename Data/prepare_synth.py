@@ -70,9 +70,11 @@ if __name__ == "__main__":
         f.write("\n".join("%d\t1\t1" % i for i in xrange(n_users)))
 
     ##### 3. Create dummy test sessions
+    print "\n\033[91m-----> Test sequences generation\033[0m"
     exc = 4 * (n_users - 1)  # Sample size. Ensure 0.8 probability given to action i
     with open("%s.test" % output_base, 'w') as f:
         for user in xrange(args.test):
+            sys.stderr.write("       %d / %d   \r" % (user + 1, args.test))
             cluster = randint(0, n_users - 1)
             lgth = randint(10, 100)
             session = [0]
@@ -96,7 +98,7 @@ if __name__ == "__main__":
                 f.write("%d\t%d\t%d\t%.5f\n" % (s1, item, get_next_state_id(s1, item), 1))
 
     ###### 5. Create transition function
-    print "\n\033[91m-----> Probability inference\033[0m"
+    print "\n\n\033[91m-----> Probability inference\033[0m"
     total_count = exc + n_items - 1
     with open("%s.transitions" % output_base, 'w') as f:
         for user_profile in xrange(n_users):
