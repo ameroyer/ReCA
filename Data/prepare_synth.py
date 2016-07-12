@@ -92,8 +92,10 @@ if __name__ == "__main__":
             f.write("%d\t%d\t%s\n" % (user, cluster, ' '.join(str(x) for x in session) ))
 
     ###### 4. Set rewards
+    print "\n\n\033[91m-----> Rewards generation\033[0m"
     with open("%s.rewards" % output_base, 'w') as f:
         for s1 in xrange(n_states):
+            sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
             for item in actions:
                 f.write("%d\t%d\t%d\t%.5f\n" % (s1, item, get_next_state_id(s1, item), 1))
 
