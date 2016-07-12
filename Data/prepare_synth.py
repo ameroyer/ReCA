@@ -15,23 +15,20 @@ import numpy as np
 from random import randint
 from utils import *
 
-
-def init_output_dir(plevel, hlength):
+def init_output_dir(nitems, hlength):
     """
     Initializa the output directory.
 
     Args:
-     * ``plevel`` (*int*): level parameter for the product clustering.
-     * ``ulevel`` (*int*): level parameter for the customer clustering.
+     * ``nitems`` (*int*): Number of actions/items in the dataset.
      * ``hlength`` (*int*): history length.
-     * ``alpha`` (*float, optional*): positive probability scaling for the recommended action.
 
     Returns:
      * ``output_base`` (*str*): base name for output files.
     """
     import shutil
-    output_base = "synth_u%d_k%d_pl%d" % (plevel, hlength, plevel)
-    output_dir = os.path.join(args.output, "Synth%d%d%d" % (plevel, hlength, plevel))
+    output_base = "synth_u%d_k%d_pl%d" % (nitems, hlength, nitems)
+    output_dir = os.path.join(args.output, "Synth%d%d%d" % (nitems, hlength, nitems))
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
@@ -64,9 +61,8 @@ if __name__ == "__main__":
     init_base_writing(n_items, args.history)
     n_states = get_nstates(n_items, args.history)
     output_base = init_output_dir(args.nactions, args.history)
-    exc = 4 * (n_users - 1)  # Ensure 0.8 probability given to action i
 
-    #### 2. Write dummy files
+    #### 2. Write .items and .profiles dummy files
     with open("%s.items" % output_base, "w") as f:
         f.write("\n".join("Item %d" % i for i in xrange(n_items)))
 
@@ -74,6 +70,7 @@ if __name__ == "__main__":
         f.write("\n".join("%d\t1\t1" % i for i in xrange(n_users)))
 
     ##### 3. Create dummy test sessions
+    exc = 4 * (n_users - 1)  # Sample size. Ensure 0.8 probability given to action i
     with open("%s.test" % output_base, 'w') as f:
         for user in xrange(args.test):
             cluster = randint(0, n_users - 1)
@@ -111,18 +108,18 @@ if __name__ == "__main__":
                 sys.stderr.flush()
                 # For fixed a
                 for a in actions:
-		    # Positive
+                    # Positive P(s1 -a-> s1.a)
                     count = exc if a == user_profile + 1 else 1
                     new_count = args.alpha * count if not args.norm else args.alpha * count / total_count
                     s2 = get_next_state_id(s1, a)
                     f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count))
-		    # Negative
+                    # Negative P(s1 -a-> s1.b), b!= a
                     beta = (total_count - args.alpha * count) / (total_count - count)
                     # For every s2, sample T(s1, a, s2)
                     for s2_link in actions:
                         if (s2_link != a):
                             s2 = get_next_state_id(s1, s2_link)
-			    count = exc if s2_link == user_profile + 1 else 1
+                            count = exc if s2_link == user_profile + 1 else 1
                             f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count))
             f.write("\n")
 
