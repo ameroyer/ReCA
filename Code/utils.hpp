@@ -366,7 +366,7 @@ void evaluate_interactive(int n_sessions,
 			  M solver,
 			  unsigned int horizon,
 			  bool verbose=false,
-			  bool supervised=true,
+			  bool supervised=false, //true only works if full policy is computed (i.e. pbvi)
 			  int session_length_max=100) {
   // Aux variables
   size_t observation = 0, prev_observation, action, prediction;

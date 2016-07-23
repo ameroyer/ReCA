@@ -35,8 +35,8 @@ void mainMDP(M model, std::string datafile_base, int steps, float epsilon, bool 
   start = std::chrono::high_resolution_clock::now();
   std::cout << "\n" << current_time_str() << " - Evaluation results\n";
   AIToolbox::MDP::Policy policy(model.getO(), model.getA(), std::get<1>(solution));
-  //evaluate_from_file(datafile_base + ".test", model, policy, 0, verbose);
-  evaluate_interactive(2000, model, policy, 0, verbose);
+  evaluate_from_file(datafile_base + ".test", model, policy, 0, verbose);
+  //evaluate_interactive(2000, model, policy, 0, verbose);
   elapsed = std::chrono::high_resolution_clock::now() - start;
   double testing_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 
