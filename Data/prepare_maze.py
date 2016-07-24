@@ -1,8 +1,9 @@
-__author__ = 'mchmelik'
+__authors__ = 'mchmelik, aroyer'
 import os
 import sys
 import shutil
 import argparse
+import numpy as np
 
 left = {'N':'W','W':'S','S':'E','E':'N'}
 right = {'N':'E','E':'S','S':'W','W':'N'}
@@ -68,50 +69,77 @@ if __name__ == "__main__":
     ###### Parameters
     base_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser = argparse.ArgumentParser(description='Generate Maze MEMDP.')
-    parser.add_argument("fin", type=str, default=os.path.join(base_folder, "Code", "Models"), help="Path to output directory.")
+    parser.add_argument("-i",  "--fin", type=str, help="If given, load the mazes from fiels (takes precedence over the other parameters.")
+    parser.add_argument("-n", "--size", type=int, default=5, help="size of the maze")
+    parser.add_argument("-s", "--init", default=1, type=int, help="number of initial states per maze")
+    parser.add_argument("-t", "--trap", default=1, type=int, help="number of trap states per maze")
+    parser.add_argument("-g", "--goal", default=1, type=int, help="number of goal states per maze")
+    parser.add_argument("-e", "--env", default=1, type=int, help="number of environments to generate for")
     parser.add_argument('-o', '--output', type=str, default=os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "Code", "Models"), help="Path to output directory.")
     args = parser.parse_args()
-    base_name = os.path.basename(args.fin).rsplit('.', 1)[0]
-    output_dir = os.path.join(args.output, base_name)
     # Hyperparameters
     actions = ['F','L','R']
     failures = [0.2, 0.1, 0.1]
     goal_reward = 5.0
 
+    # Load maze string representation
+    mazes = []
+    # from file
+    if args.fin is not None:
+        base_name = os.path.basename(args.fin).rsplit('.', 1)[0]
+        maze = []
+        min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
+        with open(args.fin, 'r') as fIn:
+            for line in fIn.read().splitlines():
+                if not line.strip():
+                    # Change env
+                    mazes.append(maze)
+                    x1, x2, y1, y2 = mazeBoundaries(maze)
+                    min_x = min(min_x, x1); max_x = max(max_x, x2);
+                    min_y = min(min_y, y1); max_y = max(max_y, y2);
+                    maze = []
+                else:
+                    maze.append(line.split())
+        # Add last maze if not done
+        if len(maze) > 1:
+            mazes.append(maze)
+            x1, x2, y1, y2 = mazeBoundaries(maze)
+            min_x = min(min_x, x1); max_x = max(max_x, x2);
+            min_y = min(min_y, y1); max_y = max(max_y, y2);
+    # or generated
+    else:
+        base_name = "gen_%dx%d_%d%d%d_%d" % (args.size, args.size, args.init, args.trap, args.goal, args.env)
+        maze = np.pad(np.zeros((args.size - 1, args.size - 1), dtype=int) + 48, 1, 'constant', constant_values=49)
+        n_cases = (args.size - 1) * (args.size - 1)
+        n_choices = args.goal + args.init + args.trap
+        choices = range(n_cases)
+        assert(n_choices <= n_cases)
+        # for each environment
+        for e in xrange(args.env):
+            # choose cases
+            current = np.array(maze)
+            cases = np.random.choice(choices, n_choices, replace=False)
+            # write states
+            for i in xrange(n_choices):
+                c = cases[i]
+                current[c / (args.size - 1) + 1, c % (args.size - 1) + 1] = 60 if i < args.init else 120 if i < args.init + args.trap else 103
+            # append new environment
+            mazes.append([[str(unichr(x)) for x in line] for line in current])
+        print '\n\n'.join('\n'.join(''.join(line) for line in maze) for maze in mazes)
+        raise SystemExit
+    
+    # Check that mazes shape are consistent
+    aux = [(len(maze), len(maze[0])) for maze in mazes]
+    assert(aux.count(aux[0]) == len(aux))
+    width, height = aux[0]
+
     # Create output dir and files
+    output_dir = os.path.join(args.output, base_name)
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
     f_transitions = open(os.path.join(output_dir, "%s.transitions" % base_name), 'w')
     f_rewards = open(os.path.join(output_dir, "%s.rewards" % base_name), 'w')
-
-    # Load every maze
-    mazes = []
-    maze = []
-    min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
-    with open(args.fin, 'r') as fIn:
-        for line in fIn.read().splitlines():
-            if not line.strip():
-                # Change env
-                mazes.append(maze)
-                x1, x2, y1, y2 = mazeBoundaries(maze)
-                min_x = min(min_x, x1); max_x = max(max_x, x2);
-                min_y = min(min_y, y1); max_y = max(max_y, y2);
-                maze = []
-            else:
-                maze.append(line.split())
-    # Add last maze if not done
-    if len(maze) > 1:
-        mazes.append(maze)
-        x1, x2, y1, y2 = mazeBoundaries(maze)
-        min_x = min(min_x, x1); max_x = max(max_x, x2);
-        min_y = min(min_y, y1); max_y = max(max_y, y2);
-
-
-    # Check tha mazes shape are consisten
-    aux = [(len(maze), len(maze[0])) for maze in mazes]
-    assert(aux.count(aux[0]) == len(aux))
-    width, height = aux[0]
 
     # Parse each maze
     from collections import Counter
