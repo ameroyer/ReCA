@@ -434,7 +434,7 @@ void Mazemodel::load_rewards(std::string rfile) {
 /**
  * LOAD_TRANSITIONS
  */
-void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */) {
+void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */, bool verbose /* = false */) {
   std::ifstream infile;
   std::string line;
   std::istringstream iss;
@@ -536,7 +536,9 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */)
     }
   }
   // Print the resulting maze for debugging purposes
-  print_maze();
+  if (verbose) {
+    print_maze();
+  }
 }
 
 
