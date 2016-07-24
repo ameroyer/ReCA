@@ -81,6 +81,7 @@ if __name__ == "__main__":
     actions = ['F','L','R']
     failures = [0.2, 0.1, 0.1]
     goal_reward = 5.0
+    min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
 
     # Load maze string representation
     mazes = []
@@ -88,7 +89,6 @@ if __name__ == "__main__":
     if args.fin is not None:
         base_name = os.path.basename(args.fin).rsplit('.', 1)[0]
         maze = []
-        min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
         with open(args.fin, 'r') as fIn:
             for line in fIn.read().splitlines():
                 if not line.strip():
@@ -124,9 +124,11 @@ if __name__ == "__main__":
                 c = cases[i]
                 current[c / (args.size - 1) + 1, c % (args.size - 1) + 1] = 60 if i < args.init else 120 if i < args.init + args.trap else 103
             # append new environment
-            mazes.append([[str(unichr(x)) for x in line] for line in current])
-        print '\n\n'.join('\n'.join(''.join(line) for line in maze) for maze in mazes)
-        raise SystemExit
+            str_maze = [[str(unichr(x)) for x in line] for line in current]
+            mazes.append(str_maze)
+            x1, x2, y1, y2 = mazeBoundaries(str_maze)
+            min_x = min(min_x, x1); max_x = max(max_x, x2);
+            min_y = min(min_y, y1); max_y = max(max_y, y2);
     
     # Check that mazes shape are consistent
     aux = [(len(maze), len(maze[0])) for maze in mazes]
