@@ -32,6 +32,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
+    std::cout << std::flush;
+    std::cerr << std::flush;
     if (has_test) {
       evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
     } else {
