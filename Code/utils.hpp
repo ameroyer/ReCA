@@ -423,12 +423,14 @@ void evaluate_interactive(int n_sessions,
 
     // Update scores
     if (!verbose) {std::cerr.clear();}
-    /*if (!model.isTerminal(state)) {
-      std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
+    if (!model.isTerminal(state)) {
+      if (verbose) {
+	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
+      }
       set_lengths[cluster] -= 1;
       n_failures += 1;
       continue;
-      }*/ //TODO
+    }
     mean_session_length[cluster] += session_length;
     mean_success[cluster] += ((model.get_rep(state) == 1) ? 1. : 0.); // Goal in robot maze
     mean_total_reward[cluster] += total_reward / session_length;
