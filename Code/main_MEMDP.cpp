@@ -45,6 +45,8 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n";
+    std::cout << std::flush;
+    std::cerr << std::flush;
     if (has_test) {
       evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
     } else {
@@ -66,8 +68,10 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
 
     // Build and Evaluate Policy
     start = std::chrono::high_resolution_clock::now();
-    std::cout << "\n" << current_time_str() << " - Evaluation results\n";
+    std::cout << "\n" << current_time_str() << " - Starting evaluation!\n";
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
+    std::cout << std::flush;
+    std::cerr << std::flush;
     if (has_test) {
       evaluate_from_file(datafile_base + ".test", model, policy, horizon_reached, verbose);
     } else {
@@ -80,11 +84,6 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
   std::cout << current_time_str() << " - Timings\n";
   std::cout << "   > Training : " << training_time << "s\n";
   std::cout << "   > Testing : " << testing_time << "s\n";
-
-  // Save policy or pomcp seach tree in file
-  /*
-   * TODO
-   */
 }
 
 
@@ -122,7 +121,7 @@ int main(int argc, char* argv[]) {
     Recomodel model (datafile_base + ".summary", discount, false);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
-    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, true); 
+    mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, true);
   } else if (!data.compare("maze")) {
     if (discount < 1) {
       std::cout << "Setting undiscounted model";

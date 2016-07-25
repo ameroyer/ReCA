@@ -33,10 +33,11 @@ void mainMDP(M model, std::string datafile_base, int steps, float epsilon, bool 
 
   // Build and Evaluate Policy
   start = std::chrono::high_resolution_clock::now();
-  std::cout << "\n" << current_time_str() << " - Evaluation results\n";
+  std::cout << "\n" << current_time_str() << " - Starting evaluation!\n";
   AIToolbox::MDP::Policy policy(model.getO(), model.getA(), std::get<1>(solution));
+  std::cout << std::flush;
+  std::cerr << std::flush;
   evaluate_from_file(datafile_base + ".test", model, policy, 0, verbose);
-  //evaluate_interactive(2000, model, policy, 0, verbose);
   elapsed = std::chrono::high_resolution_clock::now() - start;
   double testing_time = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() / 1000000.;
 
@@ -44,11 +45,6 @@ void mainMDP(M model, std::string datafile_base, int steps, float epsilon, bool 
   std::cout << current_time_str() << " - Timings\n";
   std::cout << "   > Training : " << training_time << "s\n";
   std::cout << "   > Testing : " << testing_time << "s\n";
-
-  // Save policy in file
-  std::cout << "\n" << current_time_str() << " - Saving policy\n";
-  std::ofstream output(datafile_base + ".mdppolicy");
-  output << policy;
 }
 
 
