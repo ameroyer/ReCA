@@ -124,6 +124,10 @@ int main(int argc, char* argv[]) {
     model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
     mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, true); 
   } else if (!data.compare("maze")) {
+    if (discount < 1) {
+      std::cout << "Setting undiscounted model";
+      discount = 1.;
+    }
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
     model.load_transitions(datafile_base + ".transitions", precision, verbose);
