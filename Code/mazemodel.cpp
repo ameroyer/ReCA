@@ -578,18 +578,17 @@ double Mazemodel::getTransitionProbability(size_t s1, size_t a, size_t s2) const
  * GET_EXPECTED_REWARD
  */
 double Mazemodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
+  // Trap
+  if (get_rep(s2) == T) {
+    return -1000.;
+  }
   // Step
-  if (!(get_rep(s2) == G && isGoal(s1))) {
-    size_t link = is_connected(s1, s2);
-    if (link == 2) {
-      return 0.0001;
-    } else {
-      return 0.;
-    }
+  else if (!(get_rep(s2) == G && isGoal(s1))) {
+    return -1.;
   }
   // Goal reached
   else {
-    return goal_rewards.at(s1).at(a);
+    return goal_rewards.at(s1).at(a); //positive
   }
 }
 
