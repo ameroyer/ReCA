@@ -173,9 +173,9 @@ if __name__ == "__main__":
                     # E.L.S.E
                     elif element != '1':
                         # Move forward
-                        target = "%dx%dx%s" % (i + changeMap[orient][0], j + changeMap[orient][1],orient) if not isWall(i, j, orient) else 'T'
-                        f_transitions.write("%s %s %s %f\n" % (current_state, 'F', target, 1.0 - failures[0]))
-                        f_transitions.write("%s %s %s %f\n" % (current_state, 'F', current_state, failures[0]))
+                        target, fail = ("%dx%dx%s" % (i + changeMap[orient][0], j + changeMap[orient][1],orient), failures[0]) if not isWall(i, j, orient) else ('T', 0.95)
+                        f_transitions.write("%s %s %s %f\n" % (current_state, 'F', target, 1.0 - fail))
+                        f_transitions.write("%s %s %s %f\n" % (current_state, 'F', current_state, fail))
 
                         # Turn left
                         target = "%dx%dx%s" % (i, j, left[orient]);

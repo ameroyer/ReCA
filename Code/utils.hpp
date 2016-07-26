@@ -367,7 +367,7 @@ void evaluate_interactive(int n_sessions,
 			  unsigned int horizon,
 			  bool verbose=false,
 			  bool supervised=false, //true only works if full policy is computed (i.e. pbvi)
-			  int session_length_max=100) {
+			  int session_length_max=1000) {
   // Aux variables
   size_t observation = 0, prev_observation, action, prediction;
   size_t state, prev_state;
@@ -387,8 +387,11 @@ void evaluate_interactive(int n_sessions,
   double mean_identification_precision [model.getE()] = {0};
 
   // Generate test sessions
+  int subgroup_size = n_sessions / (int)(model.getE());
+  n_sessions = n_sessions - n_sessions % (int)(model.getE());
   for (int user = 0; user < n_sessions; user++) {
-    cluster = (model.mdp_enabled() ? 0 : rand() % (int)(model.getE()));
+    cluster = user / subgroup_size;
+    //cluster = (model.mdp_enabled() ? 0 : rand() % (int)(model.getE()));
     set_lengths[cluster] += 1;
     std::cerr << "\r     User " << user + 1 << "/" << n_sessions << std::string(15, ' ');
 
@@ -423,7 +426,7 @@ void evaluate_interactive(int n_sessions,
 
     // Update scores
     if (!verbose) {std::cerr.clear();}
-    if (!model.isTerminal(state)) {
+    if (!model.isTerminal(state) || (model.get_rep(state) != 1)) {
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
