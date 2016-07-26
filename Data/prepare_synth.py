@@ -9,15 +9,14 @@ __email__ = "amelie.royer@ist.ac.at"
 
 
 import sys, os
-import csv
+import gzip
 import argparse
-import numpy as np
 from random import randint
-from utils import *
+from utils import Logger, init_base_writing, get_nstates, get_next_state_id
 
 def init_output_dir(nitems, hlength):
     """
-    Initializa the output directory.
+    Initializes the output directory.
 
     Args:
      * ``nitems`` (*int*): Number of actions/items in the dataset.
@@ -38,13 +37,14 @@ def init_output_dir(nitems, hlength):
 if __name__ == "__main__":
     ###### 0. Set Parameters
     base_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser = argparse.ArgumentParser(description='Generate syntehtic POMCP parameters with a high discrepancy between environments.')
-    parser.add_argument('-o', '--output', type=str, default=os.path.join(base_folder, "Code", "Models"), help="Path to output directory.")
-    parser.add_argument('-n', '--nactions', type=int, default=3, help="Number of items (actions) and clusters.")
-    parser.add_argument('-k', '--history', type=int, default=2, help="Length of the history to consider for one state of the MEMDP.")
-    parser.add_argument('-t', '--test', type=int, default=2000, help="Number of test sessions to generate.")
-    parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities.")
+    parser = argparse.ArgumentParser(description='Generate a synthetic recommendation task MEMDP with high discrepancy between the environments.')
+    parser.add_argument('-o', '--output', type=str, default=os.path.join(base_folder, "Code", "Models"), help="Output directory.")
+    parser.add_argument('-n', '--nactions', type=int, default=3, help="Number of items.")
+    parser.add_argument('-k', '--history', type=int, default=2, help="History length.")
     parser.add_argument('-a', '--alpha', type=float, default=1.1, help="Positive rescaling of transition probabilities matching the recommendation.")
+    parser.add_argument('-t', '--test', type=int, default=2000, help="Number of test runs.")
+    parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities.")
+    parser.add_argument('--zip', action='store_true', help="If present, the transitiosn are output in a compressed file.")
     args = parser.parse_args()
 
     ###### 0-bis. Check assertions
@@ -102,35 +102,45 @@ if __name__ == "__main__":
     ###### 5. Create transition function
     print "\n\n\033[91m-----> Probability inference\033[0m"
     total_count = exc + n_items - 1
-    with open("%s.transitions" % output_base, 'w') as f:
-        for user_profile in xrange(n_users):
-            print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, n_users),
+    transitions_str = ""
+    for user_profile in xrange(n_users):
+        print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, n_users),
+        sys.stderr.flush()
+        # For fixed s1
+        for s1 in xrange(n_states):
+            sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
             sys.stderr.flush()
-            # For fixed s1
-            for s1 in xrange(n_states):
-                sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
-                sys.stderr.flush()
-                # For fixed a
-                for a in actions:
-                    # Positive P(s1 -a-> s1.a)
-                    count = exc if a == user_profile + 1 else 1
-                    new_count = args.alpha * count if not args.norm else args.alpha * count / total_count
-                    s2 = get_next_state_id(s1, a)
-                    f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count))
-                    # Negative P(s1 -a-> s1.b), b!= a
-                    beta = (total_count - args.alpha * count) / (total_count - count)
-                    # For every s2, sample T(s1, a, s2)
-                    for s2_link in actions:
-                        if (s2_link != a):
-                            s2 = get_next_state_id(s1, s2_link)
-                            count = exc if s2_link == user_profile + 1 else 1
-                            f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count))
-            f.write("\n")
+            # For fixed a
+            for a in actions:
+                # Positive P(s1 -a-> s1.a)
+                count = exc if a == user_profile + 1 else 1
+                new_count = args.alpha * count if not args.norm else args.alpha * count / total_count
+                s2 = get_next_state_id(s1, a)
+                transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count)
+                # Negative P(s1 -a-> s1.b), b!= a
+                beta = (total_count - args.alpha * count) / (total_count - count)
+                # For every s2, sample T(s1, a, s2)
+                for s2_link in actions:
+                    if (s2_link != a):
+                        s2 = get_next_state_id(s1, s2_link)
+                        count = exc if s2_link == user_profile + 1 else 1
+                        transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count)
+        transitions_str += "\n"
+
+    # Write
+    print "\n\n\033[91m-----> Writing...\033[0m"
+    if not args.zip:
+        with open("%s.transitions" % output_base, 'w') as f:
+            f.write(transitions_str)
+    else:
+        with gzip.open("%s.transitions.gz" % output_base, 'w') as f:
+            f.write(transitions_str)
+
+    with open("%s.summary" % output_base, 'wb') as f:
+        f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%d product clustering level\n\n%s" % (n_states, n_items, n_users, args.history, args.nactions, logger.to_string()))
+    print
 
     ###### 6. Summary
     print "\n\n\033[92m-----> End\033[0m"
-    print "   All outputs are in %s" % output_base
-    with open("%s.summary" % output_base, 'w') as f:
-        f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%d product clustering level\n\n%s" % (n_states, n_items, n_users, args.history, args.nactions, logger.to_string()))
-    print
+    print "   Output directory: %s" % output_base
     # End
