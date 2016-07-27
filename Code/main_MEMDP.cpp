@@ -23,7 +23,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
   // Training
   double training_time, testing_time;
   auto start = std::chrono::high_resolution_clock::now();
-  std::cout << "\n" << current_time_str() << " - Starting " << algo << " solver...!\n";
+  std::cout << "\n" << current_time_str() << " - Starting " << algo << " solver...!\n" <<std::flush;
 
   // Evaluation
   // POMCP
@@ -31,7 +31,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     AIToolbox::POMDP::POMCP<decltype(model)> solver( model, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
-    std::cout << current_time_str() << " - Starting evaluation!\n";
+    std::cout << current_time_str() << " - Starting evaluation!\n" << std::flush;
     std::cout << std::flush;
     std::cerr << std::flush;
     if (has_test) {
@@ -46,7 +46,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     AIToolbox::POMDP::MEMCP<decltype(model)> solver( model, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
-    std::cout << current_time_str() << " - Starting evaluation!\n";
+    std::cout << current_time_str() << " - Starting evaluation!\n" << std::flush;
     std::cout << std::flush;
     std::cerr << std::flush;
     if (has_test) {
@@ -62,7 +62,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     if (!verbose) {std::cerr.setstate(std::ios_base::failbit);}
     auto solution = solver(model);
     if (!verbose) {std::cerr.clear();}
-    std::cout << "\n" << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n";
+    std::cout << "\n" << current_time_str() << " - Convergence criterion reached: " << std::boolalpha << std::get<0>(solution) << "\n" << std::flush;
     int horizon_reached = std::get<2>(solution);
     std::cout << "Horizon " << horizon_reached << " reached\n";
     std::chrono::high_resolution_clock::now() - start;
@@ -70,7 +70,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
 
     // Build and Evaluate Policy
     start = std::chrono::high_resolution_clock::now();
-    std::cout << "\n" << current_time_str() << " - Starting evaluation!\n";
+    std::cout << "\n" << current_time_str() << " - Starting evaluation!\n" << std::flush;
     AIToolbox::POMDP::Policy policy(model.getS(), model.getA(), model.getO(), std::get<1>(solution));
     std::cout << std::flush;
     std::cerr << std::flush;
@@ -83,7 +83,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
   }
 
   // Output Times
-  std::cout << current_time_str() << " - Timings\n";
+  std::cout << current_time_str() << " - Timings\n" << std::flush;
   std::cout << "   > Training : " << training_time << "s\n";
   std::cout << "   > Testing : " << testing_time << "s\n";
 }
