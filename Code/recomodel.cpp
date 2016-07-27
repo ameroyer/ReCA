@@ -13,6 +13,9 @@
 #include <fstream>
 #include <cassert>
 #include <algorithm>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 /**
  * RANDOM ENGINE
@@ -86,7 +89,7 @@ size_t Recomodel::is_connected(size_t s1, size_t s2) const {
     s1 = get_rep(s1);
     s2 = get_rep(s2);
   }
-  // Check if corresponding observations are connected
+  // Check if corresponding observations can be connected
   // Suffix of s1
   int suffix_s1 = s1 % pows[0];
   suffix_s1 = ((suffix_s1 >= acpows[1] || s1 < pows[0])  ? suffix_s1 - acpows[1] : suffix_s1 + pows[0] - acpows[1]);
@@ -203,20 +206,18 @@ void Recomodel::load_rewards(std::string rfile) {
   double v;
   size_t a;
   int rewards_found = 0;
-  size_t s1, s2; // TODO
 
   infile.open(rfile, std::ios::in);
   assert((".rewards file not found", infile.is_open()));
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
-    //if (!(iss >> a >> v)) { break; } TODO
-    if (!(iss >> s1 >> a >> s2 >> v)) { break; }
+    if (!(iss >> a >> v)) { break; }
     assert(("Unvalid reward entry", a <= n_actions));
     rewards[a - 1] = v;
     rewards_found++;
   }
-  //assert(("Missing item while parsing .rewards file",
-  //	  rewards_found == n_actions)); TODO
+  assert(("Missing item while parsing .rewards file",
+  	  rewards_found == n_actions));
   infile.close();
 }
 
@@ -225,30 +226,43 @@ void Recomodel::load_rewards(std::string rfile) {
  * LOAD_TRANSITIONS
  */
 void Recomodel::load_transitions(std::string tfile, bool precision /* =false */, std::string pfile /* ="" */) {
-  std::ifstream infile;
+  //std::fstream infile;
   std::string line;
+  std::ifstream file, gzfile;
   std::istringstream iss;
   double v;
   size_t s1, a, s2, link, p;
   int transitions_found = 0, profiles_found = 0;
+  boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
 
   // If MDP mode, load profiles proportions for weighted average
   std::vector<double> profiles_prop;
   if (is_mdp) {
-    infile.open(pfile, std::ios::in);
-    assert((".profiles file not found", infile.is_open()));
-    while (std::getline(infile, line)) {
+    file.open(pfile, std::ios::in);
+    assert((".profiles file not found", file.is_open()));
+    while (std::getline(file, line)) {
       std::istringstream iss(line);
       if (!(iss >> s1 >> s2 >> v)) { break; }
       profiles_prop.push_back(v);
     }
-    infile.close();
+    file.close();
     assert(("Missing profiles in .profiles file", profiles_prop.size() == n_environments));
   }
 
   // Load transitions
-  infile.open(tfile, std::ios::in);
-  assert((".transitions file not found", infile.is_open()));
+  std::istream infile(nullptr);
+  file.open(tfile, std::ios::in);
+  // If not found try the zipped version
+  if (!file.is_open()) {
+    std::cout << ".transitions not found. Searching for .gz alternative" << std::flush;;
+    gzfile.open(tfile + ".gz", std::ios_base::in | std::ios_base::binary);
+    in.push(boost::iostreams::gzip_decompressor());
+    in.push(gzfile);
+    infile.rdbuf(&in);
+  } else {
+    infile.rdbuf(file.rdbuf());
+  }
+  assert((".transitions(.gz) file not found", file.is_open() || gzfile.is_open()));
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
     // Change of environment
@@ -268,12 +282,16 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
       transition_matrix[index(0, s1, a - 1, link)] += profiles_prop.at(profiles_found) * v;
     } else {
       transition_matrix[index(profiles_found, s1, a - 1, link)] = v;
-      //transition_matrix[index(n_environments - 1, s1, a - 1, link)] += profiles_prop.at(profiles_found) * v;
     }
     transitions_found++;
   }
   assert(("Missing profiles in .transitions file", profiles_found == n_environments));
-  infile.close();
+  if (file.is_open()) {
+    file.close();
+  }
+  if (gzfile.is_open()) {
+    gzfile.close();
+  }
 
   //Normalization
   double nrm;

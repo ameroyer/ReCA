@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Generate a synthetic POMDP model with high discrepancy between environments.
+Generate a synthetic recommendation task MEMDP with high discrepancy between the environments.
 """
 __author__ = "Amelie Royer"
 __email__ = "amelie.royer@ist.ac.at"
@@ -12,7 +12,7 @@ import sys, os
 import gzip
 import argparse
 from random import randint
-from utils import Logger, init_base_writing, get_nstates, get_next_state_id
+from utils import ChunkedWriter, Logger, init_base_writing, get_nstates, get_next_state_id
 
 def init_output_dir(nitems, hlength):
     """
@@ -35,9 +35,9 @@ def init_output_dir(nitems, hlength):
 
 #####################################################   M A I N    R O U T I N E  #######
 if __name__ == "__main__":
-    ###### 0. Set Parameters
+    ###### 0. Parameters
     base_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser = argparse.ArgumentParser(description='Generate a synthetic recommendation task MEMDP with high discrepancy between the environments.')
+    parser = argparse.ArgumentParser(description="Generate a synthetic recommendation task MEMDP with high discrepancy between the environments.")
     parser.add_argument('-o', '--output', type=str, default=os.path.join(base_folder, "Code", "Models"), help="Output directory.")
     parser.add_argument('-n', '--nactions', type=int, default=3, help="Number of items.")
     parser.add_argument('-k', '--history', type=int, default=2, help="History length.")
@@ -94,10 +94,9 @@ if __name__ == "__main__":
     ###### 4. Set rewards
     print "\n\n\033[91m-----> Rewards generation\033[0m"
     with open("%s.rewards" % output_base, 'w') as f:
-        for s1 in xrange(n_states):
-            sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
-            for item in actions:
-                f.write("%d\t%d\t%d\t%.5f\n" % (s1, item, get_next_state_id(s1, item), 1))
+        for item in actions:
+            sys.stderr.write("      item: %d / %d   \r" % (item + 1, len(actions)))
+            f.write("%d\t%.5f\n" % (item, 1))
 
     ###### 5. Create transition function
     print "\n\n\033[91m-----> Probability inference\033[0m"
@@ -133,12 +132,13 @@ if __name__ == "__main__":
         with open("%s.transitions" % output_base, 'w') as f:
             f.write(transitions_str)
     else:
-        with gzip.open("%s.transitions.gz" % output_base, 'w') as f:
-            f.write(transitions_str)
+        f = gzip.open("%s.transitions.gz" % output_base, 'wb')
+        cw = ChunkedWriter(f)
+        cw.write(transitions_str)
+        f.close()
 
     with open("%s.summary" % output_base, 'wb') as f:
         f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%d product clustering level\n\n%s" % (n_states, n_items, n_users, args.history, args.nactions, logger.to_string()))
-    print
 
     ###### 6. Summary
     print "\n\n\033[92m-----> End\033[0m"

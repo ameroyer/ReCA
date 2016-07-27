@@ -8,7 +8,7 @@ __author__ = "Amelie Royer"
 __email__ = "amelie.royer@ist.ac.at"
 
 
-import mmap
+import sys
 import numpy as np
 from StringIO import StringIO
 
@@ -228,3 +228,16 @@ def id_to_state(s):
         i += 1
     output[-1] = real
     return output
+
+class ChunkedWriter(object):
+    """
+    Write chunks of data in a given file. Work around of the overflow bug when writing
+    with gzip in Python 2.7
+    """
+    def __init__(self, file, chunksize=sys.maxint):
+        self.file = file
+        self.chunksize = chunksize
+
+    def write(self, mdata):
+        for i in range(0, len(mdata), self.chunksize):
+            self.file.write(bytes(mdata[i:i+self.chunksize]))
