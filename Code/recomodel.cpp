@@ -225,7 +225,7 @@ void Recomodel::load_rewards(std::string rfile) {
 /**
  * LOAD_TRANSITIONS
  */
-void Recomodel::load_transitions(std::string tfile, bool precision /* =false */, std::string pfile /* ="" */) {
+void Recomodel::load_transitions(std::string tfile, bool precision /* =false */, bool normalization /* =false */, std::string pfile /* ="" */) {
   //std::fstream infile;
   std::string line;
   std::ifstream file, gzfile;
@@ -254,7 +254,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
   file.open(tfile, std::ios::in);
   // If not found try the zipped version
   if (!file.is_open()) {
-    std::cout << ".transitions not found. Searching for .gz alternative" << std::flush;;
+    std::cout << ".transitions not found. Loading .gz alternative\n" << std::flush;;
     gzfile.open(tfile + ".gz", std::ios_base::in | std::ios_base::binary);
     in.push(boost::iostreams::gzip_decompressor());
     in.push(gzfile);
@@ -267,6 +267,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
     std::istringstream iss(line);
     // Change of environment
     if (!(iss >> s1 >> a >> s2 >> v)) {
+      std::cerr << "\r env " << profiles_found + 1 << " / " << n_environments;
       profiles_found += 1;
       assert(("Incomplete transition function in current profile in .transitions",
 	      transitions_found == n_observations * n_actions * n_actions));
@@ -294,33 +295,37 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
   }
 
   //Normalization
-  double nrm;
-  int env_loop = (is_mdp ? 1 : n_environments);
-  for (int p = 0; p < env_loop; p++) {
-    for (s1 = 0; s1 < n_observations; s1++) {
-      for (a = 0; a < n_actions; a++) {
-	nrm = 0.0;
-	// If asking for precision, use kahan summation [slightly slower]
-	if (precision) {
-	  double kahan_correction = 0.0;
-	  for (s2 = 0; s2 < n_actions; s2++) {
-	    double val = transition_matrix[index(p, s1, a, s2)] - kahan_correction;
-	    double aux = nrm + val;
-	    kahan_correction = (aux - nrm) - val;
-	    nrm = aux;
+  if (normalization) {
+    std::cout << "Normalization\n";
+    double nrm;
+    int env_loop = (is_mdp ? 1 : n_environments);
+    for (int p = 0; p < env_loop; p++) {
+      std::cerr << "\r env " << p + 1 << " / " << n_environments;
+      for (s1 = 0; s1 < n_observations; s1++) {
+	for (a = 0; a < n_actions; a++) {
+	  nrm = 0.0;
+	  // If asking for precision, use kahan summation [slightly slower]
+	  if (precision) {
+	    double kahan_correction = 0.0;
+	    for (s2 = 0; s2 < n_actions; s2++) {
+	      double val = transition_matrix[index(p, s1, a, s2)] - kahan_correction;
+	      double aux = nrm + val;
+	      kahan_correction = (aux - nrm) - val;
+	      nrm = aux;
+	    }
 	  }
+	  // Else basic sum
+	  else{
+	    nrm = std::accumulate(&transition_matrix[index(p, s1, a, 0)],
+				  &transition_matrix[index(p, s1, a, n_actions)], 0.);
+	  }
+	  // Normalize
+	  std::transform(&transition_matrix[index(p, s1, a, 0)],
+			 &transition_matrix[index(p, s1, a, n_actions)],
+			 &transition_matrix[index(p, s1, a, 0)],
+			 [nrm](const double t){ return t / nrm; }
+			 );
 	}
-	// Else basic sum
-	else{
-	  nrm = std::accumulate(&transition_matrix[index(p, s1, a, 0)],
-				&transition_matrix[index(p, s1, a, n_actions)], 0.);
-	}
-	// Normalize
-	std::transform(&transition_matrix[index(p, s1, a, 0)],
-		       &transition_matrix[index(p, s1, a, n_actions)],
-		       &transition_matrix[index(p, s1, a, 0)],
-		       [nrm](const double t){ return t / nrm; }
-		       );
       }
     }
   }

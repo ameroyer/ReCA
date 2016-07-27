@@ -89,7 +89,7 @@ public:
    * \param pfile Profiles distribution file.
    * \param precision If true, precise normalization is enabled.
    */
-  void load_transitions(std::string tfile, bool precision=false, std::string pfile="");
+  void load_transitions(std::string tfile, bool precision=false, bool normalization=false, std::string pfile="");
 
   /*! \brief Returns a given transition probability.
    *

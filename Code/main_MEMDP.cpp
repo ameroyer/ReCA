@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
   if (!data.compare("reco")) {
     Recomodel model (datafile_base + ".summary", discount, false);
     model.load_rewards(datafile_base + ".rewards");
-    model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
+    model.load_transitions(datafile_base + ".transitions", precision, precision, datafile_base + ".profiles");
     mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, true);
   } else if (!data.compare("maze")) {
     if (discount < 1) {
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     }
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
-    model.load_transitions(datafile_base + ".transitions", precision, verbose);
+    model.load_transitions(datafile_base + ".transitions", precision, precision, verbose);
     mainMEMDP(model, datafile_base, algo, horizon, steps, epsilon, beliefSize, exp, precision, verbose, false);
   }
   return 0;

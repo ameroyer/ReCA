@@ -95,7 +95,7 @@ if __name__ == "__main__":
     print "\n\n\033[91m-----> Rewards generation\033[0m"
     with open("%s.rewards" % output_base, 'w') as f:
         for item in actions:
-            sys.stderr.write("      item: %d / %d   \r" % (item + 1, len(actions)))
+            sys.stderr.write("      item: %d / %d   \r" % (item, len(actions)))
             f.write("%d\t%.5f\n" % (item, 1))
 
     ###### 5. Create transition function

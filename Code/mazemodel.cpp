@@ -434,7 +434,7 @@ void Mazemodel::load_rewards(std::string rfile) {
 /**
  * LOAD_TRANSITIONS
  */
-void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */, bool verbose /* = false */) {
+void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */, bool normalization /* =false */, bool verbose /* = false */) {
   std::ifstream infile;
   std::string line;
   std::istringstream iss;
@@ -504,33 +504,35 @@ void Mazemodel::load_transitions(std::string tfile, bool precision /* =false */,
   infile.close();
 
   // Normalization
-  double nrm;
-  for (int p = 0; p < n_environments; p++) {
-    for (size_t state1 = 3; state1 < n_observations; state1++) {
-      for (size_t action = 0; action < n_actions; action++) {
-	nrm = 0.0;
-	// If asking for precision, use kahan summation [slightly slower]
-	if (precision) {
-	  double kahan_correction = 0.0;
-	  for (size_t state2 = 0; state2 < n_links; state2++) {
-	    double val = transition_matrix[index(p, state1, action, state2)] - kahan_correction;
-	    double aux = nrm + val;
-	    kahan_correction = (aux - nrm) - val;
-	    nrm = aux;
+  if (normalization) {
+    double nrm;
+    for (int p = 0; p < n_environments; p++) {
+      for (size_t state1 = 3; state1 < n_observations; state1++) {
+	for (size_t action = 0; action < n_actions; action++) {
+	  nrm = 0.0;
+	  // If asking for precision, use kahan summation [slightly slower]
+	  if (precision) {
+	    double kahan_correction = 0.0;
+	    for (size_t state2 = 0; state2 < n_links; state2++) {
+	      double val = transition_matrix[index(p, state1, action, state2)] - kahan_correction;
+	      double aux = nrm + val;
+	      kahan_correction = (aux - nrm) - val;
+	      nrm = aux;
+	    }
 	  }
-	}
-	// Else basic sum
-	else{
-	  nrm = std::accumulate(&transition_matrix[index(p, state1, action, 0)],
-				&transition_matrix[index(p, state1, action, n_links)], 0.);
-	}
-	// Normalize (nrm 0 <-> unreachable wall states)
-	if (nrm > 0.00000001) {
-	  std::transform(&transition_matrix[index(p, state1, action, 0)],
-			 &transition_matrix[index(p, state1, action, n_links)],
-			 &transition_matrix[index(p, state1, action, 0)],
-			 [nrm](const double t){ return t / nrm; }
-			 );
+	  // Else basic sum
+	  else{
+	    nrm = std::accumulate(&transition_matrix[index(p, state1, action, 0)],
+				  &transition_matrix[index(p, state1, action, n_links)], 0.);
+	  }
+	  // Normalize (nrm 0 <-> unreachable wall states)
+	  if (nrm > 0.00000001) {
+	    std::transform(&transition_matrix[index(p, state1, action, 0)],
+			   &transition_matrix[index(p, state1, action, n_links)],
+			   &transition_matrix[index(p, state1, action, 0)],
+			   [nrm](const double t){ return t / nrm; }
+			   );
+	  }
 	}
       }
     }

@@ -71,12 +71,12 @@ int main(int argc, char* argv[]) {
   if (!data.compare("reco")) {
     Recomodel model (datafile_base + ".summary", discount, true);
     model.load_rewards(datafile_base + ".rewards");
-    model.load_transitions(datafile_base + ".transitions", precision, datafile_base + ".profiles");
+    model.load_transitions(datafile_base + ".transitions", precision, precision, datafile_base + ".profiles");
     mainMDP(model, datafile_base, steps, epsilon, precision, verbose);
   } else if (!data.compare("maze")) {
     Mazemodel model(datafile_base + ".summary", discount);
     model.load_rewards(datafile_base + ".rewards");
-    model.load_transitions(datafile_base + ".transitions", precision);
+    model.load_transitions(datafile_base + ".transitions", precision, precision);
     mainMDP(model, datafile_base, steps, epsilon, precision, verbose);
   }
   return 0;
