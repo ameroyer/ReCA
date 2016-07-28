@@ -10,9 +10,14 @@ __email__ = "amelie.royer@ist.ac.at"
 
 import sys
 import numpy as np
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
-
+if sys.version_info[0] == 3:
+    xrange = range
+    
 class Logger:
     """
     Capture print statments and write them to a log file while printing on the screen.
@@ -32,6 +37,9 @@ class Logger:
 
     def to_string(self):
         return self.logfile.getvalue()
+
+    def flush(self):
+        self.logfile.flush()
 
 
 def line_count(f):
@@ -114,7 +122,7 @@ def get_n_customer_cluster(ulevel):
     if ulevel == 0:
         return 6
     else:
-        print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
+        #print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
         raise SystemExit
 
 
@@ -234,7 +242,7 @@ class ChunkedWriter(object):
     Write chunks of data in a given file. Work around of the overflow bug when writing
     with gzip in Python 2.7
     """
-    def __init__(self, file, chunksize=sys.maxint):
+    def __init__(self, file, chunksize=65536):
         self.file = file
         self.chunksize = chunksize
 

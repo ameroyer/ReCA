@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -13,6 +14,9 @@ import gzip
 import argparse
 from random import randint
 from utils import ChunkedWriter, Logger, init_base_writing, get_nstates, get_next_state_id
+
+if sys.version_info[0] == 3:
+    xrange = range
 
 def init_output_dir(nitems, hlength):
     """
@@ -59,7 +63,7 @@ if __name__ == "__main__":
     n_users = args.nactions
     actions = range(1, n_items + 1)
     init_base_writing(n_items, args.history)
-    n_states = get_nstates(n_items, args.history)
+    n_states = int(get_nstates(n_items, args.history))
     output_base = init_output_dir(args.nactions, args.history)
 
     #### 2. Write .items and .profiles dummy files
@@ -70,7 +74,7 @@ if __name__ == "__main__":
         f.write("\n".join("%d\t1\t1" % i for i in xrange(n_users)))
 
     ##### 3. Create dummy test sessions
-    print "\n\033[91m-----> Test sequences generation\033[0m"
+    print("\n\033[91m-----> Test sequences generation\033[0m")
     exc = 4 * (n_users - 1)  # Sample size. Ensure 0.8 probability given to action i
     with open("%s.test" % output_base, 'w') as f:
         for user in xrange(args.test):
@@ -92,18 +96,21 @@ if __name__ == "__main__":
             f.write("%d\t%d\t%s\n" % (user, cluster, ' '.join(str(x) for x in session) ))
 
     ###### 4. Set rewards
-    print "\n\n\033[91m-----> Rewards generation\033[0m"
+    print("\n\n\033[91m-----> Rewards generation\033[0m")
     with open("%s.rewards" % output_base, 'w') as f:
         for item in actions:
             sys.stderr.write("      item: %d / %d   \r" % (item, len(actions)))
             f.write("%d\t%.5f\n" % (item, 1))
 
     ###### 5. Create transition function
-    print "\n\n\033[91m-----> Probability inference\033[0m"
+    # Write
+    f = gzip.open("%s.transitions.gz" % output_base, 'w') if args.zip else open("%s.transitions" % output_base, 'w')
+    buffer_size = 2**16
+    print("\n\n\033[91m-----> Probability inference\033[0m")
     total_count = exc + n_items - 1
     transitions_str = ""
     for user_profile in xrange(n_users):
-        print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, n_users),
+        print("\n   > Profile %d / %d: \n" % (user_profile + 1, n_users), end=" ", file=sys.stderr)
         sys.stderr.flush()
         # For fixed s1
         for s1 in xrange(n_states):
@@ -124,23 +131,18 @@ if __name__ == "__main__":
                         s2 = get_next_state_id(s1, s2_link)
                         count = exc if s2_link == user_profile + 1 else 1
                         transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count)
+                        # If buffer overflows, write in the zip file
+                        if len(transitions_str) > buffer_size:
+                            f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
+                            transitions_str = ""
         transitions_str += "\n"
+    f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
+    f.close()
 
-    # Write
-    print "\n\n\033[91m-----> Writing...\033[0m"
-    if not args.zip:
-        with open("%s.transitions" % output_base, 'w') as f:
-            f.write(transitions_str)
-    else:
-        f = gzip.open("%s.transitions.gz" % output_base, 'wb')
-        cw = ChunkedWriter(f)
-        cw.write(transitions_str)
-        f.close()
-
-    with open("%s.summary" % output_base, 'wb') as f:
+    with open("%s.summary" % output_base, 'w') as f:
         f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%d product clustering level\n\n%s" % (n_states, n_items, n_users, args.history, args.nactions, logger.to_string()))
 
     ###### 6. Summary
-    print "\n\n\033[92m-----> End\033[0m"
-    print "   Output directory: %s" % output_base
+    print("\n\n\033[92m-----> End\033[0m")
+    print("   Output directory: %s" % output_base)
     # End
