@@ -151,7 +151,7 @@ if __name__ == "__main__":
     # Create output dir and files
     output_dir = os.path.join(args.output, base_name)
     if os.path.isdir(output_dir):
-        shutil.rmtree(output_dir)
+        rmtree(output_dir)
     os.makedirs(output_dir)
     f_rewards = open(os.path.join(output_dir, "%s.rewards" % base_name), 'w')
     f_transitions = open(os.path.join(output_dir, "%s.transitions" % base_name), 'w')
@@ -160,11 +160,13 @@ if __name__ == "__main__":
     print "\n\n\033[91m-----> Transitions generation\033[0m"
     # Parse each maze
     from collections import Counter
-    for maze in mazes:
+    for e, maze in enumerate(mazes):
+        print "\n   > Maze %d/%d \n" % (e + 1, len(mazes)),
         c = Counter([x for y in maze for x in y])
         n_init = c['v'] + c['>'] + c['^'] + c['<']
         for i in range(0, width):
             for j in range(0, height):
+                print "\r      state %d/%d" % (i * height + j + 1, width * height),
                 element = maze[i][j]
 
                 # I.N.I.T
@@ -206,11 +208,13 @@ if __name__ == "__main__":
         f_transitions.write("\n")
         f_rewards.write("\n")
 
-    # END
     f_transitions.close()
     f_rewards.close()
 
-    # write out summary file
+    ###### 3. Summary
     f_summary = open(os.path.join(output_dir, "%s.summary" % base_name), 'w')
     f_summary.write("%d min x\n%d max x\n%d min y\n%d max y\n%d environments" % (min_x, max_x, min_y, max_y, len(mazes)))
     f_summary.close()
+    print("\n\n\033[92m-----> End\033[0m")
+    print("   Output directory: %s" % output_dir)
+    # End
