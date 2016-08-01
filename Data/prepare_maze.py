@@ -1,14 +1,17 @@
-__authors__ = 'mchmelik, aroyer'
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Generate a maze model MEMDP from a given topology or with random environment initialization.
+"""
+__author__ = 'mchmelik, aroyer'
+
+
 import os
 import sys
-import shutil
 import argparse
 import numpy as np
-
-left = {'N':'W','W':'S','S':'E','E':'N'}
-right = {'N':'E','E':'S','S':'W','W':'N'}
-changeMap = {'N':[-1,0],'S':[1,0],'E':[0,1],'W':[0,-1]}
-
+from shutil import rmtree
 
 def isWall(i,j,direction):
     """
@@ -23,22 +26,26 @@ def isWall(i,j,direction):
     if(direction.__eq__('S')):
         return (maze[i+1][j] == '1')
 
+left = {'N':'W','W':'S','S':'E','E':'N'}
 def turnLeft(orient):
     """
     Return the orientation to the left of ``orient``.
     """
+    global left
     return left[orient]
 
+right = {v: k for (k, v) in left.iteritems()}
 def turnRight(orient):
     """
     Returns the orientation to the right of ``orient``.
     """
+    global right
     return right[orient]
 
 
 def mazeBoundaries(maze):
     """
-    Return the reachable boundaries of the maze.
+    Returns the reachable boundaries of the maze.
     """
     width, height = len(maze), len(maze[0])
     # Find min x
@@ -66,10 +73,10 @@ def mazeBoundaries(maze):
 
 
 if __name__ == "__main__":
-    ###### Parameters
+    ###### 0. Parameters
     base_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser = argparse.ArgumentParser(description='Generate Maze MEMDP.')
-    parser.add_argument("-i",  "--fin", type=str, help="If given, load the mazes from fiels (takes precedence over the other parameters.")
+    parser = argparse.ArgumentParser(description="Generate a maze model MEMDP from a given topology or with random environment initialization.")
+    parser.add_argument("-i",  "--fin", type=str, help="If given, load the mazes from a file (takes precedence over the other parameters.")
     parser.add_argument("-n", "--size", type=int, default=5, help="size of the maze")
     parser.add_argument("-s", "--init", default=1, type=int, help="number of initial states per maze")
     parser.add_argument("-t", "--trap", default=1, type=int, help="number of trap states per maze")
@@ -77,15 +84,19 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--env", default=1, type=int, help="number of environments to generate for")
     parser.add_argument('-o', '--output', type=str, default=os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "Code", "Models"), help="Path to output directory.")
     args = parser.parse_args()
+
     # Hyperparameters
     actions = ['F','L','R']
-    failures = [0.2, 0.1, 0.1]
-    goal_reward = 5.0
+    failures = [0.2, 0.1, 0.1] # Probability of staying still after action forward, left and right respectively.
+    wall_failure = 0.05        # Probability of being trapped when going forward towards a wall
+    goal_reward = 1.0
     min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
+    changeMap = {'N':[-1,0],'S':[1,0],'E':[0,1],'W':[0,-1]}
 
-    # Load maze string representation
+    ###### 1. Create mazes
+    print "\n\n\033[91m-----> Maze creation\033[0m"
     mazes = []
-    # from file
+    # From file
     if args.fin is not None:
         base_name = os.path.basename(args.fin).rsplit('.', 1)[0]
         maze = []
@@ -93,6 +104,7 @@ if __name__ == "__main__":
             for line in fIn.read().splitlines():
                 if not line.strip():
                     # Change env
+                    print "\r Maze %d" % len(mazes),
                     mazes.append(maze)
                     x1, x2, y1, y2 = mazeBoundaries(maze)
                     min_x = min(min_x, x1); max_x = max(max_x, x2);
@@ -106,7 +118,7 @@ if __name__ == "__main__":
             x1, x2, y1, y2 = mazeBoundaries(maze)
             min_x = min(min_x, x1); max_x = max(max_x, x2);
             min_y = min(min_y, y1); max_y = max(max_y, y2);
-    # or generated
+    # OR generate mazes
     else:
         base_name = "gen_%dx%d_%d%d%d_%d" % (args.size, args.size, args.init, args.trap, args.goal, args.env)
         maze = np.pad(np.zeros((args.size - 1, args.size - 1), dtype=int) + 48, 1, 'constant', constant_values=49)
@@ -116,6 +128,7 @@ if __name__ == "__main__":
         assert(n_choices <= n_cases)
         # for each environment
         for e in xrange(args.env):
+            print "\r Maze %d/%d" % (e + 1, args.env),
             # choose cases
             current = np.array(maze)
             cases = np.random.choice(choices, n_choices, replace=False)
@@ -129,7 +142,7 @@ if __name__ == "__main__":
             x1, x2, y1, y2 = mazeBoundaries(str_maze)
             min_x = min(min_x, x1); max_x = max(max_x, x2);
             min_y = min(min_y, y1); max_y = max(max_y, y2);
-    
+
     # Check that mazes shape are consistent
     aux = [(len(maze), len(maze[0])) for maze in mazes]
     assert(aux.count(aux[0]) == len(aux))
@@ -140,9 +153,11 @@ if __name__ == "__main__":
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
-    f_transitions = open(os.path.join(output_dir, "%s.transitions" % base_name), 'w')
     f_rewards = open(os.path.join(output_dir, "%s.rewards" % base_name), 'w')
+    f_transitions = open(os.path.join(output_dir, "%s.transitions" % base_name), 'w')
 
+    ###### 1. Create transitions function
+    print "\n\n\033[91m-----> Transitions generation\033[0m"
     # Parse each maze
     from collections import Counter
     for maze in mazes:
@@ -173,7 +188,7 @@ if __name__ == "__main__":
                     # E.L.S.E
                     elif element != '1':
                         # Move forward
-                        target, fail = ("%dx%dx%s" % (i + changeMap[orient][0], j + changeMap[orient][1],orient), failures[0]) if not isWall(i, j, orient) else ('T', 0.95)
+                        target, fail = ("%dx%dx%s" % (i + changeMap[orient][0], j + changeMap[orient][1],orient), failures[0]) if not isWall(i, j, orient) else ('T', 1.0 - wall_failure)
                         f_transitions.write("%s %s %s %f\n" % (current_state, 'F', target, 1.0 - fail))
                         f_transitions.write("%s %s %s %f\n" % (current_state, 'F', current_state, fail))
 
@@ -190,7 +205,6 @@ if __name__ == "__main__":
         # Next environment
         f_transitions.write("\n")
         f_rewards.write("\n")
-
 
     # END
     f_transitions.close()
