@@ -105,7 +105,7 @@ if __name__ == "__main__":
     ###### 5. Create transition function
     # Write
     f = gzip.open("%s.transitions.gz" % output_base, 'w') if args.zip else open("%s.transitions" % output_base, 'w')
-    buffer_size = 2**16
+    buffer_size = 2**31 -1
     print("\n\n\033[91m-----> Probability inference\033[0m")
     total_count = exc + n_items - 1
     transitions_str = ""
@@ -132,9 +132,9 @@ if __name__ == "__main__":
                         count = exc if s2_link == user_profile + 1 else 1
                         transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count)
                         # If buffer overflows, write in the zip file
-                        if len(transitions_str) > buffer_size:
-                            f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
-                            transitions_str = ""
+                if len(transitions_str) > buffer_size:
+                    f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
+                    transitions_str = ""
         transitions_str += "\n"
     f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
     f.close()
