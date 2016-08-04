@@ -79,16 +79,19 @@ if __name__ == "__main__":
     parser.add_argument("-i",  "--fin", type=str, help="If given, load the mazes from a file (takes precedence over the other parameters.")
     parser.add_argument("-n", "--size", type=int, default=5, help="size of the maze")
     parser.add_argument("-s", "--init", default=1, type=int, help="number of initial states per maze")
-    parser.add_argument("-t", "--trap", default=1, type=int, help="number of trap states per maze")
+    parser.add_argument("-t", "--trap", default=0, type=int, help="number of trap states per maze")
+    parser.add_argument("-w", "--wall", default=0, type=int, help="number of walls per maze")
     parser.add_argument("-g", "--goal", default=1, type=int, help="number of goal states per maze")
     parser.add_argument("-e", "--env", default=1, type=int, help="number of environments to generate for")
+    parser.add_argument("-wf", "--wall_failure", default=0.05, type=float, help="Probability of failure when going forward at a wall")
+    parser.add_argument("--rdf", action='store_true', help="each environment has randomized failure rates")
     parser.add_argument('-o', '--output', type=str, default=os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "Code", "Models"), help="Path to output directory.")
     args = parser.parse_args()
 
     # Hyperparameters
     actions = ['F','L','R']
     failures = [0.2, 0.1, 0.1] # Probability of staying still after action forward, left and right respectively.
-    wall_failure = 0.05        # Probability of being trapped when going forward towards a wall
+    wall_failure = args.wall_failure        # Probability of being trapped when going forward towards a wall
     goal_reward = 1.0
     min_x, max_x, min_y, max_y = sys.maxint, 0, sys.maxint, 0
     changeMap = {'N':[-1,0],'S':[1,0],'E':[0,1],'W':[0,-1]}
@@ -120,10 +123,10 @@ if __name__ == "__main__":
             min_y = min(min_y, y1); max_y = max(max_y, y2);
     # OR generate mazes
     else:
-        base_name = "gen_%dx%d_%d%d%d_%d" % (args.size, args.size, args.init, args.trap, args.goal, args.env)
+        base_name = "gen_%dx%d_%d%d%d%d_%d" % (args.size, args.size, args.init, args.trap, args.goal, args.wall, args.env)
         maze = np.pad(np.zeros((args.size - 1, args.size - 1), dtype=int) + 48, 1, 'constant', constant_values=49)
         n_cases = (args.size - 1) * (args.size - 1)
-        n_choices = args.goal + args.init + args.trap
+        n_choices = args.goal + args.init + args.trap + args.wall
         choices = range(n_cases)
         assert(n_choices <= n_cases)
         # for each environment
@@ -135,7 +138,7 @@ if __name__ == "__main__":
             # write states
             for i in xrange(n_choices):
                 c = cases[i]
-                current[c / (args.size - 1) + 1, c % (args.size - 1) + 1] = 60 if i < args.init else 120 if i < args.init + args.trap else 103
+                current[c / (args.size - 1) + 1, c % (args.size - 1) + 1] = 60 if i < args.init else 120 if i < args.init + args.trap else 103 if i < args.init + args.trap + args.goal else 49
             # append new environment
             str_maze = [[str(unichr(x)) for x in line] for line in current]
             mazes.append(str_maze)
@@ -162,11 +165,14 @@ if __name__ == "__main__":
     from collections import Counter
     for e, maze in enumerate(mazes):
         print "\n   > Maze %d/%d \n" % (e + 1, len(mazes)),
+        if args.rdf:
+            failures = np.random.rand(3) / 2. # uniformly random sampling in [0; 0.5)
+            print "      sampled failures:", failures
         c = Counter([x for y in maze for x in y])
         n_init = c['v'] + c['>'] + c['^'] + c['<']
         for i in range(0, width):
             for j in range(0, height):
-                print "\r      state %d/%d" % (i * height + j + 1, width * height),
+                print "\r      state %d/%d" % (4 * (i * height + j + 1), 4 * width * height), #4 * = all orientations
                 element = maze[i][j]
 
                 # I.N.I.T

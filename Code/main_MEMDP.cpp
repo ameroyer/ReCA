@@ -37,7 +37,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     if (has_test) {
       evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
     } else {
-      evaluate_interactive(2000, model, solver, horizon, verbose);
+      evaluate_interactive(5000, model, solver, horizon, verbose);
     }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
@@ -52,7 +52,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     if (has_test) {
       evaluate_from_file(datafile_base + ".test", model, solver, horizon, verbose);
     } else {
-      evaluate_interactive(2000, model, solver, horizon, verbose);
+      evaluate_interactive(5000, model, solver, horizon, verbose);
     }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
@@ -77,7 +77,7 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     if (has_test) {
       evaluate_from_file(datafile_base + ".test", model, policy, horizon_reached, verbose);
     } else {
-      evaluate_interactive(2000, model, policy, horizon_reached, verbose);
+      evaluate_interactive(5000, model, policy, horizon_reached, verbose);
     }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }

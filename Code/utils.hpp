@@ -367,12 +367,12 @@ void evaluate_interactive(int n_sessions,
 			  unsigned int horizon,
 			  bool verbose=false,
 			  bool supervised=false, //true only works if full policy is computed (i.e. pbvi)
-			  int session_length_max=1000) {
+			  int session_length_max=400) {
   // Aux variables
   size_t observation = 0, prev_observation, action, prediction;
   size_t state, prev_state;
   int cluster, chorizon;
-  double r, cdiscount, session_length, total_reward, discounted_reward, identity, identity_precision;
+  double r, session_length, total_reward, identity, identity_precision;
 
   // Initialize arrays
   AIToolbox::POMDP::Belief belief;
@@ -382,7 +382,7 @@ void evaluate_interactive(int n_sessions,
   double mean_session_length [model.getE()] = {0};
   double mean_success [model.getE()] = {0};
   double mean_total_reward [model.getE()] = {0};
-  double mean_discounted_reward [model.getE()] = {0};
+  double mean_goal_reward [model.getE()] = {0};
   double mean_identification [model.getE()] = {0};
   double mean_identification_precision [model.getE()] = {0};
 
@@ -396,9 +396,8 @@ void evaluate_interactive(int n_sessions,
     std::cerr << "\r     User " << user + 1 << "/" << n_sessions << std::string(15, ' ');
 
     // Reset
-    cdiscount = 1.;
     chorizon = horizon;
-    session_length = 0, total_reward = 0, discounted_reward = 0, identity = 0, identity_precision = 0;
+    session_length = 0, total_reward = 0, identity = 0, identity_precision = 0;
     std::vector< double > action_scores(model.getA(), 0);
 
     // Make initial guess
@@ -411,8 +410,6 @@ void evaluate_interactive(int n_sessions,
       std::tie(state, observation, r) = model.sampleSOR(state, prediction);
       // Update
       total_reward += r;
-      discounted_reward += cdiscount * r;
-      cdiscount *= model.getDiscount();
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
       // Predict
       prediction = make_prediction(model, solver, belief, observation, (supervised ? model.is_connected(prev_state, state) : prediction), horizon, action_scores);
@@ -426,7 +423,8 @@ void evaluate_interactive(int n_sessions,
 
     // Update scores
     if (!verbose) {std::cerr.clear();}
-    if (!model.isTerminal(state) || (model.get_rep(state) != 1)) {
+    // Not reaching anything
+    if (!model.isTerminal(state)) {
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
@@ -434,26 +432,28 @@ void evaluate_interactive(int n_sessions,
       n_failures += 1;
       continue;
     }
-    mean_session_length[cluster] += session_length;
-    mean_success[cluster] += ((model.get_rep(state) == 1) ? 1. : 0.); // Goal in robot maze
-    mean_total_reward[cluster] += total_reward / session_length;
-    mean_discounted_reward[cluster] += discounted_reward;
+
+    // id score
     mean_identification[cluster] += identity / session_length;
     mean_identification_precision[cluster] += identity_precision / session_length;
+    mean_total_reward[cluster] += total_reward / session_length;
+    // If Trap, do not count the rest
+    if (model.get_rep(state) != 1) { 
+      continue;
+    }
+    // Normal execution, i.e. goal state
+    mean_session_length[cluster] += session_length;
+    mean_success[cluster] += ((model.get_rep(state) == 1) ? 1. : 0.); // Goal in robot maze
+    mean_goal_reward[cluster] += total_reward / session_length;
   }
 
   // Only output relevant metrics
   bool has_identity = (identity >= 0);
-  bool has_total_reward = (model.getDiscount() < 1);
 
   // Output
   std::cout << "\n\n";
-  std::vector<std::string> titles {"discrw", "avgllng", "avgsuc"}; std::vector<double*> results {mean_discounted_reward, mean_session_length, mean_success};
+  std::vector<std::string> titles {"goalrw", "avgrw", "avgllng", "avgsuc"}; std::vector<double*> results {mean_goal_reward, mean_total_reward, mean_session_length, mean_success};
 
-  if (has_total_reward) {
-    titles.insert(titles.begin(), "avgrw");
-    results.insert(results.begin(), mean_total_reward);
-  }
   if (has_identity) {
     titles.push_back("idac"); titles.push_back("idpr");
     results.push_back(mean_identification); results.push_back(mean_identification_precision);
