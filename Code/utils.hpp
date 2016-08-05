@@ -412,7 +412,7 @@ void evaluate_interactive(int n_sessions,
       total_reward += r;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
       // Predict
-      prediction = make_prediction(model, solver, belief, observation, (supervised ? model.is_connected(prev_state, state) : prediction), horizon, action_scores);
+      prediction = make_prediction(model, solver, belief, observation, (supervised ? model.is_connected(prev_state, state) : prediction), chorizon, action_scores);
 
       // Evaluate
       session_length++;
