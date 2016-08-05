@@ -170,6 +170,7 @@ namespace AIToolbox {
       BeliefNode fullgraph_;
       std::vector<std::pair<size_t, size_t> > history;
       bool reset_belief = true;
+      bool to_update = true;
 
       mutable std::default_random_engine rand_;
 
@@ -285,7 +286,8 @@ namespace AIToolbox {
        * @param current The subtree computed for action a.
        * @param a The last action taken in the simulation.
        */
-      void update_fullgraph(ActionNode current, size_t a);
+      //void update_fullgraph(ActionNode current, size_t a);
+      void update_fullgraph(BeliefNode current, size_t a);
     };
 
     template <typename M>
@@ -312,6 +314,7 @@ namespace AIToolbox {
       // Clear history if beginning
       if (start_session) {
 	history.clear();
+	to_update = true;
       }
 
       // Init the belief
@@ -327,8 +330,11 @@ namespace AIToolbox {
     template <typename M>
     size_t MEMCP<M>::sampleAction(size_t a, size_t o, unsigned horizon) {
       // Update full graph
-      update_fullgraph(graph_.children[a], a);
+      //update_fullgraph(graph_.children[a], a);
+      if (to_update) {
+      update_fullgraph(graph_, a);
       history.push_back(std::make_pair(a, o));
+      }
 
       // Run simulation
       auto & obs = graph_.children[a].children;
@@ -338,6 +344,7 @@ namespace AIToolbox {
 	std::cerr << "\nObservation " << o << " never experienced in simulation, restarting belief from " << o << "\n";
 	auto b = Belief(E); b.fill(1.0/E);
 	reset_belief = true;
+	to_update = false;
 	return sampleAction(b, o, horizon, false);
       }
 
@@ -364,6 +371,7 @@ namespace AIToolbox {
 
 
     template <typename M>
+    /*
     void MEMCP<M>::update_fullgraph(ActionNode current, size_t a) {
       auto & current_branch = fullgraph_;
       // Browse history
@@ -376,6 +384,22 @@ namespace AIToolbox {
       current_branch.children[a] = current;
 
     }
+    */
+
+    void MEMCP<M>::update_fullgraph(BeliefNode current, size_t a) {
+      auto & current_branch = fullgraph_;
+      // Browse history
+      for (auto it = history.begin(); it != history.end(); ++it) {
+	auto  an = current_branch.children[std::get<0>(*it)];
+	current_branch = an.children[std::get<1>(*it)];
+      }
+      // Modify
+      current_branch = current;
+      //current_branch.children.resize(A);
+      //current_branch.children[a] = current;
+
+    }
+
 
 
     template <typename M>
