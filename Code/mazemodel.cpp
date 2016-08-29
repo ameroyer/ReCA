@@ -587,10 +587,10 @@ double Mazemodel::getExpectedReward(size_t s1, size_t a, size_t s2) const {
   // Step (slightly encourage the model to change case rather than changing orientation)
   else if (!(get_rep(s2) == G && isGoal(s1))) {
     if (is_connected(s1, s2) == 2) {
-	return -0.9;
-      } else {
-	return -1.;
-      }
+      return -0.95;
+    } else {
+      return -1.;
+    }
   }
   // Goal reached
   else {
