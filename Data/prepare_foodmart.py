@@ -10,6 +10,7 @@ __email__ = "amelie.royer@ist.ac.at"
 
 import sys, os
 import csv
+import gzip
 import argparse
 import numpy as np
 from collections import defaultdict
@@ -152,10 +153,10 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     for user in r:
         customerID = int(user[0])
         try:
-            clusterID = tmp_index_u[assign_customer_cluster(user)]
+            clusterID = tmp_index_u[assign_customer_cluster(user, ulevel)]
         except KeyError:
             clusterID = len(tmp_index_u)
-            tmp_index_u[assign_customer_cluster(user)] = clusterID
+            tmp_index_u[assign_customer_cluster(user, ulevel)] = clusterID
         customer_to_cluster[customerID] = clusterID
     f.close()
 
@@ -189,7 +190,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     # Summary profiles
     print "\n\033[92m-----> Build user profiles (cluster)\033[0m"
     print "   %d User profiles (%d total users)" %(len(user_sessions), sum(len(x) for x in user_sessions.itervalues()))
-    print '\n'.join("     > %s: %.2f%%" % (print_customer_cluster(k), 100 * float(len(user_sessions[v])) /sum(len(x) for x in user_sessions.itervalues())) for k, v in tmp_index_u.iteritems())
+    print '\n'.join("     > %s: %.2f%%" % (print_customer_cluster(k, ulevel), 100 * float(len(user_sessions[v])) /sum(len(x) for x in user_sessions.itervalues())) for k, v in tmp_index_u.iteritems())
 
     # Save product clusters information
     if sv:
@@ -199,8 +200,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     # Save profiles information
     if sv:
         with open("%s.profiles" % output_base, 'w') as f:
-            #f.write('\n'.join("%d\t%d\t%.5f\t%s" %(tmp_index_u[k], k, 100 * float(len(user_sessions[tmp_index_u[k]])) /sum(len(z) for z in user_sessions.itervalues()), print_customer_cluster(k)) for k in sorted(tmp_index_u.keys(), key=lambda x: tmp_index_u[x])))
-            f.write('\n'.join("%d\t%d\t%.5f\t%s" %(i, i, 1, "profile") for i in xrange(6)))
+            f.write('\n'.join("%d\t%d\t%.5f\t%s" %(tmp_index_u[k], k, 100 * float(len(user_sessions[tmp_index_u[k]])) /sum(len(z) for z in user_sessions.itervalues()), print_customer_cluster(k, ulevel)) for k in sorted(tmp_index_u.keys(), key=lambda x: tmp_index_u[x])))
 
     # Return values
     return product_to_cluster, customer_to_cluster, user_sessions, product_profit, actions, output_base
@@ -218,20 +218,19 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--data', type=str, default=os.path.join(base_folder, "Data", "Foodmart", "data"), help="Path to data directory or archive.")
     parser.add_argument('-o', '--output', type=str, default=os.path.join(base_folder, "Code", "Models"), help="Path to output directory.")
     parser.add_argument('-pl', '--plevel', type=int, default=4, help="Clustering level for product categorization (0: no lumping to 4:lumping by family). See product classes hierarchy.")
-    parser.add_argument('-ul', '--ulevel', type=int, default=0, help="Clustering level for user categorization.")
+    parser.add_argument('-ul', '--ulevel', type=int, default=0, help="Clustering level for user categorization (0, 1 or 2: 6, or environments).")
     parser.add_argument('-k', '--history', type=int, default=2, help="Length of the history to consider for one state of the MEMDP.")
     parser.add_argument('-t', '--train', type=float, default=0.8, help="Fraction of training data to extract from the database.")
     parser.add_argument('-a', '--alpha', type=float, default=1.1, help="Positive rescaling of transition probabilities matching the recommendation.")
-    #parser.add_argument('--ordered', action='store_true', help="If present, the states of the MEMDP are ordered product sequences. TODO.")
     parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities. ")
-    parser.add_argument('--draw', action='store_true', help="If present, draw the first user MDP model.")
+    parser.add_argument('--draw', action='store_true', help="If present, draw the first user MDP model. For debugging purposes")
+    parser.add_argument('--zip', action='store_true', help="If present, the transitiosn are output in a compressed file.")
     args = parser.parse_args()
-
 
     ###### 0-bis. Check assertions
     assert(args.train >= 0 and args.train <= 1), "Training fraction must be between 0 and 1 (included)"
     assert(args.plevel in [0, 1, 2, 3, 4]), "plevel argument must be in [0, 1, 2, 3, 4]"
-    assert(args.ulevel == 0), "only ulevel 0 implemented"
+    assert(args.ulevel in [0, 1, 2]), "ulevel argument must be in [0, 1, 2]"
     assert(args.alpha >= 1), "alpha argument must be greater than 1"
     assert(args.history > 1), "history length must be strictly greater than 1"
     logger = Logger(sys.stdout)
@@ -264,87 +263,81 @@ if __name__ == "__main__":
     print "   %d test sessions" % len(test_sessions)
 
     # Save train and test Sessions
-    with open("%s.train" % output_base, 'w') as f:
-        f.write('\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, s in sessions.iteritems() for c, sessions in user_sessions.iteritems()))
+    trn_str = '\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, s in sessions.iteritems() for c, sessions in user_sessions.iteritems())
+    tst_str = '\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, c, s in test_sessions)
 
-    with open("%s.test" % output_base, 'w') as f:
-        f.write('\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, c, s in test_sessions))
-    del test_sessions
+    f = gzip.open("%s.train.gz" % output_base, 'w') if args.zip else open("%s.train" % output_base, 'w')
+    f.write(bytes(trn_str.encode("UTF-8")) if args.zip else trn_str)
+    f.close()
+
+    f = gzip.open("%s.test.gz" % output_base, 'w') if args.zip else open("%s.test" % output_base, 'w')
+    f.write(bytes(tst_str.encode("UTF-8")) if args.zip else tst_str)
+    f.close()
 
 
     ###### 3. Init probability counts [Smoothing] and rewards
-    print "\n\033[91m-----> Count smoothing and Reward function\033[0m"
+    print "\n\033[91m-----> Reward function\033[0m"
     print "   %d States in the database" % n_states
     print "   %d Actions in the database" % n_items
-    epsilon = 1
-    js_count_init = np.zeros((n_states, n_items), dtype=int) # js[s1, a] = P(s1.a | s1)
     with open("%s.rewards" % output_base, 'w') as f:
-        for s1 in xrange(get_nstates(n_items, args.history)):
-            for item in actions:
-                js_count_init[s1, item - 1] += epsilon
-                f.write("%d\t%d\t%d\t%.5f\n" % (s1, item, get_next_state_id(s1, item), product_profit[item]))
+        for item in actions:
+            f.write("%d\t%.5f\n" % (item, product_profit[item]))
     del product_profit
 
 
 
     ###### 4. Compute joint state occurrences from the database
-    print "\n\033[91m-----> Counting joint state occurrences\033[0m"
-    js_count = np.tile(js_count_init, (len(user_sessions), 1, 1))
-    for clusterID, aux in user_sessions.iteritems():
+    print "\n\033[91m-----> Probability inference\033[0m"
+    f = gzip.open("%s.transitions.gz" % output_base, 'w') if args.zip else open("%s.transitions" % output_base, 'w')
+    buffer_size = 2**31 -1
+    transitions_str = ""
+    epsilon = 0.5   # Smoothing
+    max_upscale = 0.95 # Max value of the probability after upscale by alpha
+    for user_profile, aux in user_sessions.iteritems():
+        print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, len(user_sessions))
+        sys.stderr.flush()
+        # Count
+        js_count = np.zeros((n_states, n_items), dtype=int) # js[s1, a] = P(s1.a | s1; cluster)
         for _, session in aux.iteritems():
             s1 = 0
             for item in session[args.history + 1:]:
                 s2 = get_next_state_id(s1, item)
-                js_count[clusterID, s1, item - 1] += 1
+                js_count[s1, item - 1] += 1
                 s1 = s2
-
-    
-    ###### 5. Add a positive factor for the recommended action transition
-    print "\n\033[91m-----> Probability inference\033[0m"
-    max_upscale = 0.9995
-    prob, old_prob = [], []
-    alphas = [0.01, 0.5, 1., 5., 10., 100.]
-    with open("%s.transitions" % output_base, 'w') as f:
-        for user_profile, alpha in enumerate(alphas):
-            print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, js_count.shape[0]),
+                
+        # Estimate and normalize probabilities
+        for s1, s1_counts in enumerate(js_count[:, :]):
+            sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
             sys.stderr.flush()
-            # For fixed s1
-            prob = []
-            for s1, s1_counts in enumerate(js_count[0, :, :]):
-                sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
-                sys.stderr.flush()
-                nrm = np.sum(s1_counts)
+            nrm = np.sum(s1_counts) + len(actions) * epsilon
 
-                # For fixed a
-                for a in actions:
-                    # Positive (s1, a, s1.a)
-                    s2 = get_next_state_id(s1, a)
-                    count = s1_counts[a - 1]
-                    #new_count = min(count * alpha, max(count, nrm * max_upscale))
-                    new_count = min(count * alpha, max_upscale * nrm)
-                    f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count if not args.norm else new_count / nrm))
-                    prob.append(new_count)
-                    # Negative (s1, b, s1.a)
-                    beta = float(nrm - new_count) / (nrm - count)
-                    #print 
-                    #print nrm, new_count
-                    #print alpha, beta
-                    assert(beta > 0), "AssertionError: Beta out of range"
-                    #assert(beta > 0 and beta <= 1), "AssertionError: Beta out of range"
-                    for b, count in enumerate(s1_counts):
-                        if a - 1 != b:
-                            s2 = get_next_state_id(s1, b + 1)
-                            f.write("%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / nrm))
-                            prob.append(beta * count)
-            f.write("\n")
-            if len(old_prob):
-                from scipy.stats import pearsonr
-                print pearsonr(old_prob, prob)
-            old_prob = prob
-
+            # For fixed a
+            for a in actions:
+                # Positive (s1, a, s1.a)
+                s2 = get_next_state_id(s1, a)
+                count = s1_counts[a - 1] + epsilon
+                new_count = min(args.alpha * count, max_upscale * nrm) if not args.norm else min(max_upscale, args.alpha * count / nrm)
+                assert (new_count < nrm if not args.norm else new_count < 1), "AssertionError: Probabilities out of range."
+                transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count)
+                # Negative (s1, b, s1.a)
+                beta = float(nrm - min(args.alpha * count, max_upscale * nrm)) / (nrm - count) 
+                for s2_link, s2_count in enumerate(s1_counts):
+                    if s2_link != a - 1:
+                        s2 = get_next_state_id(s1, s2_link + 1)
+                        transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * (s2_count + epsilon) if not args.norm else beta * (s2_count + epsilon) / nrm)
+                # If buffer overflow, write in file
+                if len(transitions_str) > buffer_size:
+                    f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
+                    transitions_str = ""
+        # Environment change
+        transitions_str += "\n"
+    f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
+    f.close()
+    
+    ###### 5. Summary
     print "\n\n\033[92m-----> End\033[0m"
     print "   All outputs are in %s" % output_base
     with open("%s.summary" % output_base, 'w') as f:
-        f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%f alpha\n%d product clustering level\n\n%s" % (n_states, n_items, len(alphas), args.history, args.alpha, args.plevel, logger.to_string()))
+        f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%f alpha\n%d product clustering level\n\n%s" % (n_states, n_items, len(user_sessions), args.history, args.alpha, args.plevel, logger.to_string()))
     print
     # End

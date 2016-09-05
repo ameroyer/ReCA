@@ -121,6 +121,7 @@ if __name__ == "__main__":
                 # Positive P(s1 -a-> s1.a)
                 count = exc if a == user_profile + 1 else 1
                 new_count = args.alpha * count if not args.norm else args.alpha * count / total_count
+                assert (args.alpha * count < nrm), "AssertionError: alpha parameter too large. Probabilities out of range."
                 s2 = get_next_state_id(s1, a)
                 transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count)
                 # Negative P(s1 -a-> s1.b), b!= a
@@ -131,10 +132,11 @@ if __name__ == "__main__":
                         s2 = get_next_state_id(s1, s2_link)
                         count = exc if s2_link == user_profile + 1 else 1
                         transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, beta * count if not args.norm else beta * count / total_count)
-                        # If buffer overflows, write in the zip file
+                # If buffer overflows, write in file
                 if len(transitions_str) > buffer_size:
                     f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
                     transitions_str = ""
+        # Environment change
         transitions_str += "\n"
     f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
     f.close()

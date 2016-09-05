@@ -71,7 +71,7 @@ def get_nstates(n_items, hlength):
     return (n_items ** (hlength + 1) - 1) / (n_items - 1)
 
 
-def assign_customer_cluster(user):
+def assign_customer_cluster(user, ulevel):
     from random import randint
     """
     Assigns user profile given customer data from the foodmart dataset.
@@ -82,6 +82,27 @@ def assign_customer_cluster(user):
     Returns:
      * ``cluster`` (*int*): Cluster ID
     """
+    # Parse
+    gender = int(user[19] == 'F')
+    age_category = ((1997 - int(user[16].split('-', 1)[0])) / 10) / 5
+    n_children = int(user[20])
+    n_children_home = min(int(user[21]), 3) #clip to 3
+    income = int(''.join([c for c in user[18].split('-')[-1] if c.isdigit()]))
+    income = 0 if income <= 50 else 1 if income <= 90 else 2
+    card = 0 if user[24] == 'Bronze' else 1 if user[24] == 'Normal' else 2
+    status = int(user[17] == 'M')
+    house = int(user[26] == 'Y')
+    ncars = int(user[27])
+    # Ulevel 0, distinguish on 5 age category and gender
+    if ulevel == 0:
+        return gender + 2 * age_category
+    # Ulevel 1, gender, number of children at home and income
+    elif ulevel == 1:
+        return gender + 2 * (n_children_home + 4 * income)
+    # Ulevel 2: number of children, income, marital status and house
+    else:
+        return n_children_home + 4 * (income + 3 * (marital_status + 2 * house))
+
     return 0
     gender = int(user[19] == 'F')
     age_category = ((1997 - int(user[16].split('-', 1)[0])) / 10) / 3
@@ -95,7 +116,7 @@ def assign_customer_cluster(user):
     #return gender * 10 + age_category
 
 
-def print_customer_cluster(cluster):
+def print_customer_cluster(cluster, ulevel):
     """
     Returns the string representation for a cluster ID.
 
@@ -105,8 +126,13 @@ def print_customer_cluster(cluster):
     Returns:
      * ``cluster_str`` (*str*): String representation of the cluster ID
     """
-
-    return "%s in the %d+ years old category" %("Female" if cluster / 10 else "Male", 30 * (cluster % 10))
+    if ulevel == 0:
+        return "%s in the %d+ years old category" %("Female" if cluster % 2 else "Male", 50 * (cluster / 2))
+    elif ulevel == 1:
+        return "%s, %d children at home, %d tier income" %("Female" if cluster % 2 else "Male", (cluster / 2) % 4, cluster / 8)
+    elif ulevel == 2:
+        return "%s, %s, %d children at home, %d tier income" %("Married" if ((cluster / 12) % 2) else "Single", "house" if cluster / 24 else "house", cluster % 4, (cluster / 4) % 3)
+        
 
 
 def get_n_customer_cluster(ulevel):
@@ -121,6 +147,10 @@ def get_n_customer_cluster(ulevel):
     """
     if ulevel == 0:
         return 6
+    elif ulevel == 1:
+        return 24
+    elif ulevel == 2:
+        return 48
     else:
         #print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
         raise SystemExit
