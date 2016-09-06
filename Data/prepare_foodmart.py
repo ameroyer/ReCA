@@ -222,7 +222,6 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--train', type=float, default=0.8, help="Fraction of training data to extract from the database.")
     parser.add_argument('-a', '--alpha', type=float, default=1.4, help="Positive rescaling of transition probabilities matching the recommendation.")
     parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities. ")
-    parser.add_argument('--draw', action='store_true', help="If present, draw the first user MDP model. For debugging purposes")
     parser.add_argument('--zip', action='store_true', help="If present, the transitiosn are output in a compressed file.")
     args = parser.parse_args()
 
