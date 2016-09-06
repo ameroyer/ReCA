@@ -219,7 +219,7 @@ if __name__ == "__main__":
     parser.add_argument('-pl', '--plevel', type=int, default=4, help="Clustering level for product categorization (0: no lumping to 4:lumping by family). See product classes hierarchy.")
     parser.add_argument('-ul', '--ulevel', type=int, default=0, help="Clustering level for user categorization (0, 1 or 2: 6, or environments).")
     parser.add_argument('-k', '--history', type=int, default=2, help="Length of the history to consider for one state of the MEMDP.")
-    parser.add_argument('-t', '--train', type=float, default=0.7, help="Fraction of training data to extract from the database.")
+    parser.add_argument('-t', '--train', type=float, default=0.8, help="Fraction of training data to extract from the database.")
     parser.add_argument('-a', '--alpha', type=float, default=1.4, help="Positive rescaling of transition probabilities matching the recommendation.")
     parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities. ")
     parser.add_argument('--draw', action='store_true', help="If present, draw the first user MDP model. For debugging purposes")
@@ -245,16 +245,14 @@ if __name__ == "__main__":
     ###### 2. Split training and testing database
 
     print("\n\033[96m-----> Split training and testing database \033[0m")
-    c = 0.25
-    test_sessions = [0] * sum(int(c * (1 - args.train) * len(x)) for x in user_sessions.values())
+    test_sessions = [0] * sum(int((1 - args.train) * len(x)) for x in user_sessions.values())
     i = 0
     for u, sessions in user_sessions.items():
         test_users = sorted(sessions, key=lambda k: random())[:int((1 - args.train) * len(sessions))]
         for j, x in enumerate(test_users):
             assert(len(sessions[x]) > args.history), "Empty user session %d" % x
-            if j < int(c * len(test_users)):
-                test_sessions[i] = [x, u, sessions[x]]
-                i += 1
+            test_sessions[i] = [x, u, sessions[x]]
+            i += 1
             del user_sessions[u][x]
 
     # Summary
