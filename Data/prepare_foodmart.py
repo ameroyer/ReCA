@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -17,7 +18,6 @@ from collections import defaultdict
 from random import random
 from utils import *
 import tarfile as tar
-
 
 def init_output_dir(plevel, ulevel, hlength, alpha):
     """
@@ -57,7 +57,7 @@ def load_datafile(base_name, target):
         try:
             return open(os.path.join(base_name, target), "r")
         except IOError:
-            print >> sys.stderr, "File %s not found" % base_name
+            print("File %s not found" % base_name, file=sys.stderr)
             raise SystemExit
 
 
@@ -84,7 +84,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     ###### Load and Cluster items
     #########################################################################
 
-    print "\n\033[92m-----> Load and Cluster products\033[0m"
+    print("\n\033[92m-----> Load and Cluster products\033[0m")
     product_to_cluster = np.zeros(line_count(load_datafile(base_name, "product.csv")) + 1, dtype=int)      # Product ID -> Cluster ID
     tmp_index = {}                          # Cluster name -> Cluster ID
     tmp_clusters = defaultdict(lambda: [])  # Cluster name -> Product ID list
@@ -93,7 +93,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     if plevel == 0:
         f = load_datafile(base_name, "product.csv")
         r = csv.reader(f)
-        r.next()
+        next(r)
         for product in r:
             tmp_clusters[product[3]].append(int(product[1]))
             try:
@@ -108,7 +108,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
         product_classes = {}
         f = load_datafile(base_name, "product_class.csv")
         r = csv.reader(f)
-        r.next()
+        next(r)
         for categories in r:
             product_classes[int(categories[0])] = categories[plevel]
         f.close()
@@ -116,7 +116,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
         # Cluster products
         f = load_datafile(base_name, "product.csv")
         r = csv.reader(f)
-        r.next()
+        next(r)
         for product in r:
             try:
                 product_to_cluster[int(product[1])] = tmp_index[product_classes[int(product[0])]]
@@ -127,20 +127,19 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
         f.close()
 
     # Print summary
-    print "   %d product profiles (%d products)" % (len(tmp_index), (len(product_to_cluster) - 1))
-    print '\n'.join("     > %s: %.2f%%" % (k, 100 * float(len(v)) / (len(product_to_cluster) - 1)) for k, v in tmp_clusters.iteritems())
+    print("   %d product profiles (%d products)" % (len(tmp_index), (len(product_to_cluster) - 1)))
+    print('\n'.join("     > %s: %.2f%%" % (k, 100 * float(len(v)) / (len(product_to_cluster) - 1)) for k, v in tmp_clusters.items()))
     actions = sorted(tmp_index.values())
     product_to_cluster[0] = 0 # Empty selection
 
     # Init states
-    print "\n\033[92m-----> [Optional] Export states description\033[0m"
+    print("\n\033[92m-----> [Optional] Export states description\033[0m")
     init_base_writing(len(actions), args.history)
     if sv:
-        rv_tmp_indx = {v: k for k, v in tmp_index.iteritems()}
-        rv_tmp_indx[0] = str(unichr(35))
+        rv_tmp_indx = {v: k for k, v in tmp_index.items()}
+        rv_tmp_indx[0] = str(chr(35))
         with open("%s.states" % output_base, 'w') as f:
-            f.write('\n'.join("%d\t%s" % (x, '|'.join(rv_tmp_indx[y] for y in id_to_state(x))) for x in xrange(get_nstates(len(actions), args.history))))
-
+            f.write('\n'.join("%f\t%s" % (x, '|'.join(rv_tmp_indx[y] for y in id_to_state(x))) for x in range(get_nstates(len(actions), args.history))))
 
     ######  Load and Cluster users by profile
     #########################################################################
@@ -149,7 +148,7 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     tmp_index_u = {}                          # Cluster name -> Cluster ID
     f = load_datafile(base_name, "customer.csv")
     r = csv.reader(f)
-    r.next()
+    next(r)
     for user in r:
         customerID = int(user[0])
         try:
@@ -164,33 +163,34 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
     ###### Load and Store user sessions
     #########################################################################
 
-    print "\n\033[92m-----> Load user sessions and shop profits \033[0m"
+    print("\n\033[92m-----> Load user sessions and shop profits \033[0m")
     product_profit = np.zeros(len(actions) + 1, dtype=float)           # Product ID -> profit
     product_profit_nrm = np.zeros(len(actions) + 1, dtype=int)
-    user_sessions = {k: defaultdict(lambda: [0] * hlength) for k in tmp_index_u.itervalues()}  # Customer ID -> Session (product list)
+    user_sessions = {k: defaultdict(lambda: [0] * hlength) for k in tmp_index_u.values()}  # Customer ID -> Session (product list)
 
     # Load session
     f = load_datafile(base_name, "sales.csv")
     r = csv.reader(f)
-    r.next()
+    next(r)
     for sale in r:
         product_clusterID = product_to_cluster[int(sale[0])]
         product_profit[product_clusterID] += float(sale[5]) - float(sale[6])
         product_profit_nrm[product_clusterID] += 1
-        for _ in xrange(int(sale[7])):
+        for _ in range(int(sale[7])):
             user_sessions[customer_to_cluster[int(sale[2])]][int(sale[2])].append(product_clusterID)
     f.close()
 
     # Summary profit
     product_profit[1:] /= product_profit_nrm[1:]
-    print "   %d user sessions\n" % sum(len(x) for x in user_sessions.itervalues())
-    print "   Average profit per product profile"
-    print '\n'.join("     > %s: %.2f $" % (k, product_profit[v]) for k, v in tmp_index.iteritems())
+    print("   %d user sessions\n" % sum(len(x) for x in user_sessions.values()))
+    print("   Average profit per product profile")
+    print('\n'.join("     > %s: %.2f $" % (k, product_profit[v]) for k, v in tmp_index.items()))
 
     # Summary profiles
-    print "\n\033[92m-----> Build user profiles (cluster)\033[0m"
-    print "   %d User profiles (%d total users)" %(len(user_sessions), sum(len(x) for x in user_sessions.itervalues()))
-    print '\n'.join("     > %s: %.2f%%" % (print_customer_cluster(k, ulevel), 100 * float(len(user_sessions[v])) /sum(len(x) for x in user_sessions.itervalues())) for k, v in tmp_index_u.iteritems())
+    rv_tmp_indx_u = {v: k for k, v in tmp_index_u.items()}
+    print("\n\033[92m-----> Build user profiles (cluster)\033[0m")
+    print("   %d User profiles (%d total users)" %(len(user_sessions), sum(len(x) for x in user_sessions.values())))
+    print('\n'.join("     > %s: %.2f%%" % (print_customer_cluster(rv_tmp_indx_u[v], ulevel), 100 * float(len(user_sessions[v])) /sum(len(x) for x in user_sessions.values())) for v in user_sessions.keys()))
 
     # Save product clusters information
     if sv:
@@ -198,9 +198,8 @@ def load_data(base_name, plevel, ulevel, hlength, alpha, trfr, sv=False):
             f.write('\n'.join("%d\t%s\t%d\t%.3f" %(tmp_index[k], k, len(tmp_clusters[k]), product_profit[tmp_index[k]]) for k in sorted(tmp_index.keys(), key=lambda x: tmp_index[x])))
 
     # Save profiles information
-    if sv:
         with open("%s.profiles" % output_base, 'w') as f:
-            f.write('\n'.join("%d\t%d\t%.5f\t%s" %(tmp_index_u[k], k, 100 * float(len(user_sessions[tmp_index_u[k]])) /sum(len(z) for z in user_sessions.itervalues()), print_customer_cluster(k, ulevel)) for k in sorted(tmp_index_u.keys(), key=lambda x: tmp_index_u[x])))
+            f.write('\n'.join("%d\t%d\t%.5f\t%s" %(k, rv_tmp_indx_u[k], 100 * float(len(v)) /sum(len(z) for z in user_sessions.values()), print_customer_cluster(rv_tmp_indx_u[k], ulevel)) for k, v in user_sessions.items()))
 
     # Return values
     return product_to_cluster, customer_to_cluster, user_sessions, product_profit, actions, output_base
@@ -220,8 +219,8 @@ if __name__ == "__main__":
     parser.add_argument('-pl', '--plevel', type=int, default=4, help="Clustering level for product categorization (0: no lumping to 4:lumping by family). See product classes hierarchy.")
     parser.add_argument('-ul', '--ulevel', type=int, default=0, help="Clustering level for user categorization (0, 1 or 2: 6, or environments).")
     parser.add_argument('-k', '--history', type=int, default=2, help="Length of the history to consider for one state of the MEMDP.")
-    parser.add_argument('-t', '--train', type=float, default=0.8, help="Fraction of training data to extract from the database.")
-    parser.add_argument('-a', '--alpha', type=float, default=1.1, help="Positive rescaling of transition probabilities matching the recommendation.")
+    parser.add_argument('-t', '--train', type=float, default=0.7, help="Fraction of training data to extract from the database.")
+    parser.add_argument('-a', '--alpha', type=float, default=1.4, help="Positive rescaling of transition probabilities matching the recommendation.")
     parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities. ")
     parser.add_argument('--draw', action='store_true', help="If present, draw the first user MDP model. For debugging purposes")
     parser.add_argument('--zip', action='store_true', help="If present, the transitiosn are output in a compressed file.")
@@ -245,11 +244,11 @@ if __name__ == "__main__":
 
     ###### 2. Split training and testing database
 
-    print "\n\033[96m-----> Split training and testing database \033[0m"
+    print("\n\033[96m-----> Split training and testing database \033[0m")
     c = 0.25
-    test_sessions = [0] * sum(int(c * (1 - args.train) * len(x)) for x in user_sessions.itervalues())
+    test_sessions = [0] * sum(int(c * (1 - args.train) * len(x)) for x in user_sessions.values())
     i = 0
-    for u, sessions in user_sessions.iteritems():
+    for u, sessions in user_sessions.items():
         test_users = sorted(sessions, key=lambda k: random())[:int((1 - args.train) * len(sessions))]
         for j, x in enumerate(test_users):
             assert(len(sessions[x]) > args.history), "Empty user session %d" % x
@@ -259,26 +258,26 @@ if __name__ == "__main__":
             del user_sessions[u][x]
 
     # Summary
-    print "   %d training sessions" % sum(len(x) for x in user_sessions.itervalues())
-    print "   %d test sessions" % len(test_sessions)
+    print("   %d training sessions" % sum(len(x) for x in user_sessions.values()))
+    print("   %d test sessions" % len(test_sessions))
 
     # Save train and test Sessions
-    trn_str = '\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, s in sessions.iteritems() for c, sessions in user_sessions.iteritems())
+    trn_str = '\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, s in sessions.items() for c, sessions in user_sessions.items())
     tst_str = '\n'.join("%d\t%d\t%s" % (u,  c, ' '.join('%d %d' % (state_indx(s[i : i + args.history]), s[i + args.history]) for i, x in enumerate(s[:-args.history]))) for u, c, s in test_sessions)
 
     f = gzip.open("%s.train.gz" % output_base, 'w') if args.zip else open("%s.train" % output_base, 'w')
     f.write(bytes(trn_str.encode("UTF-8")) if args.zip else trn_str)
     f.close()
 
-    f = gzip.open("%s.test.gz" % output_base, 'w') if args.zip else open("%s.test" % output_base, 'w')
-    f.write(bytes(tst_str.encode("UTF-8")) if args.zip else tst_str)
+    f = open("%s.test" % output_base, 'w')
+    f.write(tst_str)
     f.close()
 
 
     ###### 3. Init probability counts [Smoothing] and rewards
-    print "\n\033[91m-----> Reward function\033[0m"
-    print "   %d States in the database" % n_states
-    print "   %d Actions in the database" % n_items
+    print("\n\033[91m-----> Reward function\033[0m")
+    print("   %d States in the database" % n_states)
+    print("   %d Actions in the database" % n_items)
     with open("%s.rewards" % output_base, 'w') as f:
         for item in actions:
             f.write("%d\t%.5f\n" % (item, product_profit[item]))
@@ -287,24 +286,24 @@ if __name__ == "__main__":
 
 
     ###### 4. Compute joint state occurrences from the database
-    print "\n\033[91m-----> Probability inference\033[0m"
+    print("\n\033[91m-----> Probability inference\033[0m")
     f = gzip.open("%s.transitions.gz" % output_base, 'w') if args.zip else open("%s.transitions" % output_base, 'w')
     buffer_size = 2**31 -1
     transitions_str = ""
     epsilon = 0.5   # Smoothing
     max_upscale = 0.95 # Max value of the probability after upscale by alpha
-    for user_profile, aux in user_sessions.iteritems():
-        print >> sys.stderr, "\n   > Profile %d / %d: \n" % (user_profile + 1, len(user_sessions))
+    for user_profile, aux in user_sessions.items():
+        print("\n   > Profile %d / %d: \n" % (user_profile + 1, len(user_sessions)), file=sys.stderr)
         sys.stderr.flush()
         # Count
         js_count = np.zeros((n_states, n_items), dtype=int) # js[s1, a] = P(s1.a | s1; cluster)
-        for _, session in aux.iteritems():
+        for _, session in aux.items():
             s1 = 0
             for item in session[args.history + 1:]:
                 s2 = get_next_state_id(s1, item)
                 js_count[s1, item - 1] += 1
                 s1 = s2
-                
+
         # Estimate and normalize probabilities
         for s1, s1_counts in enumerate(js_count[:, :]):
             sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
@@ -320,7 +319,7 @@ if __name__ == "__main__":
                 assert (new_count < nrm if not args.norm else new_count < 1), "AssertionError: Probabilities out of range."
                 transitions_str += "%d\t%d\t%d\t%s\n" % (s1, a, s2, new_count)
                 # Negative (s1, b, s1.a)
-                beta = float(nrm - min(args.alpha * count, max_upscale * nrm)) / (nrm - count) 
+                beta = float(nrm - min(args.alpha * count, max_upscale * nrm)) / (nrm - count)
                 for s2_link, s2_count in enumerate(s1_counts):
                     if s2_link != a - 1:
                         s2 = get_next_state_id(s1, s2_link + 1)
@@ -333,11 +332,11 @@ if __name__ == "__main__":
         transitions_str += "\n"
     f.write(bytes(transitions_str.encode("UTF-8")) if args.zip else transitions_str)
     f.close()
-    
+
     ###### 5. Summary
-    print "\n\n\033[92m-----> End\033[0m"
-    print "   All outputs are in %s" % output_base
+    print("\n\n\033[92m-----> End\033[0m")
+    print("   All outputs are in %s" % output_base)
     with open("%s.summary" % output_base, 'w') as f:
         f.write("%d States\n%d Actions (Items)\n%d user profiles\n%d history length\n%f alpha\n%d product clustering level\n\n%s" % (n_states, n_items, len(user_sessions), args.history, args.alpha, args.plevel, logger.to_string()))
-    print
+    print()
     # End

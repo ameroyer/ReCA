@@ -68,7 +68,7 @@ def get_nstates(n_items, hlength):
     Returns:
      * ``n_states`` (*str*): number of states in the corresponding MDPs.
     """
-    return (n_items ** (hlength + 1) - 1) / (n_items - 1)
+    return (n_items ** (hlength + 1) - 1) // (n_items - 1)
 
 
 def assign_customer_cluster(user, ulevel):
@@ -84,7 +84,7 @@ def assign_customer_cluster(user, ulevel):
     """
     # Parse
     gender = int(user[19] == 'F')
-    age_category = ((1997 - int(user[16].split('-', 1)[0])) / 10) / 5
+    age_category = ((1997 - int(user[16].split('-', 1)[0])) // 10) // 2
     n_children = int(user[20])
     n_children_home = min(int(user[21]), 3) #clip to 3
     income = int(''.join([c for c in user[18].split('-')[-1] if c.isdigit()]))
@@ -101,20 +101,7 @@ def assign_customer_cluster(user, ulevel):
         return gender + 2 * (n_children_home + 4 * income)
     # Ulevel 2: number of children, income, marital status and house
     else:
-        return n_children_home + 4 * (income + 3 * (marital_status + 2 * house))
-
-    return 0
-    gender = int(user[19] == 'F')
-    age_category = ((1997 - int(user[16].split('-', 1)[0])) / 10) / 3
-    n_children = 0 if int(user[20]) == 0 else 1 if int(user[20]) <= 2 else 2
-    income = int(''.join([c for c in user[18].split('-')[-1] if c.isdigit()]))
-    income_level = 0 if income <= 70 else 1
-    user_id = int(user[0])
-    card = 0 if user[24] == 'Bronze' else 1 if user[24] == 'Normal' else 2
-    return card * 10 + income_level
-
-    #return gender * 10 + age_category
-
+        return n_children_home + 4 * (income + 3 * (status + 2 * (house + 2 * card)))
 
 def print_customer_cluster(cluster, ulevel):
     """
@@ -127,11 +114,11 @@ def print_customer_cluster(cluster, ulevel):
      * ``cluster_str`` (*str*): String representation of the cluster ID
     """
     if ulevel == 0:
-        return "%s in the %d+ years old category" %("Female" if cluster % 2 else "Male", 50 * (cluster / 2))
+        return "%s in the %d+ years old category" %("Female" if cluster % 2 else "Male", 20 * (cluster // 2))
     elif ulevel == 1:
-        return "%s, %d children at home, %d tier income" %("Female" if cluster % 2 else "Male", (cluster / 2) % 4, cluster / 8)
+        return "%s, %d children at home, %d tier income" %("Female" if cluster % 2 else "Male", (cluster // 2) % 4, cluster // 8)
     elif ulevel == 2:
-        return "%s, %s, %d children at home, %d tier income" %("Married" if ((cluster / 12) % 2) else "Single", "house" if cluster / 24 else "house", cluster % 4, (cluster / 4) % 3)
+        return "%s, %s, %d children at home, %d tier income. %d card" %("Married" if ((cluster // 12) % 2) else "Single", "house" if cluster // 24 else "house", cluster % 4, (cluster // 4) % 3, cluster // 24)
         
 
 
@@ -146,13 +133,13 @@ def get_n_customer_cluster(ulevel):
      * ``n_clusters`` (*int*): Number of clusters that will be created.
     """
     if ulevel == 0:
-        return 6
+        return 10
     elif ulevel == 1:
         return 24
     elif ulevel == 2:
-        return 48
+        return 89
     else:
-        #print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
+        print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
         raise SystemExit
 
 
