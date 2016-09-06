@@ -1,6 +1,6 @@
 # [ R e C A ]  r e a d   m e 
 
-# installation
+# Installation
 
 #### requirements
    * python (the scripts were tested with versions 2.7 and 3.2)
@@ -21,7 +21,7 @@ make -j
 ctest -V
 ```
 
-# dataset generation
+# Dataset generation
 
 #### synthetic recommandation dataset
 Generate synthetic POMDP parameters to highlight the impact of using multiple environments. The model comprises as many environments as possible recommandations. The *i*-th environment corresponds to users choosing item *i* with a high probability (``p=0.8``) and uniform preference towards other recommandations.  The reward is 0 if the recommendation does not match the user's choice, and 1 otherwise.
@@ -80,7 +80,7 @@ Generating POMDP parameters for a typical maze/path finding problem with multipl
   * ``[--rdf]`` If present, the failure rates (probability of staying put instead of realizing the intended action) for each environment are sampled uniformly over [0; 0.5[
   * ``[--help]`` displays help about the script.
 
-# building and evaluating the MEMDP-based models
+# Building and evaluating the MEMDP-based models
 
 #### set-up
 The following variables can be configured at the beginning of the ``run.sh`` script (e.g. if some libaries are installed locally and not globally)
@@ -123,7 +123,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
    * ``[-v]`` If present, enables verbose output. In verbose mode, evaluation results per environments are displayed, and the std::cerr stream is eanbled during evaluation.
 
 #### examples
-**Example** *(synthetic recommandations, 10 environments, 10 actions, ~100 states)* :
+synthetic recommandations, 10 environments, 10 actions, ~100 states
 ```bash
 cd Data/
 python prepare_synth.py --norm --zip -n 10 -k 2 
@@ -132,5 +132,5 @@ cd ../Code/
 ./run.sh -m pamcp -d rd -n 10 -k 2 -c
 ```
 
-# known issues
+# Known issues
   * When using the ``--zip`` option for data generation, it might be necessary to run the script with ``python3`` due to an [issue](https://bugs.python.org/issue23306) with the gzip library in python < 3.
