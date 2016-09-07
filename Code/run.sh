@@ -1,22 +1,20 @@
 #!/bin/bash
 
-# PATHES (if local installation)
-AIBUILD="/home/aroyer/Libs/AI-Toolbox/build"
-AIINCLUDE="/home/aroyer/Libs/AI-Toolbox/include"
+# CONFIG
+AIROOT="/home/aroyer/Libs/AI-Toolbox"
 EIGEN="/usr/local/include/eigen3/"
 LPSOLVE="/usr/local/lib/"
 GCC="/usr/bin/g++-4.9"
 STDLIB="/usr/lib/gcc/x86_64-linux-gnu/4.9.3/"
-#AIBUILD="/home/amelie/Libs/AI-Toolbox/build"
-#AIINCLUDE="/home/amelie/Libs/AI-Toolbox/include"
-#GCC="/usr/local/bin/gcc-4.9.0/bin/g++"
-#STDLIB="/usr/local/bin/gcc-4.9.0/lib64"
 
 # DEFAULT ARGUMENTS
+AIBUILD="$AIROOT/build"
+AIINCLUDE="$AIROOT/include"
 MODE="mdp"
 DATA="fm"
 PLEVEL="4"
 HIST="2"
+UPROFILE="0"
 DISCOUNT="0.95"
 STEPS="1500"
 EPSILON="0.01"
@@ -28,7 +26,7 @@ HORIZON="2"
 COMPILE=false
 
 # SET  ARGUMENTS FROM CMD LINE
-while getopts "m:d:n:k:g:s:h:e:x:b:cpv" opt; do
+while getopts "m:d:n:k:u:g:s:h:e:x:b:cpv" opt; do
   case $opt in
     m)
       MODE=$OPTARG
@@ -41,6 +39,9 @@ while getopts "m:d:n:k:g:s:h:e:x:b:cpv" opt; do
       ;;
     k)
       HIST=$OPTARG
+      ;;
+    u)
+      UPROFILE=$OPTARG
       ;;
     g)
       DISCOUNT=$OPTARG
@@ -82,9 +83,15 @@ done
 
 # SET CORRECT DATA PATHS
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ $DATA = "fm" ]; then 
-    PROFILES=6
-    ALPHA=1.10
+if [ $DATA = "fm" ]; then
+    PROFILES=10
+    if [ $UPROFILE = 1 ]; then
+	PROFILES=24
+    fi
+    if [ $UPROFILE = 2 ]; then
+	PROFILES=89
+    fi
+    ALPHA=1.40
     printf -v BASE "$DIR/Models/Foodmart%d%d%d/foodmart_u%d_k%d_pl%d_a%.2f" "$PROFILES" "$HIST" "$PLEVEL" "$PROFILES" "$HIST" "$PLEVEL" "$ALPHA"
     if [ ! -f "$BASE.items" ]; then
 	echo "File $BASE.items not found"
@@ -139,7 +146,7 @@ else
 	    echo "exit"
 	    exit 1
 	fi
-    fi   
+    fi
 
 # RUN
     echo
