@@ -111,6 +111,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
      * *fm* (foodmart recommandations) with following options
        * ``[3]`` Product discretization level. Defaults to 4.
        * ``[4]`` History length. Must be strictly greater than 1. Defaults to 2.
+       * ``[5]`` User discretization level. Defaults to 0.
      * *mz* recommandations.
        * ``[3]`` Base name for the directory containing the corresponding MEMDP model parameters.
      * *rd* (synthetic data recommandations) 
