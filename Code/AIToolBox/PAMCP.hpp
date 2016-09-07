@@ -1,5 +1,5 @@
-#ifndef AI_TOOLBOX_POMDP_MEMCP_HEADER_FILE
-#define AI_TOOLBOX_POMDP_MEMCP_HEADER_FILE
+#ifndef AI_TOOLBOX_POMDP_PAMCP_HEADER_FILE
+#define AI_TOOLBOX_POMDP_PAMCP_HEADER_FILE
 
 #include <AIToolbox/POMDP/Types.hpp>
 #include <AIToolbox/ProbabilityUtils.hpp>
@@ -14,7 +14,7 @@ namespace AIToolbox {
 #ifndef DOXYGEN_SKIP
     // This is done to avoid bringing around the enable_if everywhere.
     template <typename M, typename = typename std::enable_if<is_generative_model<M>::value>::type>
-    class MEMCP;
+    class PAMCP;
 #endif
 
     /**
@@ -22,7 +22,7 @@ namespace AIToolbox {
      *
      */
     template <typename M>
-    class MEMCP<M> {
+    class PAMCP<M> {
     public:
       using SampleBelief = std::vector<size_t>;
 
@@ -53,7 +53,7 @@ namespace AIToolbox {
        * @param iterations The number of episodes to run before completion.
        * @param exp The exploration constant. This parameter is VERY important to determine the final POMCP performance.
        */
-      MEMCP(const M& m, size_t beliefSize, unsigned iterations, double exp);
+      PAMCP(const M& m, size_t beliefSize, unsigned iterations, double exp);
 
       /**
        * @brief This function resets the internal graph and samples
@@ -291,11 +291,11 @@ namespace AIToolbox {
     };
 
     template <typename M>
-    MEMCP<M>::MEMCP(const M& m, size_t beliefSize, unsigned iter, double exp) : model_(m), S(model_.getS()), A(model_.getA()), O(model_.getO()), E(model_.getE()), beliefSize_(beliefSize), iterations_(iter),
+    PAMCP<M>::PAMCP(const M& m, size_t beliefSize, unsigned iter, double exp) : model_(m), S(model_.getS()), A(model_.getA()), O(model_.getO()), E(model_.getE()), beliefSize_(beliefSize), iterations_(iter),
 												       exploration_(exp), graph_(), rand_(Impl::Seeder::getSeed()) {}
 
     template <typename M>
-    size_t MEMCP<M>::sampleAction(const Belief& be, size_t o, unsigned horizon, bool start_session /* false */) {
+    size_t PAMCP<M>::sampleAction(const Belief& be, size_t o, unsigned horizon, bool start_session /* false */) {
       // Reset graph initially or with new belief (e.g. observation missing)
       if (reset_belief) {
 	graph_ = BeliefNode(A);
@@ -328,7 +328,7 @@ namespace AIToolbox {
     }
 
     template <typename M>
-    size_t MEMCP<M>::sampleAction(size_t a, size_t o, unsigned horizon) {
+    size_t PAMCP<M>::sampleAction(size_t a, size_t o, unsigned horizon) {
       // Update full graph
       //update_fullgraph(graph_.children[a], a);
       if (to_update) {
@@ -371,22 +371,8 @@ namespace AIToolbox {
 
 
     template <typename M>
-    /*
-    void MEMCP<M>::update_fullgraph(ActionNode current, size_t a) {
-      auto & current_branch = fullgraph_;
-      // Browse history
-      for (auto it = history.begin(); it != history.end(); ++it) {
-	auto  an = current_branch.children[std::get<0>(*it)];
-	current_branch = an.children[std::get<1>(*it)];
-      }
-      // Modify
-      current_branch.children.resize(A);
-      current_branch.children[a] = current;
 
-    }
-    */
-
-    void MEMCP<M>::update_fullgraph(BeliefNode current, size_t a) {
+    void PAMCP<M>::update_fullgraph(BeliefNode current, size_t a) {
       auto & current_branch = fullgraph_;
       // Browse history
       for (auto it = history.begin(); it != history.end(); ++it) {
@@ -395,15 +381,12 @@ namespace AIToolbox {
       }
       // Modify
       current_branch = current;
-      //current_branch.children.resize(A);
-      //current_branch.children[a] = current;
-
     }
 
 
 
     template <typename M>
-    size_t MEMCP<M>::runSimulation(unsigned horizon) {
+    size_t PAMCP<M>::runSimulation(unsigned horizon) {
       if ( !horizon ) return 0;
 
       maxDepth_ = horizon;
@@ -417,7 +400,7 @@ namespace AIToolbox {
     }
 
     template <typename M>
-    double MEMCP<M>::simulate(BeliefNode & b, size_t s, unsigned depth) {
+    double PAMCP<M>::simulate(BeliefNode & b, size_t s, unsigned depth) {
       b.N++;
 
       auto begin = std::begin(b.children);
@@ -465,7 +448,7 @@ namespace AIToolbox {
     }
 
     template <typename M>
-    double MEMCP<M>::rollout(size_t s, unsigned depth) {
+    double PAMCP<M>::rollout(size_t s, unsigned depth) {
       double rew = 0.0, totalRew = 0.0, gamma = 1.0;
 
       std::uniform_int_distribution<size_t> generator(0, A-1);
@@ -480,13 +463,13 @@ namespace AIToolbox {
 
     template <typename M>
     template <typename Iterator>
-    Iterator MEMCP<M>::findBestA(Iterator begin, Iterator end) {
+    Iterator PAMCP<M>::findBestA(Iterator begin, Iterator end) {
       return std::max_element(begin, end, [](const ActionNode & lhs, const ActionNode & rhs){ return lhs.V < rhs.V; });
     }
 
     template <typename M>
     template <typename Iterator>
-    Iterator MEMCP<M>::findBestBonusA(Iterator begin, Iterator end, unsigned count) {
+    Iterator PAMCP<M>::findBestBonusA(Iterator begin, Iterator end, unsigned count) {
       // Count here can be as low as 1.
       // Since log(1) = 0, and 0/0 = error, we add 1.0.
       double logCount = std::log(count + 1.0);
@@ -511,7 +494,7 @@ namespace AIToolbox {
     }
 
     template <typename M>
-    typename MEMCP<M>::SampleBelief MEMCP<M>::makeSampledBelief(const Belief & b) {
+    typename PAMCP<M>::SampleBelief PAMCP<M>::makeSampledBelief(const Belief & b) {
       SampleBelief belief;
       belief.reserve(beliefSize_);
 
@@ -522,42 +505,42 @@ namespace AIToolbox {
     }
 
     template <typename M>
-    void MEMCP<M>::setBeliefSize(size_t beliefSize) {
+    void PAMCP<M>::setBeliefSize(size_t beliefSize) {
       beliefSize_ = beliefSize;
     }
 
     template <typename M>
-    void MEMCP<M>::setIterations(unsigned iter) {
+    void PAMCP<M>::setIterations(unsigned iter) {
       iterations_ = iter;
     }
 
     template <typename M>
-    void MEMCP<M>::setExploration(double exp) {
+    void PAMCP<M>::setExploration(double exp) {
       exploration_ = exp;
     }
 
     template <typename M>
-    const M& MEMCP<M>::getModel() const {
+    const M& PAMCP<M>::getModel() const {
       return model_;
     }
 
     template <typename M>
-    const typename MEMCP<M>::BeliefNode& MEMCP<M>::getGraph() const {
+    const typename PAMCP<M>::BeliefNode& PAMCP<M>::getGraph() const {
       return graph_;
     }
 
     template <typename M>
-    size_t MEMCP<M>::getBeliefSize() const {
+    size_t PAMCP<M>::getBeliefSize() const {
       return beliefSize_;
     }
 
     template <typename M>
-    unsigned MEMCP<M>::getIterations() const {
+    unsigned PAMCP<M>::getIterations() const {
       return iterations_;
     }
 
     template <typename M>
-    double MEMCP<M>::getExploration() const {
+    double PAMCP<M>::getExploration() const {
       return exploration_;
     }
   }

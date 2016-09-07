@@ -41,9 +41,9 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     }
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
-  // MEMCP
-  else if (!algo.compare("memcp")) {
-    AIToolbox::POMDP::MEMCP<decltype(model)> solver( model, beliefSize, steps, exp);
+  // PAMCP
+  else if (!algo.compare("pamcp")) {
+    AIToolbox::POMDP::PAMCP<decltype(model)> solver( model, beliefSize, steps, exp);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n" << std::flush;
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
   assert(("Unvalid data mode", !(data.compare("reco") && data.compare("maze"))));
   std::string algo = ((argc > 3) ? argv[3] : "pbvi");
   std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
-  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("memcp"))));
+  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("pamcp"))));
   double discount = ((argc > 4) ? std::atof(argv[4]) : 0.95);
   assert(("Unvalid discount parameter", discount > 0 && discount <= 1));
   int steps = ((argc > 5) ? std::atoi(argv[5]) : 1000000);

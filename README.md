@@ -1,4 +1,4 @@
-# [ R e C A ]  r e a d   m e 
+# [ R e C A ]  r e a d   m e
 
 # Installation
 
@@ -58,7 +58,7 @@ Generate synthetic POMDP parameters to highlight the impact of using multiple en
   * ``[--norm]`` If present, output transition probabilities are normalized.
   * ``[--zip]`` If present, transitions are stored in an archive. Recommended for large state spaces.
   * ``[--help]`` displays help about the script.
-  
+
 #### maze dataset
 Generating POMDP parameters for a typical maze/path finding problem with multiple environments.
 
@@ -96,8 +96,8 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
 ./run.sh -m [1] -d [2] -n [3] -k [4] -u [5] -g [6] -s [7] -h [8] -e [9] -x [10] -b [11] -c -p -v
 ```
 
-   * ``[1]`` Model to use. Defaults to mdp. Available options are 
-      * *mdp*. MDP model obtained by a weighted average of all the environments' transition probabilities and solved by Value iteration. The solver can be configured with 
+   * ``[1]`` Model to use. Defaults to mdp. Available options are
+      * *mdp*. MDP model obtained by a weighted average of all the environments' transition probabilities and solved by Value iteration. The solver can be configured with
         * ``[7]`` Number of iterations. Defaults to 1500.
       * *pbvi*. point-based value iteration optimized for the MEMDP structure with options
         * ``[8]`` Horizon parameter. Must be greater than 1. Defaults to 2.
@@ -114,7 +114,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
        * ``[5]`` User discretization level. Defaults to 0.
      * *mz* recommandations.
        * ``[3]`` Base name for the directory containing the corresponding MEMDP model parameters.
-     * *rd* (synthetic data recommandations) 
+     * *rd* (synthetic data recommandations)
        * ``[3]`` Number of actions. Defaults to 4.
        * ``[4]`` History length. Must be strictly greater than 1. Defaults to 2.
    * ``[6]`` Discount Parameter. Must be strictly between 0 and 1. Defaults to 0.95.
@@ -127,7 +127,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
 synthetic recommandations, 10 environments, 10 actions, ~100 states
 ```bash
 cd Data/
-python prepare_synth.py --norm --zip -n 10 -k 2 
+python prepare_synth.py --norm --zip -n 10 -k 2
 cd ../Code/
 ./run.sh -m mdp -d rd -n 10 -k 2 -c
 ./run.sh -m pamcp -d rd -n 10 -k 2 -c

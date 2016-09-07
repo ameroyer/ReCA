@@ -119,7 +119,7 @@ if [ $MODE = "mdp" ]; then
 # COMPILE
     if [ "$COMPILE" = true ]; then
 	echo
-	echo "Compiling MDP model in mainMDP"
+	echo "Compiling mainMDP"
 	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 mazemodel.cpp recomodel.cpp utils.cpp main_MDP.cpp -o mainMDP -I $AIINCLUDE -I $EIGEN -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55 -lz -lboost_iostreams
 	if [ $? -ne 0 ]; then
 	    echo "Compilation failed!"
@@ -138,7 +138,7 @@ else
 # COMPILE
     if [ "$COMPILE" = true ]; then
 	echo
-	echo "Compiling MEMDP model in mainMEMDP"
+	echo "Compiling mainMEMDP"
 	$GCC -O3 -Wl,-rpath,$STDLIB -DNITEMSPRM=$NITEMS -DHISTPRM=$HIST -DNPROFILESPRM=$PROFILES -std=c++11 mazemodel.cpp recomodel.cpp utils.cpp main_MEMDP.cpp -o mainMEMDP -I $AIINCLUDE -I $EIGEN -L $LPSOLVE -L $AIBUILD -l AIToolboxMDP -l AIToolboxPOMDP -l lpsolve55 -lz -lboost_iostreams
 	if [ $? -ne 0 ]
 	then

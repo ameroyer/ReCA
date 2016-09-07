@@ -21,7 +21,7 @@
 #include <AIToolbox/MDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Policies/Policy.hpp>
 #include <AIToolbox/POMDP/Algorithms/POMCP.hpp>
-#include "AIToolBox/MEMCP.hpp"
+#include "AIToolBox/PAMCP.hpp"
 #include "model.hpp"
 
 
@@ -97,11 +97,11 @@ AIToolbox::POMDP::Belief update_belief(AIToolbox::POMDP::Belief b, size_t a, siz
 /*! \brief Returns the initial prediction and belief for a given model and solver.
  *
  * \param model the underlying model.
- * \param solver the solver to evaluate (MDP policy, POMDP policy, POMCP or MEMCP).
+ * \param solver the solver to evaluate (MDP policy, POMDP policy, POMCP or PAMCP).
  * \param horizon the horizon to predict for, if applicable.
  * \param action_scores array to store the probability distribution over predictions, if applicable.
  *
- * \return belief the initial belief over states (or over environments for MEMCP).
+ * \return belief the initial belief over states (or over environments for PAMCP).
  * \return prediction the initial prediction.
  */
 // MDP
@@ -125,15 +125,15 @@ std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model&
   return std::make_pair(belief, prediction);
 }
 
-// MEMCP
+// PAMCP
 template<typename M>
-std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model& model, AIToolbox::POMDP::MEMCP<M> &memcp, int horizon, std::vector<double> &action_scores) {
+std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model& model, AIToolbox::POMDP::PAMCP<M> &pamcp, int horizon, std::vector<double> &action_scores) {
   size_t init_observation = 0;
   AIToolbox::POMDP::Belief env_belief = AIToolbox::POMDP::Belief(model.getE());
   env_belief.fill(1.0 / model.getE());
-  size_t prediction = memcp.sampleAction(env_belief, init_observation, horizon, true);
+  size_t prediction = pamcp.sampleAction(env_belief, init_observation, horizon, true);
 
-  auto & graph_ = memcp.getGraph();
+  auto & graph_ = pamcp.getGraph();
   for (size_t a = 0; a < model.getA(); a++) {
     action_scores.at(a) = graph_.children[a].V;
   }
@@ -144,14 +144,14 @@ std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model&
 /*! \brief Returns the prediction of the solver for a given action and observation -a-> o.
  *
  * \param model the underlying model.
- * \param solver the solver to evaluate (MDP policy, POMDP policy, POMCP or MEMCP).
+ * \param solver the solver to evaluate (MDP policy, POMDP policy, POMCP or PAMCP).
  * \param b current belief.
  * \param o last seen observation.
  * \param a last action.
  * \param horizon the horizon to predict for, if applicable.
  * \param action_scores array to store the probability distribution over predictions, if applicable.
  *
- * \return belief the initial belief over states (or over environments for MEMCP).
+ * \return belief the initial belief over states (or over environments for PAMCP).
  * \return prediction the initial prediction.
  */
 //MDP
@@ -171,11 +171,11 @@ size_t make_prediction(const Model& model, AIToolbox::POMDP::POMCP<M> &pomcp, AI
   return prediction;
 }
 
-// MEMCP
+// PAMCP
 template<typename M>
-size_t make_prediction(const Model& model, AIToolbox::POMDP::MEMCP<M> &memcp, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
-  size_t prediction = memcp.sampleAction(a, o, horizon);
-  auto & graph_ = memcp.getGraph();
+size_t make_prediction(const Model& model, AIToolbox::POMDP::PAMCP<M> &pamcp, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+  size_t prediction = pamcp.sampleAction(a, o, horizon);
+  auto & graph_ = pamcp.getGraph();
   for (size_t action = 0; action < model.getA(); action++) {
     action_scores.at(action) = graph_.children[action].V;
   }
@@ -185,7 +185,7 @@ size_t make_prediction(const Model& model, AIToolbox::POMDP::MEMCP<M> &memcp, AI
 /*! \brief Returns the accuracy and prediction for the profile detection of the solver in the current state of the simulation..
  *
  * \param model the underlying model.
- * \param solver the solver to evaluate (MDP policy, POMDP policy, POMCP or MEMCP).
+ * \param solver the solver to evaluate (MDP policy, POMDP policy, POMCP or PAMCP).
  * \param current belief.
  * \param o last seen observation.
  * \param cluster ground-truth cluster.
@@ -218,10 +218,10 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
   return std::make_pair(accuracy, 1.0 / rank);
 }
 
-// MEMCP
+// PAMCP
 template<typename M>
-std::pair<double, double> identification_score(const Model& model, AIToolbox::POMDP::MEMCP<M> memcp, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
-  std::vector<size_t> sampleBelief = memcp.getGraph().belief;
+std::pair<double, double> identification_score(const Model& model, AIToolbox::POMDP::PAMCP<M> pamcp, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
+  std::vector<size_t> sampleBelief = pamcp.getGraph().belief;
   std::vector<int> scores(model.getE());
   for (auto it = begin(sampleBelief); it != end(sampleBelief); ++it) {
     scores.at(model.get_env(*it))++;
@@ -438,7 +438,7 @@ void evaluate_interactive(int n_sessions,
     mean_identification_precision[cluster] += identity_precision / session_length;
     mean_total_reward[cluster] += total_reward / session_length;
     // If Trap, do not count the rest
-    if (model.get_rep(state) != 1) { 
+    if (model.get_rep(state) != 1) {
       continue;
     }
     // Normal execution, i.e. goal state
