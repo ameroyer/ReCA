@@ -267,7 +267,7 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     if (is_mdp) {
       transition_matrix[index(0, s1, a - 1, link)] = v;
-    } else {
+    } else if (profiles_found >= 0) {
       transition_matrix[index(profiles_found, s1, a - 1, link)] = v;
     }
     transitions_found++;
