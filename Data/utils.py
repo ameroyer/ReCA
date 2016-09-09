@@ -15,8 +15,24 @@ try:
 except ImportError:
     from io import StringIO
 
+# Python 2 - 3 compatibility
 if sys.version_info[0] == 3:
     xrange = range
+
+try:
+    dict.iteritems
+except AttributeError:
+    # Python 3
+    def itervalues(d):
+        return iter(d.values())
+    def iteritems(d):
+        return iter(d.items())
+else:
+    # Python 2
+    def itervalues(d):
+        return d.itervalues()
+    def iteritems(d):
+        return d.iteritems()
     
 class Logger:
     """
@@ -93,6 +109,7 @@ def assign_customer_cluster(user, ulevel):
     status = int(user[17] == 'M')
     house = int(user[26] == 'Y')
     ncars = int(user[27])
+    #return n_children_home
     # Ulevel 0, distinguish on 5 age category and gender
     if ulevel == 0:
         return gender + 2 * age_category
