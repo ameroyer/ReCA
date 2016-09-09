@@ -142,7 +142,7 @@ if __name__ == "__main__":
             # write states
             for i in xrange(n_choices):
                 c = cases[i]
-                current[c / (args.size - 1) + 1, c % (args.size - 1) + 1] = 60 if i < args.init else 120 if i < args.init + args.trap else 103 if i < args.init + args.trap + args.goal else 49
+                current[c // (args.size - 1) + 1, c % (args.size - 1) + 1] = 60 if i < args.init else 120 if i < args.init + args.trap else 103 if i < args.init + args.trap + args.goal else 49
             # append new environment
             str_maze = [[str(chr(x)) for x in line] for line in current]
             mazes.append(str_maze)

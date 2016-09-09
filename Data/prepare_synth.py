@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 s2 = get_next_state_id(session[-1], a)
                 session.append(a)
                 session.append(s2)
-            f.write("%d\t%d\t%s\n" % (user, cluster + 1, ' '.join(str(x) for x in session) )) # Cluster 0 is the average transition probability for the MDP ==> not a user, no test sequences
+            f.write("%d\t%d\t%s\n" % (user, cluster, ' '.join(str(x) for x in session) )) # Cluster 0 is the average transition probability for the MDP ==> not a user, no test sequences
 
     ###### 4. Set rewards
     print("\n\n\033[91m-----> Rewards generation\033[0m")
