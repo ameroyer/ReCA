@@ -143,7 +143,7 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
   std::getline(infile, line);
   iss.str(line);
   iss >> aux;
-  n_environments = aux;
+  n_environments = aux - 1; // Skip the first environment as it only contains the model for the MDP
   // history length
   std::getline(infile, line);
   iss.str(line);
@@ -232,22 +232,8 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
   std::istringstream iss;
   double v;
   size_t s1, a, s2, link, p;
-  int transitions_found = 0, profiles_found = 0;
+  int transitions_found = 0, profiles_found = -1;
   boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
-
-  // If MDP mode, load profiles proportions for weighted average
-  std::vector<double> profiles_prop;
-  if (is_mdp) {
-    file.open(pfile, std::ios::in);
-    assert((".profiles file not found", file.is_open()));
-    while (std::getline(file, line)) {
-      std::istringstream iss(line);
-      if (!(iss >> s1 >> s2 >> v)) { break; }
-      profiles_prop.push_back(v);
-    }
-    file.close();
-    assert(("Missing profiles in .profiles file", profiles_prop.size() == n_environments));
-  }
 
   // Load transitions
   std::istream infile(nullptr);
@@ -274,19 +260,21 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
       assert(("Too many profiles found in .transitions file",
 	      profiles_found <= n_environments));
       transitions_found = 0;
-      continue;
+      if (is_mdp) { break; } else { continue; }
     }
     // Set transition probability
     link = is_connected(s1, s2);
     assert(("Unfeasible transition with >0 probability", link < n_actions));
     if (is_mdp) {
-      transition_matrix[index(0, s1, a - 1, link)] += profiles_prop.at(profiles_found) * v;
+      transition_matrix[index(0, s1, a - 1, link)] = v;
     } else {
       transition_matrix[index(profiles_found, s1, a - 1, link)] = v;
     }
     transitions_found++;
   }
-  assert(("Missing profiles in .transitions file", profiles_found == n_environments));
+  if (!is_mdp) {
+    assert(("Missing profiles in .transitions file", profiles_found == n_environments));
+  }
   if (file.is_open()) {
     file.close();
   }
@@ -295,12 +283,12 @@ void Recomodel::load_transitions(std::string tfile, bool precision /* =false */,
   }
 
   //Normalization
-  if (normalization) {
+  if ((normalization)) {
     std::cout << "Normalization\n";
     double nrm;
     int env_loop = (is_mdp ? 1 : n_environments);
     for (int p = 0; p < env_loop; p++) {
-      std::cerr << "\r env " << p + 1 << " / " << n_environments;
+      std::cerr << "\r env " << p + 1 << " / " << env_loop;
       for (s1 = 0; s1 < n_observations; s1++) {
 	for (a = 0; a < n_actions; a++) {
 	  nrm = 0.0;
