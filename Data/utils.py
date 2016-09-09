@@ -33,7 +33,7 @@ else:
         return d.itervalues()
     def iteritems(d):
         return d.iteritems()
-    
+
 class Logger:
     """
     Capture print statments and write them to a log file while printing on the screen.
@@ -68,7 +68,7 @@ def line_count(f):
     Returns:
      * ``nlines`` (*int*): number of lines in f.
     """
-    nlines= len(f.readlines())
+    nlines = len(f.readlines())
     f.close()
     return nlines
 
@@ -85,79 +85,6 @@ def get_nstates(n_items, hlength):
      * ``n_states`` (*str*): number of states in the corresponding MDPs.
     """
     return (n_items ** (hlength + 1) - 1) // (n_items - 1)
-
-
-def assign_customer_cluster(user, ulevel):
-    from random import randint
-    """
-    Assigns user profile given customer data from the foodmart dataset.
-
-    Args:
-     * ``user`` (*list*): data for one customer extracted from the foodmart dataset.
-
-    Returns:
-     * ``cluster`` (*int*): Cluster ID
-    """
-    # Parse
-    gender = int(user[19] == 'F')
-    age_category = ((1997 - int(user[16].split('-', 1)[0])) // 10) // 2
-    n_children = int(user[20])
-    n_children_home = min(int(user[21]), 3) #clip to 3
-    income = int(''.join([c for c in user[18].split('-')[-1] if c.isdigit()]))
-    income = 0 if income <= 50 else 1 if income <= 90 else 2
-    card = 0 if user[24] == 'Bronze' else 1 if user[24] == 'Normal' else 2
-    status = int(user[17] == 'M')
-    house = int(user[26] == 'Y')
-    ncars = int(user[27])
-    #return n_children_home
-    # Ulevel 0, distinguish on 5 age category and gender
-    if ulevel == 0:
-        return gender + 2 * age_category
-    # Ulevel 1, gender, number of children at home and income
-    elif ulevel == 1:
-        return gender + 2 * (n_children_home + 4 * income)
-    # Ulevel 2: number of children, income, marital status and house
-    else:
-        return n_children_home + 4 * (income + 3 * (status + 2 * (house + 2 * card)))
-
-def print_customer_cluster(cluster, ulevel):
-    """
-    Returns the string representation for a cluster ID.
-
-    Args:
-     * ``cluster`` (*int*): Cluster ID
-
-    Returns:
-     * ``cluster_str`` (*str*): String representation of the cluster ID
-    """
-    if ulevel == 0:
-        return "%s in the %d+ years old category" %("Female" if cluster % 2 else "Male", 20 * (cluster // 2))
-    elif ulevel == 1:
-        return "%s, %d children at home, %d tier income" %("Female" if cluster % 2 else "Male", (cluster // 2) % 4, cluster // 8)
-    elif ulevel == 2:
-        return "%s, %s, %d children at home, %d tier income. %d card" %("Married" if ((cluster // 12) % 2) else "Single", "house" if cluster // 24 else "house", cluster % 4, (cluster // 4) % 3, cluster // 24)
-        
-
-
-def get_n_customer_cluster(ulevel):
-    """
-    Returns the number of user profiles for the given clustering parameter.
-
-    Args:
-     * ``ulevel`` (*int*): user clustering parameter.
-
-    Returns:
-     * ``n_clusters`` (*int*): Number of clusters that will be created.
-    """
-    if ulevel == 0:
-        return 10
-    elif ulevel == 1:
-        return 24
-    elif ulevel == 2:
-        return 89
-    else:
-        print >> sys.stderr, "Unknown ulevel = %d option. Exit." % ulevel
-        raise SystemExit
 
 
 def assign_product_cluster(product, product_classes, plevel):
@@ -270,16 +197,3 @@ def id_to_state(s):
         i += 1
     output[-1] = real
     return output
-
-class ChunkedWriter(object):
-    """
-    Write chunks of data in a given file. Work around of the overflow bug when writing
-    with gzip in Python 2.7
-    """
-    def __init__(self, file, chunksize=65536):
-        self.file = file
-        self.chunksize = chunksize
-
-    def write(self, mdata):
-        for i in range(0, len(mdata), self.chunksize):
-            self.file.write(bytes(mdata[i:i+self.chunksize]))
