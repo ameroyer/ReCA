@@ -237,6 +237,53 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
   return std::make_pair(accuracy, 1.0 / rank);
 }
 
+/*! \brief
+  Statistics class to compute mean and standard deviation (across sequences) of the evaluation measures.
+*/
+public class Stats
+{
+  double[] data;
+  int size;
+  int indx = 0;
+
+public:
+  Statistics(int s) {
+    size = s;
+    data = new double[size]();
+  }
+
+  Statistics::~Statistics() {
+    delete []data;
+  }
+
+  void update(double v) {
+    assert(("overflow error", indx < size));
+    data[indx++] = v;
+  }
+
+  double getMean()
+  {
+    double sum = 0.0;
+    for(double a : data)
+      sum += a;
+    return sum/size;
+  }
+
+  double getVariance()
+  {
+    double mean = getMean();
+    double temp = 0;
+    for(double a :data)
+      temp += (a-mean)*(a-mean);
+    return temp/size;
+  }
+
+  double getStdDev()
+  {
+    return Math.sqrt(getVariance());
+  }
+}
+
 /*! \brief Evaluates a given solver using external test sequences (sequence of (observation, action)) stored in a file.
  *
  * \param sfile full path to the base_name.test file.
