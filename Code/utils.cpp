@@ -22,6 +22,63 @@ std::string current_time_str() {
 }
 
 /**
+ * STATS
+ */
+Stats::Stats(int s) {
+    size = s;
+    acc_mean = new double[size]();
+    acc_var = new double[size]();
+    lengths = new double[size]();
+  }
+
+
+Stats::~Stats() {
+  //delete []acc_mean;
+  //delete []acc_var;
+  //delete []lengths;
+  }
+
+
+void Stats::update(int cluster, double v) {
+    assert(("overflow error", cluster < size));
+    acc_mean[cluster] += v;
+    acc_var[cluster] += v * v;
+    lengths[cluster] += 1;
+  }
+
+double Stats::get_mean(int cluster) {
+    if (cluster >= 0) {
+      return acc_mean[cluster] / lengths[cluster];
+    } else {
+      double v, l = 0;
+      for (int i = 0; i < size; i++) {
+	v += acc_mean[i];
+	l += lengths[i];
+      }
+      return v / l;
+    }
+  }
+
+double Stats::get_var(int cluster) {
+    if (cluster >= 0) {
+      double mean = get_mean(cluster);
+      return acc_var[cluster] / lengths[cluster] - mean * mean;
+    } else {
+      double v, l = 0;
+      for (int i = 0; i < size; i++) {
+	v += get_var(i);
+	l += 1;
+      }
+      return v / l;
+    }
+  }
+
+double Stats::get_std(int cluster) {
+    return sqrt(get_var(cluster));
+  }
+
+
+/**
  * LOAD_TEST_SESSIONS
  */
 std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > load_test_sessions(std::string sfile) {
@@ -83,31 +140,27 @@ double avprecision_score(std::vector<double> action_scores, size_t action) {
 /**
  * PRINT_EVALUATION_RESULT
  */
-void print_evaluation_result(int* set_lengths,
-			     int n_environments,
-			     std::vector<double*> results,
+void print_evaluation_result(int n_environments,
+			     std::vector<Stats> results,
 			     std::vector<std::string> titles,
 			     bool verbose /* = false*/)
 {
   // Print results for each environment, as well as global result
-  int session_length = 0;
   int n_results = results.size();
   std::vector<double> acc(n_results, 0);
   if (verbose) { std::cout << "> Results by cluster ----------------\n";}
   for (int i = 0; i < n_environments; i++) {
     if (verbose) { std::cout << "   cluster " << i;}
     for (int j = 0; j < n_results; j++) {
-      acc.at(j) += results.at(j)[i];
-      if (verbose) { std::cout << "\n      > " << titles[j] << ": " << results.at(j)[i] / set_lengths[i];}
+      if (verbose) { std::cout << "\n      > " << titles[j] << ": " << results.at(j).get_mean(i) << " +/- " << results.at(j).get_std(i);}
     }
-    session_length += set_lengths[i];
     if (verbose) {std::cout << "\n\n";}
   }
 
   // Global
   std::cout << "> Global results ----------------";
   for (int j = 0; j < n_results; j++) {
-    std::cout << "\n      > " << titles[j] << ": " << acc.at(j) / session_length;
+    std::cout << "\n      > " << titles[j] << ": " << results.at(j).get_mean(-1) << " +/- " << results.at(j).get_std(-1);
   }
 }
 

@@ -13,6 +13,7 @@
 ** -------------------------------------------------------------------------*/
 
 #include <random>
+#include <math.h>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -31,6 +32,25 @@
  * \return current time in a readable string format.
  */
 std::string current_time_str();
+
+/*! \brief
+  Statistics class to compute mean and standard deviation (across sequences) of the evaluation measures for each cluster.
+*/
+class Stats {
+private:
+  double* acc_mean;
+  double* acc_var;
+  double* lengths;
+  int size;
+
+public:
+  Stats(int s);
+  ~Stats();
+  void update(int cluster, double v);
+  double get_mean(int cluster);
+  double get_var(int cluster);
+  double get_std(int cluster);
+};
 
 /*! \brief Returns a sequence of sessions and corresponding user
  * profile for evaluation. Sessions are loaded from the corresponding
@@ -52,9 +72,8 @@ std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > load_test
  * \param titles contains the name of each evaluation measures
  * \param verbose if true, increases the verbosity. Defaults to false.
  */
-void print_evaluation_result(int* set_lengths,
-			     int n_environments,
-			     std::vector<double*> results,
+void print_evaluation_result(int n_environments,
+			     std::vector<Stats> results,
 			     std::vector<std::string> titles,
 			     bool verbose /* = false*/);
 
@@ -237,53 +256,6 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
   return std::make_pair(accuracy, 1.0 / rank);
 }
 
-/*! \brief
-  Statistics class to compute mean and standard deviation (across sequences) of the evaluation measures.
-*/
-public class Stats
-{
-  double[] data;
-  int size;
-  int indx = 0;
-
-public:
-  Statistics(int s) {
-    size = s;
-    data = new double[size]();
-  }
-
-  Statistics::~Statistics() {
-    delete []data;
-  }
-
-  void update(double v) {
-    assert(("overflow error", indx < size));
-    data[indx++] = v;
-  }
-
-  double getMean()
-  {
-    double sum = 0.0;
-    for(double a : data)
-      sum += a;
-    return sum/size;
-  }
-
-  double getVariance()
-  {
-    double mean = getMean();
-    double temp = 0;
-    for(double a :data)
-      temp += (a-mean)*(a-mean);
-    return temp/size;
-  }
-
-  double getStdDev()
-  {
-    return Math.sqrt(getVariance());
-  }
-}
-
 /*! \brief Evaluates a given solver using external test sequences (sequence of (observation, action)) stored in a file.
  *
  * \param sfile full path to the base_name.test file.
@@ -310,22 +282,20 @@ void evaluate_from_file(std::string sfile,
   // Initialize arrays
   AIToolbox::POMDP::Belief belief;
   std::vector< double > action_scores(model.getA(), 0);
-  int set_lengths [model.getE()] = {0};
-  double mean_accuracy [model.getE()] = {0};
-  double mean_precision [model.getE()] = {0};
-  double mean_total_reward [model.getE()] = {0};
-  double mean_discounted_reward [model.getE()] = {0};
-  double mean_identification [model.getE()] = {0};
-  double mean_identification_precision [model.getE()] = {0};
-  double total_length = 0.;
+  Stats accuracy_s(model.getE());
+  Stats precision_s(model.getE());
+  Stats total_reward_s(model.getE());
+  Stats discounted_reward_s(model.getE());
+  Stats identification_s(model.getE());
+  Stats identification_precision_s(model.getE());
 
   // Load test sessions
+  double total_length = 0.;
   std::vector<std::pair<int, std::vector<std::pair<size_t, size_t> > > > aux = load_test_sessions(sfile);
   for (auto it = begin(aux); it != end(aux); ++it) {
     // Identity
     user++;
     cluster = std::get<0>(*it);
-    set_lengths[cluster] += 1;
     session_length = std::get<1>(*it).size();
     total_length += session_length;
     assert(("Empty test user session", session_length > 0));
@@ -367,12 +337,13 @@ void evaluate_from_file(std::string sfile,
 
     // Update scores
     if (!verbose) {std::cerr.clear();}
-    mean_accuracy[cluster] += accuracy / session_length;
-    mean_precision[cluster] += precision / session_length;
-    mean_total_reward[cluster] += total_reward / session_length;
-    mean_discounted_reward[cluster] += discounted_reward;
-    mean_identification[cluster] += identity / session_length;
-    mean_identification_precision[cluster] += identity_precision / session_length;
+    //std::cout << accuracy / session_length << "\n";
+    accuracy_s.update(cluster, accuracy / session_length);
+    precision_s.update(cluster, precision / session_length);
+    total_reward_s.update(cluster, total_reward / session_length);
+    discounted_reward_s.update(cluster, discounted_reward);
+    identification_s.update(cluster, identity / session_length);
+    identification_precision_s.update(cluster, identity_precision / session_length);
   }
 
   // Only output relevant metrics
@@ -381,17 +352,17 @@ void evaluate_from_file(std::string sfile,
 
   // Output
   std::cout << "\n\n";
-  std::vector<std::string> titles {"discrw", "acc", "avgpr"}; std::vector<double*> results {mean_discounted_reward, mean_accuracy, mean_precision};
+  std::vector<std::string> titles {"discrw", "acc", "avgpr"}; std::vector<Stats> results {discounted_reward_s, accuracy_s, precision_s};
 
   if (has_total_reward) {
     titles.insert(titles.begin(), "avgrw");
-    results.insert(results.begin(), mean_total_reward);
+    results.insert(results.begin(), total_reward_s);
   }
   if (has_identity) {
     titles.push_back("idac"); titles.push_back("idpr");
-    results.push_back(mean_identification); results.push_back(mean_identification_precision);
+    results.push_back(identification_s); results.push_back(identification_precision_s);
   }
-  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  print_evaluation_result(model.getE(), results, titles, verbose);
   std::cout << "\n      > avglng: " << total_length / user;
   std::cout << "\n\n";
 }
@@ -505,7 +476,8 @@ void evaluate_interactive(int n_sessions,
     titles.push_back("idac"); titles.push_back("idpr");
     results.push_back(mean_identification); results.push_back(mean_identification_precision);
   }
-  print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  //TODO
+  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
   std::cout << "\n      > " << n_failures << " / " << n_sessions << " reach failures\n";
   std::cout << "\n\n";
 }

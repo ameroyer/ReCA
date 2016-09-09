@@ -143,7 +143,7 @@ Recomodel::Recomodel(std::string sfile, double discount_, bool is_mdp_) {
   std::getline(infile, line);
   iss.str(line);
   iss >> aux;
-  n_environments = aux - 1; // Skip the first environment as it only contains the model for the MDP
+  n_environments = aux; // Real number of env. (ignoring the transitions for the MDP model)
   // history length
   std::getline(infile, line);
   iss.str(line);
