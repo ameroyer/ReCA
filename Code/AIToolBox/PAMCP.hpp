@@ -272,11 +272,13 @@ namespace AIToolbox {
       /**
        * @brief This function samples a given belief in order to produce a particle approximation of it.
        *
-       * @param b The belief to be approximated.
+       * @param b The belief (over environment) to be approximated.
+       * @param o The current observation to determine the belief
+       * over states.
        *
        * @return A particle belief approximating the input belief.
        */
-      SampleBelief makeSampledBelief(const Belief & b);
+      SampleBelief makeSampledBelief(const Belief & b, size_t o);
 
       /**
        * @brief This function updates the full graph with the current state of the simulation.
@@ -318,11 +320,8 @@ namespace AIToolbox {
       }
 
       // Init the belief
-      auto b = Belief(S); b.fill(0);
-      for (int u = 0; u < E; u++) {
-	b(u * O + o) = be(u);
-      }
-      graph_.belief = makeSampledBelief(b);
+      auto b = Belief(be);
+      graph_.belief = makeSampledBelief(b, o);
 
       return runSimulation(horizon);
     }
@@ -330,10 +329,9 @@ namespace AIToolbox {
     template <typename M>
     size_t PAMCP<M>::sampleAction(size_t a, size_t o, unsigned horizon) {
       // Update full graph
-      //update_fullgraph(graph_.children[a], a);
       if (to_update) {
-      update_fullgraph(graph_, a);
-      history.push_back(std::make_pair(a, o));
+	update_fullgraph(graph_, a);
+	history.push_back(std::make_pair(a, o));
       }
 
       // Run simulation
@@ -342,7 +340,7 @@ namespace AIToolbox {
       auto it = obs.find(o);
       if ( it == obs.end() ) {
 	std::cerr << "\nObservation " << o << " never experienced in simulation, restarting belief from " << o << "\n";
-	auto b = Belief(E); b.fill(1.0/E);
+	auto b = Belief(E); b.fill(1.0 / E);
 	reset_belief = true;
 	to_update = false;
 	return sampleAction(b, o, horizon, false);
@@ -357,7 +355,9 @@ namespace AIToolbox {
 
       if ( ! graph_.belief.size() ) {
 	std::cerr << "POMCP Lost track of the belief, restarting with uniform..\n";
-	auto b = Belief(S); b.fill(1.0/S);
+	auto b = Belief(E); b.fill(1.0 / E);
+	reset_belief = true;
+	to_update = false;
 	return sampleAction(b, o, horizon);
       }
 
@@ -494,12 +494,12 @@ namespace AIToolbox {
     }
 
     template <typename M>
-    typename PAMCP<M>::SampleBelief PAMCP<M>::makeSampledBelief(const Belief & b) {
+    typename PAMCP<M>::SampleBelief PAMCP<M>::makeSampledBelief(const Belief & b, size_t o) {
       SampleBelief belief;
       belief.reserve(beliefSize_);
 
       for ( size_t i = 0; i < beliefSize_; ++i )
-	belief.push_back(sampleProbability(S, b, rand_));
+	belief.push_back(sampleProbability(E, b, rand_) * O + o);
 
       return belief;
     }
