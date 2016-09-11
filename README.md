@@ -126,13 +126,36 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
 
 #### examples
 synthetic recommandations, 10 environments, 10 actions, ~100 states
-```bash
-cd Data/
-python prepare_synth.py --norm --zip -n 10 -k 2
-cd ../Code/
-./run.sh -m mdp -d rd -n 10 -k 2 -c
-./run.sh -m pamcp -d rd -n 10 -k 2 -c
-```
+
+  * if needed, generate the data (already available on the repository)
+  ```bash
+   cd Data/
+   python prepare_synth.py --norm --zip -n 10 -k 2
+  ```
+
+  * run the code
+  ```bash
+  cd ../Code/
+  ./run.sh -m mdp -d rd -n 10 -k 2 -c
+  ./run.sh -m pamcp -d rd -n 10 -k 2 -c	
+  ```
+
+Foodmart recommandations, 5 environments, 22 actions, ~500 states
+
+  * if needed, generate the data (already available on the repository)
+  ```bash
+   cd Data/
+   python prepare_foodmart.py --norm --zip -u 5 -p 3 -k 2
+  ```
+
+  * run the code
+  ```bash
+  cd ../Code/
+  ./run.sh -m mdp -d fm -n 3 -k 2 -u 5 -c
+  ./run.sh -m pamcp -d rd -n 3 -k 2 -u 5 -c
+  ./run.sh -m pbvi -d rd -n 3 -k 2 -u 5 -c	
+  ```
+
 
 # Known issues
   * When using the ``--zip`` option for data generation, it might be necessary to run the script with ``python3`` due to an [issue](https://bugs.python.org/issue23306) with the gzip library in python < 3.

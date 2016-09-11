@@ -1,0 +1,53 @@
+507 States
+22 Actions (Items)
+5 user profiles
+2 history length
+1.100000 alpha
+3 product clustering level
+
+
+[92m-----> Load and Cluster products[0m
+   22 product profiles (1561 products)
+     > Periodicals: 1.60%
+     > Dairy: 6.41%
+     > Carousel: 0.32%
+     > Checkout: 0.64%
+     > Breakfast Foods: 1.28%
+     > Deli: 4.48%
+     > Eggs: 1.60%
+     > Beverages: 5.12%
+     > Produce: 14.09%
+     > Alcoholic Beverages: 2.56%
+     > Frozen Foods: 9.93%
+     > Canned Products: 0.64%
+     > Meat: 0.64%
+     > Seafood: 0.64%
+     > Health and Hygiene: 6.09%
+     > Snacks: 2.56%
+     > Household: 10.25%
+     > Snack Foods: 11.53%
+     > Baking Goods: 7.69%
+     > Canned Foods: 7.05%
+     > Starchy Foods: 1.92%
+     > Baked Goods: 2.88%
+
+[92m-----> [Optional] Export states description[0m
+
+[92m-----> Load user sessions and shop profits [0m
+
+[91m-----> Reward function[0m
+   507 States in the database
+   22 Actions in the database
+
+[91m-----> Clustering[0m
+   Create cluster 0 with mean perplexity 16.479
+   Create cluster 1 with mean perplexity 11.294
+   Create cluster 2 with mean perplexity 14.826
+   Create cluster 3 with mean perplexity 12.220
+   Create cluster 4 with mean perplexity 14.100
+
+[91m-----> Probability inference[0m
+
+
+[92m-----> End[0m
+   All outputs are in /home/amelie/Rotations/ChatterjeeRotation/Code/Models/Foodmart523/foodmart_u5_k2_pl3

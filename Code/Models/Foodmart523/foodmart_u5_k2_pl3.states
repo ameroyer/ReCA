@@ -1,0 +1,507 @@
+0.000000	#|#
+1.000000	#|Beverages
+2.000000	#|Breakfast Foods
+3.000000	#|Canned Foods
+4.000000	#|Canned Products
+5.000000	#|Carousel
+6.000000	#|Checkout
+7.000000	#|Dairy
+8.000000	#|Deli
+9.000000	#|Eggs
+10.000000	#|Frozen Foods
+11.000000	#|Health and Hygiene
+12.000000	#|Household
+13.000000	#|Meat
+14.000000	#|Periodicals
+15.000000	#|Produce
+16.000000	#|Seafood
+17.000000	#|Snack Foods
+18.000000	#|Snacks
+19.000000	#|Starchy Foods
+20.000000	#|Alcoholic Beverages
+21.000000	#|Baked Goods
+22.000000	#|Baking Goods
+23.000000	Beverages|Beverages
+24.000000	Beverages|Breakfast Foods
+25.000000	Beverages|Canned Foods
+26.000000	Beverages|Canned Products
+27.000000	Beverages|Carousel
+28.000000	Beverages|Checkout
+29.000000	Beverages|Dairy
+30.000000	Beverages|Deli
+31.000000	Beverages|Eggs
+32.000000	Beverages|Frozen Foods
+33.000000	Beverages|Health and Hygiene
+34.000000	Beverages|Household
+35.000000	Beverages|Meat
+36.000000	Beverages|Periodicals
+37.000000	Beverages|Produce
+38.000000	Beverages|Seafood
+39.000000	Beverages|Snack Foods
+40.000000	Beverages|Snacks
+41.000000	Beverages|Starchy Foods
+42.000000	Beverages|Alcoholic Beverages
+43.000000	Beverages|Baked Goods
+44.000000	Beverages|Baking Goods
+45.000000	Breakfast Foods|Beverages
+46.000000	Breakfast Foods|Breakfast Foods
+47.000000	Breakfast Foods|Canned Foods
+48.000000	Breakfast Foods|Canned Products
+49.000000	Breakfast Foods|Carousel
+50.000000	Breakfast Foods|Checkout
+51.000000	Breakfast Foods|Dairy
+52.000000	Breakfast Foods|Deli
+53.000000	Breakfast Foods|Eggs
+54.000000	Breakfast Foods|Frozen Foods
+55.000000	Breakfast Foods|Health and Hygiene
+56.000000	Breakfast Foods|Household
+57.000000	Breakfast Foods|Meat
+58.000000	Breakfast Foods|Periodicals
+59.000000	Breakfast Foods|Produce
+60.000000	Breakfast Foods|Seafood
+61.000000	Breakfast Foods|Snack Foods
+62.000000	Breakfast Foods|Snacks
+63.000000	Breakfast Foods|Starchy Foods
+64.000000	Breakfast Foods|Alcoholic Beverages
+65.000000	Breakfast Foods|Baked Goods
+66.000000	Breakfast Foods|Baking Goods
+67.000000	Canned Foods|Beverages
+68.000000	Canned Foods|Breakfast Foods
+69.000000	Canned Foods|Canned Foods
+70.000000	Canned Foods|Canned Products
+71.000000	Canned Foods|Carousel
+72.000000	Canned Foods|Checkout
+73.000000	Canned Foods|Dairy
+74.000000	Canned Foods|Deli
+75.000000	Canned Foods|Eggs
+76.000000	Canned Foods|Frozen Foods
+77.000000	Canned Foods|Health and Hygiene
+78.000000	Canned Foods|Household
+79.000000	Canned Foods|Meat
+80.000000	Canned Foods|Periodicals
+81.000000	Canned Foods|Produce
+82.000000	Canned Foods|Seafood
+83.000000	Canned Foods|Snack Foods
+84.000000	Canned Foods|Snacks
+85.000000	Canned Foods|Starchy Foods
+86.000000	Canned Foods|Alcoholic Beverages
+87.000000	Canned Foods|Baked Goods
+88.000000	Canned Foods|Baking Goods
+89.000000	Canned Products|Beverages
+90.000000	Canned Products|Breakfast Foods
+91.000000	Canned Products|Canned Foods
+92.000000	Canned Products|Canned Products
+93.000000	Canned Products|Carousel
+94.000000	Canned Products|Checkout
+95.000000	Canned Products|Dairy
+96.000000	Canned Products|Deli
+97.000000	Canned Products|Eggs
+98.000000	Canned Products|Frozen Foods
+99.000000	Canned Products|Health and Hygiene
+100.000000	Canned Products|Household
+101.000000	Canned Products|Meat
+102.000000	Canned Products|Periodicals
+103.000000	Canned Products|Produce
+104.000000	Canned Products|Seafood
+105.000000	Canned Products|Snack Foods
+106.000000	Canned Products|Snacks
+107.000000	Canned Products|Starchy Foods
+108.000000	Canned Products|Alcoholic Beverages
+109.000000	Canned Products|Baked Goods
+110.000000	Canned Products|Baking Goods
+111.000000	Carousel|Beverages
+112.000000	Carousel|Breakfast Foods
+113.000000	Carousel|Canned Foods
+114.000000	Carousel|Canned Products
+115.000000	Carousel|Carousel
+116.000000	Carousel|Checkout
+117.000000	Carousel|Dairy
+118.000000	Carousel|Deli
+119.000000	Carousel|Eggs
+120.000000	Carousel|Frozen Foods
+121.000000	Carousel|Health and Hygiene
+122.000000	Carousel|Household
+123.000000	Carousel|Meat
+124.000000	Carousel|Periodicals
+125.000000	Carousel|Produce
+126.000000	Carousel|Seafood
+127.000000	Carousel|Snack Foods
+128.000000	Carousel|Snacks
+129.000000	Carousel|Starchy Foods
+130.000000	Carousel|Alcoholic Beverages
+131.000000	Carousel|Baked Goods
+132.000000	Carousel|Baking Goods
+133.000000	Checkout|Beverages
+134.000000	Checkout|Breakfast Foods
+135.000000	Checkout|Canned Foods
+136.000000	Checkout|Canned Products
+137.000000	Checkout|Carousel
+138.000000	Checkout|Checkout
+139.000000	Checkout|Dairy
+140.000000	Checkout|Deli
+141.000000	Checkout|Eggs
+142.000000	Checkout|Frozen Foods
+143.000000	Checkout|Health and Hygiene
+144.000000	Checkout|Household
+145.000000	Checkout|Meat
+146.000000	Checkout|Periodicals
+147.000000	Checkout|Produce
+148.000000	Checkout|Seafood
+149.000000	Checkout|Snack Foods
+150.000000	Checkout|Snacks
+151.000000	Checkout|Starchy Foods
+152.000000	Checkout|Alcoholic Beverages
+153.000000	Checkout|Baked Goods
+154.000000	Checkout|Baking Goods
+155.000000	Dairy|Beverages
+156.000000	Dairy|Breakfast Foods
+157.000000	Dairy|Canned Foods
+158.000000	Dairy|Canned Products
+159.000000	Dairy|Carousel
+160.000000	Dairy|Checkout
+161.000000	Dairy|Dairy
+162.000000	Dairy|Deli
+163.000000	Dairy|Eggs
+164.000000	Dairy|Frozen Foods
+165.000000	Dairy|Health and Hygiene
+166.000000	Dairy|Household
+167.000000	Dairy|Meat
+168.000000	Dairy|Periodicals
+169.000000	Dairy|Produce
+170.000000	Dairy|Seafood
+171.000000	Dairy|Snack Foods
+172.000000	Dairy|Snacks
+173.000000	Dairy|Starchy Foods
+174.000000	Dairy|Alcoholic Beverages
+175.000000	Dairy|Baked Goods
+176.000000	Dairy|Baking Goods
+177.000000	Deli|Beverages
+178.000000	Deli|Breakfast Foods
+179.000000	Deli|Canned Foods
+180.000000	Deli|Canned Products
+181.000000	Deli|Carousel
+182.000000	Deli|Checkout
+183.000000	Deli|Dairy
+184.000000	Deli|Deli
+185.000000	Deli|Eggs
+186.000000	Deli|Frozen Foods
+187.000000	Deli|Health and Hygiene
+188.000000	Deli|Household
+189.000000	Deli|Meat
+190.000000	Deli|Periodicals
+191.000000	Deli|Produce
+192.000000	Deli|Seafood
+193.000000	Deli|Snack Foods
+194.000000	Deli|Snacks
+195.000000	Deli|Starchy Foods
+196.000000	Deli|Alcoholic Beverages
+197.000000	Deli|Baked Goods
+198.000000	Deli|Baking Goods
+199.000000	Eggs|Beverages
+200.000000	Eggs|Breakfast Foods
+201.000000	Eggs|Canned Foods
+202.000000	Eggs|Canned Products
+203.000000	Eggs|Carousel
+204.000000	Eggs|Checkout
+205.000000	Eggs|Dairy
+206.000000	Eggs|Deli
+207.000000	Eggs|Eggs
+208.000000	Eggs|Frozen Foods
+209.000000	Eggs|Health and Hygiene
+210.000000	Eggs|Household
+211.000000	Eggs|Meat
+212.000000	Eggs|Periodicals
+213.000000	Eggs|Produce
+214.000000	Eggs|Seafood
+215.000000	Eggs|Snack Foods
+216.000000	Eggs|Snacks
+217.000000	Eggs|Starchy Foods
+218.000000	Eggs|Alcoholic Beverages
+219.000000	Eggs|Baked Goods
+220.000000	Eggs|Baking Goods
+221.000000	Frozen Foods|Beverages
+222.000000	Frozen Foods|Breakfast Foods
+223.000000	Frozen Foods|Canned Foods
+224.000000	Frozen Foods|Canned Products
+225.000000	Frozen Foods|Carousel
+226.000000	Frozen Foods|Checkout
+227.000000	Frozen Foods|Dairy
+228.000000	Frozen Foods|Deli
+229.000000	Frozen Foods|Eggs
+230.000000	Frozen Foods|Frozen Foods
+231.000000	Frozen Foods|Health and Hygiene
+232.000000	Frozen Foods|Household
+233.000000	Frozen Foods|Meat
+234.000000	Frozen Foods|Periodicals
+235.000000	Frozen Foods|Produce
+236.000000	Frozen Foods|Seafood
+237.000000	Frozen Foods|Snack Foods
+238.000000	Frozen Foods|Snacks
+239.000000	Frozen Foods|Starchy Foods
+240.000000	Frozen Foods|Alcoholic Beverages
+241.000000	Frozen Foods|Baked Goods
+242.000000	Frozen Foods|Baking Goods
+243.000000	Health and Hygiene|Beverages
+244.000000	Health and Hygiene|Breakfast Foods
+245.000000	Health and Hygiene|Canned Foods
+246.000000	Health and Hygiene|Canned Products
+247.000000	Health and Hygiene|Carousel
+248.000000	Health and Hygiene|Checkout
+249.000000	Health and Hygiene|Dairy
+250.000000	Health and Hygiene|Deli
+251.000000	Health and Hygiene|Eggs
+252.000000	Health and Hygiene|Frozen Foods
+253.000000	Health and Hygiene|Health and Hygiene
+254.000000	Health and Hygiene|Household
+255.000000	Health and Hygiene|Meat
+256.000000	Health and Hygiene|Periodicals
+257.000000	Health and Hygiene|Produce
+258.000000	Health and Hygiene|Seafood
+259.000000	Health and Hygiene|Snack Foods
+260.000000	Health and Hygiene|Snacks
+261.000000	Health and Hygiene|Starchy Foods
+262.000000	Health and Hygiene|Alcoholic Beverages
+263.000000	Health and Hygiene|Baked Goods
+264.000000	Health and Hygiene|Baking Goods
+265.000000	Household|Beverages
+266.000000	Household|Breakfast Foods
+267.000000	Household|Canned Foods
+268.000000	Household|Canned Products
+269.000000	Household|Carousel
+270.000000	Household|Checkout
+271.000000	Household|Dairy
+272.000000	Household|Deli
+273.000000	Household|Eggs
+274.000000	Household|Frozen Foods
+275.000000	Household|Health and Hygiene
+276.000000	Household|Household
+277.000000	Household|Meat
+278.000000	Household|Periodicals
+279.000000	Household|Produce
+280.000000	Household|Seafood
+281.000000	Household|Snack Foods
+282.000000	Household|Snacks
+283.000000	Household|Starchy Foods
+284.000000	Household|Alcoholic Beverages
+285.000000	Household|Baked Goods
+286.000000	Household|Baking Goods
+287.000000	Meat|Beverages
+288.000000	Meat|Breakfast Foods
+289.000000	Meat|Canned Foods
+290.000000	Meat|Canned Products
+291.000000	Meat|Carousel
+292.000000	Meat|Checkout
+293.000000	Meat|Dairy
+294.000000	Meat|Deli
+295.000000	Meat|Eggs
+296.000000	Meat|Frozen Foods
+297.000000	Meat|Health and Hygiene
+298.000000	Meat|Household
+299.000000	Meat|Meat
+300.000000	Meat|Periodicals
+301.000000	Meat|Produce
+302.000000	Meat|Seafood
+303.000000	Meat|Snack Foods
+304.000000	Meat|Snacks
+305.000000	Meat|Starchy Foods
+306.000000	Meat|Alcoholic Beverages
+307.000000	Meat|Baked Goods
+308.000000	Meat|Baking Goods
+309.000000	Periodicals|Beverages
+310.000000	Periodicals|Breakfast Foods
+311.000000	Periodicals|Canned Foods
+312.000000	Periodicals|Canned Products
+313.000000	Periodicals|Carousel
+314.000000	Periodicals|Checkout
+315.000000	Periodicals|Dairy
+316.000000	Periodicals|Deli
+317.000000	Periodicals|Eggs
+318.000000	Periodicals|Frozen Foods
+319.000000	Periodicals|Health and Hygiene
+320.000000	Periodicals|Household
+321.000000	Periodicals|Meat
+322.000000	Periodicals|Periodicals
+323.000000	Periodicals|Produce
+324.000000	Periodicals|Seafood
+325.000000	Periodicals|Snack Foods
+326.000000	Periodicals|Snacks
+327.000000	Periodicals|Starchy Foods
+328.000000	Periodicals|Alcoholic Beverages
+329.000000	Periodicals|Baked Goods
+330.000000	Periodicals|Baking Goods
+331.000000	Produce|Beverages
+332.000000	Produce|Breakfast Foods
+333.000000	Produce|Canned Foods
+334.000000	Produce|Canned Products
+335.000000	Produce|Carousel
+336.000000	Produce|Checkout
+337.000000	Produce|Dairy
+338.000000	Produce|Deli
+339.000000	Produce|Eggs
+340.000000	Produce|Frozen Foods
+341.000000	Produce|Health and Hygiene
+342.000000	Produce|Household
+343.000000	Produce|Meat
+344.000000	Produce|Periodicals
+345.000000	Produce|Produce
+346.000000	Produce|Seafood
+347.000000	Produce|Snack Foods
+348.000000	Produce|Snacks
+349.000000	Produce|Starchy Foods
+350.000000	Produce|Alcoholic Beverages
+351.000000	Produce|Baked Goods
+352.000000	Produce|Baking Goods
+353.000000	Seafood|Beverages
+354.000000	Seafood|Breakfast Foods
+355.000000	Seafood|Canned Foods
+356.000000	Seafood|Canned Products
+357.000000	Seafood|Carousel
+358.000000	Seafood|Checkout
+359.000000	Seafood|Dairy
+360.000000	Seafood|Deli
+361.000000	Seafood|Eggs
+362.000000	Seafood|Frozen Foods
+363.000000	Seafood|Health and Hygiene
+364.000000	Seafood|Household
+365.000000	Seafood|Meat
+366.000000	Seafood|Periodicals
+367.000000	Seafood|Produce
+368.000000	Seafood|Seafood
+369.000000	Seafood|Snack Foods
+370.000000	Seafood|Snacks
+371.000000	Seafood|Starchy Foods
+372.000000	Seafood|Alcoholic Beverages
+373.000000	Seafood|Baked Goods
+374.000000	Seafood|Baking Goods
+375.000000	Snack Foods|Beverages
+376.000000	Snack Foods|Breakfast Foods
+377.000000	Snack Foods|Canned Foods
+378.000000	Snack Foods|Canned Products
+379.000000	Snack Foods|Carousel
+380.000000	Snack Foods|Checkout
+381.000000	Snack Foods|Dairy
+382.000000	Snack Foods|Deli
+383.000000	Snack Foods|Eggs
+384.000000	Snack Foods|Frozen Foods
+385.000000	Snack Foods|Health and Hygiene
+386.000000	Snack Foods|Household
+387.000000	Snack Foods|Meat
+388.000000	Snack Foods|Periodicals
+389.000000	Snack Foods|Produce
+390.000000	Snack Foods|Seafood
+391.000000	Snack Foods|Snack Foods
+392.000000	Snack Foods|Snacks
+393.000000	Snack Foods|Starchy Foods
+394.000000	Snack Foods|Alcoholic Beverages
+395.000000	Snack Foods|Baked Goods
+396.000000	Snack Foods|Baking Goods
+397.000000	Snacks|Beverages
+398.000000	Snacks|Breakfast Foods
+399.000000	Snacks|Canned Foods
+400.000000	Snacks|Canned Products
+401.000000	Snacks|Carousel
+402.000000	Snacks|Checkout
+403.000000	Snacks|Dairy
+404.000000	Snacks|Deli
+405.000000	Snacks|Eggs
+406.000000	Snacks|Frozen Foods
+407.000000	Snacks|Health and Hygiene
+408.000000	Snacks|Household
+409.000000	Snacks|Meat
+410.000000	Snacks|Periodicals
+411.000000	Snacks|Produce
+412.000000	Snacks|Seafood
+413.000000	Snacks|Snack Foods
+414.000000	Snacks|Snacks
+415.000000	Snacks|Starchy Foods
+416.000000	Snacks|Alcoholic Beverages
+417.000000	Snacks|Baked Goods
+418.000000	Snacks|Baking Goods
+419.000000	Starchy Foods|Beverages
+420.000000	Starchy Foods|Breakfast Foods
+421.000000	Starchy Foods|Canned Foods
+422.000000	Starchy Foods|Canned Products
+423.000000	Starchy Foods|Carousel
+424.000000	Starchy Foods|Checkout
+425.000000	Starchy Foods|Dairy
+426.000000	Starchy Foods|Deli
+427.000000	Starchy Foods|Eggs
+428.000000	Starchy Foods|Frozen Foods
+429.000000	Starchy Foods|Health and Hygiene
+430.000000	Starchy Foods|Household
+431.000000	Starchy Foods|Meat
+432.000000	Starchy Foods|Periodicals
+433.000000	Starchy Foods|Produce
+434.000000	Starchy Foods|Seafood
+435.000000	Starchy Foods|Snack Foods
+436.000000	Starchy Foods|Snacks
+437.000000	Starchy Foods|Starchy Foods
+438.000000	Starchy Foods|Alcoholic Beverages
+439.000000	Starchy Foods|Baked Goods
+440.000000	Starchy Foods|Baking Goods
+441.000000	Alcoholic Beverages|Beverages
+442.000000	Alcoholic Beverages|Breakfast Foods
+443.000000	Alcoholic Beverages|Canned Foods
+444.000000	Alcoholic Beverages|Canned Products
+445.000000	Alcoholic Beverages|Carousel
+446.000000	Alcoholic Beverages|Checkout
+447.000000	Alcoholic Beverages|Dairy
+448.000000	Alcoholic Beverages|Deli
+449.000000	Alcoholic Beverages|Eggs
+450.000000	Alcoholic Beverages|Frozen Foods
+451.000000	Alcoholic Beverages|Health and Hygiene
+452.000000	Alcoholic Beverages|Household
+453.000000	Alcoholic Beverages|Meat
+454.000000	Alcoholic Beverages|Periodicals
+455.000000	Alcoholic Beverages|Produce
+456.000000	Alcoholic Beverages|Seafood
+457.000000	Alcoholic Beverages|Snack Foods
+458.000000	Alcoholic Beverages|Snacks
+459.000000	Alcoholic Beverages|Starchy Foods
+460.000000	Alcoholic Beverages|Alcoholic Beverages
+461.000000	Alcoholic Beverages|Baked Goods
+462.000000	Alcoholic Beverages|Baking Goods
+463.000000	Baked Goods|Beverages
+464.000000	Baked Goods|Breakfast Foods
+465.000000	Baked Goods|Canned Foods
+466.000000	Baked Goods|Canned Products
+467.000000	Baked Goods|Carousel
+468.000000	Baked Goods|Checkout
+469.000000	Baked Goods|Dairy
+470.000000	Baked Goods|Deli
+471.000000	Baked Goods|Eggs
+472.000000	Baked Goods|Frozen Foods
+473.000000	Baked Goods|Health and Hygiene
+474.000000	Baked Goods|Household
+475.000000	Baked Goods|Meat
+476.000000	Baked Goods|Periodicals
+477.000000	Baked Goods|Produce
+478.000000	Baked Goods|Seafood
+479.000000	Baked Goods|Snack Foods
+480.000000	Baked Goods|Snacks
+481.000000	Baked Goods|Starchy Foods
+482.000000	Baked Goods|Alcoholic Beverages
+483.000000	Baked Goods|Baked Goods
+484.000000	Baked Goods|Baking Goods
+485.000000	Baking Goods|Beverages
+486.000000	Baking Goods|Breakfast Foods
+487.000000	Baking Goods|Canned Foods
+488.000000	Baking Goods|Canned Products
+489.000000	Baking Goods|Carousel
+490.000000	Baking Goods|Checkout
+491.000000	Baking Goods|Dairy
+492.000000	Baking Goods|Deli
+493.000000	Baking Goods|Eggs
+494.000000	Baking Goods|Frozen Foods
+495.000000	Baking Goods|Health and Hygiene
+496.000000	Baking Goods|Household
+497.000000	Baking Goods|Meat
+498.000000	Baking Goods|Periodicals
+499.000000	Baking Goods|Produce
+500.000000	Baking Goods|Seafood
+501.000000	Baking Goods|Snack Foods
+502.000000	Baking Goods|Snacks
+503.000000	Baking Goods|Starchy Foods
+504.000000	Baking Goods|Alcoholic Beverages
+505.000000	Baking Goods|Baked Goods
+506.000000	Baking Goods|Baking Goods

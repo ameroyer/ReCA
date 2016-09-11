@@ -230,7 +230,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract POMDP transition probabilities from the Foodmart dataset.')
     parser.add_argument('-in', '--data', type=str, default=os.path.join(base_folder, "Data", "Foodmart", "data"), help="Path to data directory or archive.")
     parser.add_argument('-o', '--output', type=str, default=os.path.join(base_folder, "Code", "Models"), help="Path to output directory.")
-    parser.add_argument('-u', '--ulevel', type=int, default=3, help="Number of environments to create.")
+    parser.add_argument('-u', '--ulevel', type=int, default=5, help="Number of environments to create.")
     parser.add_argument('-p', '--plevel', type=int, default=4, help="Clustering level for product categorization (0: no lumping to 4:lumping by family). See product classes hierarchy.")
     parser.add_argument('-k', '--history', type=int, default=2, help="Length of the history to consider for one state of the MEMDP.")
     parser.add_argument('-D', '--D', type=int, default=500, help="Number of sequences to keep to estimate each environment's transition function.")
