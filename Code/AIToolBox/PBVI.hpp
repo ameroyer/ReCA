@@ -166,8 +166,7 @@ namespace AIToolbox {
       bool useEpsilon = checkDifferentSmall(epsilon_, 0.0);
       double variation = epsilon_ * 2; // Make it bigger
       while ( timestep < horizon_ && ( !useEpsilon || variation > epsilon_ ) ) {
-	std::cout << "\r        Timestep " << timestep + 1 <<"/" << horizon_;
-	std::cerr << "\n";
+	std::cerr << "        Timestep " << timestep + 1 <<"/" << horizon_ << "\n";
 	++timestep;
 
 	// Compute all possible outcomes, from our previous results.
