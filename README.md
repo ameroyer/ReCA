@@ -45,16 +45,17 @@ Generate synthetic POMDP parameters to highlight the impact of using multiple en
 
  ```bash
   cd Data/
-  ./prepare_foodmart.py -pl [1] -k [2] -ul [3] -a [4] -t [5] -d [6] -o [7] --norm --help
+  ./prepare_foodmart.py -p [1] -k [2] -u [3] -a [4] -t [5] -d [6] -o [7] -D [8] --norm --help
 ```
 
   * ``[1]`` Items discretization level. Must be between 0 (*1561 fine-grained products*)  and 4 (*3 high-level categories*). Defaults to 4.
   * ``[2]`` History length, > 1. Defaults to 2.
-  * ``[3]`` User profiles discretization level (*0*: 10 profiles, *1*: 24 profiles, *2*: 48 profiles). Defaults to 0.
-  * ``[4]`` Positive scaling parameter for correct recommandation. Must be greater than 1. Defaults to 1.4.
-  * ``[5]`` Proportion of the dataset to keep for parameter inference. Defaults to 0.8.
+  * ``[3]`` Number of profiles to generate. Defaults to 5.
+  * ``[4]`` Positive scaling parameter for correct recommandation. Must be greater than 1. Defaults to 1.1.
+  * ``[5]`` Number of test sequences to generate. Defaults to 2000.
   * ``[6]`` Path to the Foodmart dataset. Defaults to ``Data/Foodmart.gz``.
   * ``[7]`` Path to the output directory. Defaults to ``../Code/Models``.
+  * ``[8]`` Number of sequences to isolate to estimate each environment's transition probabilities.
   * ``[--norm]`` If present, output transition probabilities are normalized.
   * ``[--zip]`` If present, transitions are stored in an archive. Recommended for large state spaces.
   * ``[--help]`` displays help about the script.
@@ -98,15 +99,15 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
 
    * ``[1]`` Model to use. Defaults to mdp. Available options are
       * *mdp*. MDP model obtained by a weighted average of all the environments' transition probabilities and solved by Value iteration. The solver can be configured with
-        * ``[7]`` Number of iterations. Defaults to 1500.
+        * ``[7]`` Number of iterations. Defaults to 1000.
       * *pbvi*. point-based value iteration optimized for the MEMDP structure with options
         * ``[8]`` Horizon parameter. Must be greater than 1. Defaults to 2.
-        * ``[11]`` Belief size. Defaults to  100.
+        * ``[11]`` Belief size. Defaults to  500.
       * *pomcp* and *pamcp*. Monte-carlo solver, respectively without and with optimization for the MEMDP structure with options
-        * ``[7]`` Number of simulation steps. Defaults to 1500.
+        * ``[7]`` Number of simulation steps. Defaults to 1000.
         * ``[8]`` Horizon parameter. Must be greater than 1. Defaults to 2.
         * ``[10]`` Exploration parameter. Defaults to 10000 (high exploration).
-        * ``[11]`` Number of particles for the belief approximation. Defaults to  100.
+        * ``[11]`` Number of particles for the belief approximation. Defaults to  500.
    * ``[2]`` Dataset to use. Defaults to rd. Available options are
      * *fm* (foodmart recommandations) with following options
        * ``[3]`` Product discretization level. Defaults to 4.
