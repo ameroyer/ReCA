@@ -84,15 +84,8 @@ done
 # SET CORRECT DATA PATHS
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ $DATA = "fm" ]; then
-    PROFILES=10
-    if [ $UPROFILE = 1 ]; then
-	PROFILES=24
-    fi
-    if [ $UPROFILE = 2 ]; then
-	PROFILES=89
-    fi
-    ALPHA=1.40
-    printf -v BASE "$DIR/Models/Foodmart%d%d%d/foodmart_u%d_k%d_pl%d_a%.2f" "$PROFILES" "$HIST" "$PLEVEL" "$PROFILES" "$HIST" "$PLEVEL" "$ALPHA"
+    PROFILES=$UPROFILE
+    printf -v BASE "$DIR/Models/Foodmart%d%d%d/foodmart_u%d_k%d_pl%d" "$PROFILES" "$HIST" "$PLEVEL" "$PROFILES" "$HIST" "$PLEVEL"
     if [ ! -f "$BASE.items" ]; then
 	echo "File $BASE.items not found"
 	echo "exit"
