@@ -337,7 +337,6 @@ void evaluate_from_file(std::string sfile,
 
     // Update scores
     if (!verbose) {std::cerr.clear();}
-    //std::cout << accuracy / session_length << "\n";
     accuracy_s.update(cluster, accuracy / session_length);
     precision_s.update(cluster, precision / session_length);
     total_reward_s.update(cluster, total_reward / session_length);
@@ -396,21 +395,18 @@ void evaluate_interactive(int n_sessions,
   AIToolbox::POMDP::Belief belief;
   std::vector< double > action_scores(model.getA(), 0);
   int n_failures = 0;
-  int set_lengths [model.getE()] = {0};
-  double mean_session_length [model.getE()] = {0};
-  double mean_success [model.getE()] = {0};
-  double mean_total_reward [model.getE()] = {0};
-  double mean_goal_reward [model.getE()] = {0};
-  double mean_identification [model.getE()] = {0};
-  double mean_identification_precision [model.getE()] = {0};
-
+  Stats session_length_s(model.getE());
+  Stats success_s(model.getE());
+  Stats total_reward_s(model.getE());
+  Stats goal_reward_s(model.getE());
+  Stats identification_s(model.getE());
+  Stats identification_precision_s(model.getE());
+ 
   // Generate test sessions
   int subgroup_size = n_sessions / (int)(model.getE());
   n_sessions = n_sessions - n_sessions % (int)(model.getE());
   for (int user = 0; user < n_sessions; user++) {
     cluster = user / subgroup_size;
-    //cluster = (model.mdp_enabled() ? 0 : rand() % (int)(model.getE()));
-    set_lengths[cluster] += 1;
     std::cerr << "\r     User " << user + 1 << "/" << n_sessions << std::string(15, ' ');
 
     // Reset
@@ -446,23 +442,22 @@ void evaluate_interactive(int n_sessions,
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
-      set_lengths[cluster] -= 1;
       n_failures += 1;
       continue;
     }
 
     // id score
-    mean_identification[cluster] += identity / session_length;
-    mean_identification_precision[cluster] += identity_precision / session_length;
-    mean_total_reward[cluster] += total_reward / session_length;
+    identification_s.update(cluster, identity / session_length);
+    identification_precision_s.update(cluster, identity_precision / session_length);
+    total_reward_s.update(cluster, total_reward / session_length);
     // If Trap, do not count the rest
     if (model.get_rep(state) != 1) {
       continue;
     }
     // Normal execution, i.e. goal state
-    mean_session_length[cluster] += session_length;
-    mean_success[cluster] += ((model.get_rep(state) == 1) ? 1. : 0.); // Goal in robot maze
-    mean_goal_reward[cluster] += total_reward / session_length;
+    session_length_s.update(cluster, session_length);
+    success_s.update(cluster, ((model.get_rep(state) == 1) ? 1. : 0.)); // Goal in robot maze
+    goal_reward_s.update(cluster, total_reward / session_length);
   }
 
   // Only output relevant metrics
@@ -470,14 +465,13 @@ void evaluate_interactive(int n_sessions,
 
   // Output
   std::cout << "\n\n";
-  std::vector<std::string> titles {"goalrw", "avgrw", "avgllng", "avgsuc"}; std::vector<double*> results {mean_goal_reward, mean_total_reward, mean_session_length, mean_success};
+  std::vector<std::string> titles {"goalrw", "avgrw", "avgllng", "avgsuc"}; std::vector<Stats> results {goal_reward_s, total_reward_s, session_length_s, success_s};
 
   if (has_identity) {
     titles.push_back("idac"); titles.push_back("idpr");
-    results.push_back(mean_identification); results.push_back(mean_identification_precision);
+    results.push_back(identification_s); results.push_back(identification_precision_s);
   }
-  //TODO
-  //print_evaluation_result(set_lengths, model.getE(), results, titles, verbose);
+  print_evaluation_result(model.getE(), results, titles, verbose);
   std::cout << "\n      > " << n_failures << " / " << n_sessions << " reach failures\n";
   std::cout << "\n\n";
 }
