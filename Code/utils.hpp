@@ -452,11 +452,12 @@ void evaluate_interactive(int n_sessions,
     total_reward_s.update(cluster, total_reward / session_length);
     // If Trap, do not count the rest
     if (model.get_rep(state) != 1) {
+      success_s.update(cluster, 0);
       continue;
     }
     // Normal execution, i.e. goal state
     session_length_s.update(cluster, session_length);
-    success_s.update(cluster, ((model.get_rep(state) == 1) ? 1. : 0.)); // Goal in robot maze
+    success_s.update(cluster, 1); // Goal in robot maze
     goal_reward_s.update(cluster, total_reward / session_length);
   }
 

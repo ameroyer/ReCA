@@ -48,7 +48,11 @@ void Stats::update(int cluster, double v) {
 
 double Stats::get_mean(int cluster) {
     if (cluster >= 0) {
-      return acc_mean[cluster] / lengths[cluster];
+      if (lengths[cluster] > 0) {
+	return acc_mean[cluster] / lengths[cluster];
+      } else {
+	return 0.;
+      }
     } else {
       double v, l = 0;
       for (int i = 0; i < size; i++) {
@@ -61,15 +65,18 @@ double Stats::get_mean(int cluster) {
 
 double Stats::get_var(int cluster) {
     if (cluster >= 0) {
-      double mean = get_mean(cluster);
-      return acc_var[cluster] / lengths[cluster] - mean * mean;
+      if (lengths[cluster] > 0) {
+	double mean = get_mean(cluster);
+	return acc_var[cluster] / lengths[cluster] - mean * mean;
+      } else {
+	return 0.;
+      }
     } else {
-      double v, l = 0;
+      double v = 0;
       for (int i = 0; i < size; i++) {
 	v += get_var(i);
-	l += 1;
       }
-      return v / l;
+      return v / size;
     }
   }
 
