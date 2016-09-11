@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--nactions', type=int, default=3, help="Number of items.")
     parser.add_argument('-k', '--history', type=int, default=2, help="History length.")
     parser.add_argument('-a', '--alpha', type=float, default=1.1, help="Positive rescaling of transition probabilities matching the recommendation.")
-    parser.add_argument('-t', '--test', type=int, default=2000, help="Number of test runs.")
+    parser.add_argument('-t', '--test', type=int, default=2000, help="Number of test sequences to generate.")
     parser.add_argument('--norm', action='store_true', help="If present, normalize the output transition probabilities.")
     parser.add_argument('--zip', action='store_true', help="If present, the transitiosn are output in a compressed file.")
     args = parser.parse_args()
@@ -111,6 +111,7 @@ if __name__ == "__main__":
     transitions_str = ""
 
     #### Define the average transition probability for the MDP model
+    print("\n   > MDP", file=sys.stderr)
     # For fixed s1
     for s1 in xrange(n_states):
         sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
@@ -143,8 +144,7 @@ if __name__ == "__main__":
     total_count = exc + n_items - 1
     transitions_str = ""
     for user_profile in xrange(n_users):
-        print("\n   > Profile %d / %d: \n" % (user_profile + 1, n_users), end=" ", file=sys.stderr)
-        sys.stderr.flush()
+        print("\n   > Profile %d / %d:" % (user_profile + 1, n_users), file=sys.stderr)
         # For fixed s1
         for s1 in xrange(n_states):
             sys.stderr.write("      state: %d / %d   \r" % (s1 + 1, n_states))
