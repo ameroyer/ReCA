@@ -442,6 +442,9 @@ void evaluate_interactive(int n_sessions,
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
+      identification_s.update(cluster, 0.);
+      identification_precision_s.update(cluster, 0);
+      success_s.update(cluster, 0);
       n_failures += 1;
       continue;
     }
@@ -452,12 +455,12 @@ void evaluate_interactive(int n_sessions,
     total_reward_s.update(cluster, total_reward / session_length);
     // If Trap, do not count the rest
     if (model.get_rep(state) != 1) {
-      success_s.update(cluster, 0);
+      success_s.update(cluster, 0.);
       continue;
     }
     // Normal execution, i.e. goal state
     session_length_s.update(cluster, session_length);
-    success_s.update(cluster, 1); // Goal in robot maze
+    success_s.update(cluster, 1.); // Goal in robot maze
     goal_reward_s.update(cluster, total_reward / session_length);
   }
 
