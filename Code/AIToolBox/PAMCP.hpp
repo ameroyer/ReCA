@@ -497,7 +497,7 @@ namespace AIToolbox {
     typename PAMCP<M>::SampleBelief PAMCP<M>::makeSampledBelief(const Belief & b, size_t o) {
       SampleBelief belief;
       belief.reserve(beliefSize_);
-
+      model_.bottleneck_call();
       for ( size_t i = 0; i < beliefSize_; ++i )
 	belief.push_back(sampleProbability(E, b, rand_) * O + o);
 

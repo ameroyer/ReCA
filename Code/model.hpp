@@ -167,6 +167,15 @@ public:
    */
   size_t get_rep(size_t s) const { return s % n_observations; };
 
+  /*!
+   * \brief Returns the number of times the model transition function has been sampled 
+   * since its creation.
+   *
+   * \return number of calls to the sampleSR function.
+   */
+  int get_bottleneck_calls() const { return n_bottleneck_calls; };
+  int bottleneck_call() const { n_bottleneck_calls ++; }
+
   /*! \brief Given a state, returns all its possible predecessors.
    *
    * \param state unique state index.
@@ -200,6 +209,7 @@ protected:
   size_t n_actions;  /*!< Number of actions in the model */
   size_t n_observations;  /*!< Number of observations in the model */
   size_t n_environments;  /*!< Number of environments */
+  mutable int n_bottleneck_calls = 0;    /*!<Number of times the transition sampling function has been called. Used for POMCP and PAMCP comparison*/
   double discount; /*!< Discount factor */
 };
 

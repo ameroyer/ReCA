@@ -362,7 +362,8 @@ void evaluate_from_file(std::string sfile,
     results.push_back(identification_s); results.push_back(identification_precision_s);
   }
   print_evaluation_result(model.getE(), results, titles, verbose);
-  std::cout << "\n      > avglng: " << total_length / user;
+  std::cout << "\n      > avglng: " << (float)total_length / (float)user;
+  std::cout << "\n      > avgsmpl: " << (float)model.get_bottleneck_calls() / (float)user;
   std::cout << "\n\n";
 }
 
@@ -442,8 +443,6 @@ void evaluate_interactive(int n_sessions,
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
-      identification_s.update(cluster, 0.);
-      identification_precision_s.update(cluster, 0);
       success_s.update(cluster, 0);
       n_failures += 1;
       continue;
