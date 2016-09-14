@@ -170,35 +170,35 @@ std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model&
  * \param horizon the horizon to predict for, if applicable.
  * \param action_scores array to store the probability distribution over predictions, if applicable.
  *
- * \return belief the initial belief over states (or over environments for PAMCP).
+ * \return has_prec True iff action_scores is updated, i.e. a precision can be computed
  * \return prediction the initial prediction.
  */
 //MDP
-size_t make_prediction(const Model& model, AIToolbox::MDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores);
+std::pair<bool, size_t> make_prediction(const Model& model, AIToolbox::MDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores);
 
 // POMDP policy
-size_t make_prediction(const Model& model, AIToolbox::POMDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores);
+std::pair<bool, size_t> make_prediction(const Model& model, AIToolbox::POMDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores);
 
 // POMCP
 template<typename M>
-size_t make_prediction(const Model& model, AIToolbox::POMDP::POMCP<M> &pomcp, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+std::pair<bool, size_t> make_prediction(const Model& model, AIToolbox::POMDP::POMCP<M> &pomcp, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
   size_t prediction = pomcp.sampleAction(a, o, horizon);
   auto & graph_ = pomcp.getGraph();
   for (size_t action = 0; action < model.getA(); action++) {
     action_scores.at(action) = graph_.children[action].V;
   }
-  return prediction;
+  return std::make_pair(true, prediction);
 }
 
 // PAMCP
 template<typename M>
-size_t make_prediction(const Model& model, AIToolbox::POMDP::PAMCP<M> &pamcp, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+std::pair<bool, size_t> make_prediction(const Model& model, AIToolbox::POMDP::PAMCP<M> &pamcp, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
   size_t prediction = pamcp.sampleAction(a, o, horizon);
   auto & graph_ = pamcp.getGraph();
   for (size_t action = 0; action < model.getA(); action++) {
     action_scores.at(action) = graph_.children[action].V;
   }
-  return prediction;
+  return std::make_pair(true, prediction);
 }
 
 /*! \brief Returns the accuracy and prediction for the profile detection of the solver in the current state of the simulation..
@@ -288,6 +288,7 @@ void evaluate_from_file(std::string sfile,
   Stats discounted_reward_s(model.getE());
   Stats identification_s(model.getE());
   Stats identification_precision_s(model.getE());
+  bool has_prec;
 
   // Load test sessions
   double total_length = 0.;
@@ -323,13 +324,13 @@ void evaluate_from_file(std::string sfile,
       // Predict
       observation  = std::get<0>(*it2);
       if (!model.isInitial(observation)) {
-	prediction = make_prediction(model, solver, belief, observation, (supervised ? action : prediction), chorizon, action_scores);
+	std::tie(has_prec, prediction) = make_prediction(model, solver, belief, observation, (supervised ? action : prediction), chorizon, action_scores);
       }
 
       // Evaluate
       action = std::get<1>(*it2);
       accuracy += accuracy_score(prediction, action);
-      precision += avprecision_score(action_scores, action);
+      precision += has_prec ? avprecision_score(action_scores, action) : -1.;
       auto aux = identification_score(model, solver, belief, observation, cluster);
       identity += std::get<0>(aux);
       identity_precision += std::get<1>(aux);
@@ -363,7 +364,7 @@ void evaluate_from_file(std::string sfile,
   }
   print_evaluation_result(model.getE(), results, titles, verbose);
   std::cout << "\n      > avglng: " << (float)total_length / (float)user;
-  std::cout << "\n      > avgsmpl: " << (float)model.get_bottleneck_calls() / (float)user;
+  std::cout << "\n      > avg mcp makeparticles calls: " << (float)model.get_bottleneck_calls() / (float)user;
   std::cout << "\n\n";
 }
 
@@ -427,7 +428,7 @@ void evaluate_interactive(int n_sessions,
       total_reward += r;
       chorizon = ((chorizon > 1) ? chorizon - 1 : 1 );
       // Predict
-      prediction = make_prediction(model, solver, belief, observation, (supervised ? model.is_connected(prev_state, state) : prediction), chorizon, action_scores);
+      prediction = std::get<1>(make_prediction(model, solver, belief, observation, (supervised ? model.is_connected(prev_state, state) : prediction), chorizon, action_scores));
 
       // Evaluate
       session_length++;
@@ -443,14 +444,14 @@ void evaluate_interactive(int n_sessions,
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
+      identification_s.update(cluster, identity / session_length);
+      identification_precision_s.update(cluster, identity_precision / session_length);
       success_s.update(cluster, 0);
       n_failures += 1;
       continue;
     }
 
     // id score
-    identification_s.update(cluster, identity / session_length);
-    identification_precision_s.update(cluster, identity_precision / session_length);
     total_reward_s.update(cluster, total_reward / session_length);
     // If Trap, do not count the rest
     if (model.get_rep(state) != 1) {

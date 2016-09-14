@@ -198,20 +198,20 @@ std::pair<AIToolbox::POMDP::Belief, size_t> make_initial_prediction(const Model&
 /**
  * MAKE_PREDICTION (POMDP policy)
  */
-size_t make_prediction(const Model& model, AIToolbox::POMDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+std::pair<bool, size_t> make_prediction(const Model& model, AIToolbox::POMDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
   b = update_belief(b, a, o, model);
   size_t id, prediction;
   std::tie(prediction, id) = policy.sampleAction(b, horizon);
-
-  return prediction;
+  // Action score is not update since PBVI does not return action score
+  return std::make_pair(false, prediction);
 }
 
 /**
  * MAKE_PREDICTION (MDP policy)
  */
-size_t make_prediction(const Model& model, AIToolbox::MDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
+std::pair<bool, size_t> make_prediction(const Model& model, AIToolbox::MDP::Policy &policy, AIToolbox::POMDP::Belief &b, size_t o, size_t a, int horizon, std::vector<double> &action_scores) {
   action_scores = policy.getStatePolicy(o);
-  return get_prediction(action_scores);
+  return std::make_pair(true, get_prediction(action_scores));
 }
 
 /**
@@ -222,12 +222,12 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
   for (int e = 0; e < model.getE(); e++) {
     scores.at(e) = b(e * model.getO() + o);
   }
-  double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
+  double accuracy = (((std::max_element(scores.begin(), scores.end()) - scores.begin()) == cluster) ? 1.0 : 0.0);
   int rank = 1.;
   double value = scores.at(cluster);
   for (auto it = begin(scores); it != end(scores); ++it) {
     if ( *it > value) {
-      rank += 1;
+      rank += 1.;
     }
   }
   return std::make_pair(accuracy, 1.0 / rank);
