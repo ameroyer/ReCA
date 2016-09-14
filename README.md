@@ -103,7 +103,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
       * *pbvi*. point-based value iteration optimized for the MEMDP structure with options
         * ``[8]`` Horizon parameter. Must be greater than 1. Defaults to 2.
         * ``[11]`` Belief size. Defaults to  500.
-      * *pomcp* and *pamcp*. Monte-carlo solver, respectively without and with optimization for the MEMDP structure with options
+      * *pomcp* (POMCP*), *pomcpex*, *pamcpex*, *pamcp*. Monte-carlo solvers. *pamcp* and *pamcpex* implement the past-aware graph initialization. *pomcpex* and *pamcpex* implement the exact belief computation.
         * ``[7]`` Number of simulation steps. Defaults to 1000.
         * ``[8]`` Horizon parameter. Must be greater than 1. Defaults to 2.
         * ``[10]`` Exploration parameter. Defaults to 10000 (high exploration).
@@ -153,6 +153,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
   cd ../Code/
   ./run.sh -m mdp -d rd -n 10 -k 2 -c
   ./run.sh -m pamcp -d rd -n 10 -k 2 -c	
+  ./run.sh -m pomcpex -d rd -n 10 -k 2 -c	
   ```
 
 #### Foodmart recommandations, 5 environments, 22 actions, ~500 states
