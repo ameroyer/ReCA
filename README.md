@@ -148,7 +148,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
    python prepare_synth.py --norm --zip -n 10 -k 2
   ```
 
-  * run the code
+  * run the code (assuming the output directory is the default ``ROOT/Code/Models/``)
   ```bash
   cd ../Code/
   ./run.sh -m mdp -d rd -n 10 -k 2 -c
@@ -163,7 +163,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
    python prepare_foodmart.py --norm --zip -u 5 -p 3 -k 2
   ```
 
-  * run the code
+  * run the code (assuming the output directory is the default ``ROOT/Code/Models/``)
   ```bash
   cd ../Code/
   ./run.sh -m mdp -d fm -n 3 -k 2 -u 5 -c
