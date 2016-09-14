@@ -113,9 +113,9 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
        * ``[3]`` Product discretization level. Defaults to 4.
        * ``[4]`` History length. Must be strictly greater than 1. Defaults to 2.
        * ``[5]`` User discretization level. Defaults to 0.
-     * *mz* recommandations.
+     * *mz* (maze solving problem) with following options
        * ``[3]`` Base name for the directory containing the corresponding MEMDP model parameters.
-     * *rd* (synthetic data recommandations)
+     * *rd* (synthetic data recommandations) with following options
        * ``[3]`` Number of actions. Defaults to 4.
        * ``[4]`` History length. Must be strictly greater than 1. Defaults to 2.
    * ``[6]`` Discount Parameter. Must be strictly between 0 and 1. Defaults to 0.95.
