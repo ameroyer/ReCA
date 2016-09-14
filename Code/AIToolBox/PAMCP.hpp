@@ -37,10 +37,12 @@ namespace AIToolbox {
       using ActionNodes = std::vector<ActionNode>;
 
       struct BeliefNode {
-	BeliefNode() : N(0) {}
-	BeliefNode(size_t s) : belief(1, s), N(0) {}
+	BeliefNode() : obs(0), N(0) {}
+	BeliefNode(size_t o) : obs(o), N(0) {}
 	ActionNodes children;
-	SampleBelief belief;
+	SampleBelief smplbelief;
+	Belief envbelief;
+	size_t obs;
 	unsigned N;
       };
 
@@ -52,8 +54,10 @@ namespace AIToolbox {
        * @param beliefSize The size of the initial particle belief.
        * @param iterations The number of episodes to run before completion.
        * @param exp The exploration constant. This parameter is VERY important to determine the final POMCP performance.
+       * @param with_tree If True, maintain a past-aware search tree.
+       * @param with_exact_belief If True, use exact belief computation instead of particles
        */
-      PAMCP(const M& m, size_t beliefSize, unsigned iterations, double exp);
+      PAMCP(const M& m, size_t beliefSize, unsigned iterations, double exp, bool with_tree=false, bool with_exact_belief=true);
 
       /**
        * @brief This function resets the internal graph and samples
@@ -132,6 +136,13 @@ namespace AIToolbox {
       const M& getModel() const;
 
       /**
+       * @brief This function returns the implicit/explicit belief environment maintained by the model
+       *
+       * @return The belief over environment
+       */
+      const std::vector<double> getEnvBelief() const;
+
+      /**
        * @brief This function returns a reference to the internal graph structure holding the results of rollouts.
        *
        * @return The internal graph.
@@ -165,12 +176,13 @@ namespace AIToolbox {
       unsigned iterations_, maxDepth_;
       double exploration_;
 
-      SampleBelief sampleBelief_;
       BeliefNode graph_;
       BeliefNode fullgraph_;
       std::vector<std::pair<size_t, size_t> > history;
       bool reset_belief = true;
-      bool to_update = true;
+      bool to_update;
+      bool with_tree;
+      bool with_exact_belief;
 
       mutable std::default_random_engine rand_;
 
@@ -293,14 +305,13 @@ namespace AIToolbox {
     };
 
     template <typename M>
-    PAMCP<M>::PAMCP(const M& m, size_t beliefSize, unsigned iter, double exp) : model_(m), S(model_.getS()), A(model_.getA()), O(model_.getO()), E(model_.getE()), beliefSize_(beliefSize), iterations_(iter),
-												       exploration_(exp), graph_(), rand_(Impl::Seeder::getSeed()) {}
+    PAMCP<M>::PAMCP(const M& m, size_t beliefSize, unsigned iter, double exp, bool with_tree_/*=false*/, bool with_exact_belief_/*=true*/) : model_(m), S(model_.getS()), A(model_.getA()), O(model_.getO()), E(model_.getE()), beliefSize_(beliefSize), iterations_(iter), exploration_(exp), graph_(), with_tree(with_tree_), with_exact_belief(with_exact_belief_), rand_(Impl::Seeder::getSeed()) {}
 
     template <typename M>
     size_t PAMCP<M>::sampleAction(const Belief& be, size_t o, unsigned horizon, bool start_session /* false */) {
       // Reset graph initially or with new belief (e.g. observation missing)
-      if (reset_belief) {
-	graph_ = BeliefNode(A);
+      if (reset_belief || ! with_tree) {
+	graph_ = BeliefNode(o);
 	graph_.children.resize(A);
 	reset_belief = false;
       }
@@ -308,20 +319,25 @@ namespace AIToolbox {
       else {
 	graph_ = fullgraph_;
       }
+      
       // Initialize full graph
-      if (start_session && history.size() == 0) {
-	fullgraph_ = BeliefNode(A);
+      if (with_tree && start_session && history.size() == 0) {
+	fullgraph_ = BeliefNode(o);
 	fullgraph_.children.resize(A);
       }
+
       // Clear history if beginning
-      if (start_session) {
+      if (with_tree && start_session) {
 	history.clear();
 	to_update = true;
       }
 
-      // Init the belief
-      auto b = Belief(be);
-      graph_.belief = makeSampledBelief(b, o);
+      // Init the env belief
+      if (with_exact_belief) {
+	graph_.envbelief = be;
+      } else {	
+	graph_.smplbelief = makeSampledBelief(be, o);
+      }
 
       return runSimulation(horizon);
     }
@@ -329,7 +345,7 @@ namespace AIToolbox {
     template <typename M>
     size_t PAMCP<M>::sampleAction(size_t a, size_t o, unsigned horizon) {
       // Update full graph
-      if (to_update) {
+      if (with_tree && to_update) {
 	update_fullgraph(graph_, a);
 	history.push_back(std::make_pair(a, o));
       }
@@ -342,7 +358,7 @@ namespace AIToolbox {
 	std::cerr << "\nObservation " << o << " never experienced in simulation, restarting belief from " << o << "\n";
 	auto b = Belief(E); b.fill(1.0 / E);
 	reset_belief = true;
-	to_update = false;
+	to_update = false; // stop retaining information in case of failure
 	return sampleAction(b, o, horizon, false);
       }
 
@@ -353,7 +369,7 @@ namespace AIToolbox {
       // we can then assign safely.
       { auto tmp = std::move(it->second); graph_ = std::move(tmp); }
 
-      if ( ! graph_.belief.size() ) {
+      if ( (with_exact_belief && ! graph_.envbelief.size()) || (! with_exact_belief && ! graph_.smplbelief.size()) ) {
 	std::cerr << "POMCP Lost track of the belief, restarting with uniform..\n";
 	auto b = Belief(E); b.fill(1.0 / E);
 	reset_belief = true;
@@ -388,12 +404,16 @@ namespace AIToolbox {
     template <typename M>
     size_t PAMCP<M>::runSimulation(unsigned horizon) {
       if ( !horizon ) return 0;
-
       maxDepth_ = horizon;
-      std::uniform_int_distribution<size_t> generator(0, graph_.belief.size()-1);
-
-      for (unsigned i = 0; i < iterations_; ++i )
-	simulate(graph_, graph_.belief.at(generator(rand_)), 0);
+      
+      if (with_exact_belief) {
+	for (unsigned i = 0; i < iterations_; ++i )
+	  simulate(graph_, O *  sampleProbability(E, graph_.envbelief, rand_) + graph_.obs, 0);
+      } else {
+	std::uniform_int_distribution<size_t> generator(0, graph_.smplbelief.size() - 1);
+	for (unsigned i = 0; i < iterations_; ++i )
+	  simulate(graph_, graph_.smplbelief.at(generator(rand_)), 0);
+      }
 
       auto begin = std::begin(graph_.children);
       return std::distance(begin, findBestA(begin, std::end(graph_.children)));
@@ -402,29 +422,45 @@ namespace AIToolbox {
     template <typename M>
     double PAMCP<M>::simulate(BeliefNode & b, size_t s, unsigned depth) {
       b.N++;
-
       auto begin = std::begin(b.children);
       size_t a = std::distance(begin, findBestBonusA(begin, std::end(b.children), b.N));
 
       size_t s1, o; double rew;
       std::tie(s1, o, rew) = model_.sampleSOR(s, a);
-
       auto & aNode = b.children[a];
-
       {
 	double futureRew = 0.0;
 	// We need to append the node anyway to perform the belief
 	// update for the next timestep.
 	auto ot = aNode.children.find(o);
-	if ( ot == std::end(aNode.children) ) {
-	  aNode.children.emplace(std::piecewise_construct,
-				 std::forward_as_tuple(o),
-				 std::forward_as_tuple(s1));
+	if ((ot == std::end(aNode.children))) {
+	  if (with_exact_belief) {
+	    aNode.children.emplace(std::piecewise_construct,
+				   std::forward_as_tuple(o),
+				   std::forward_as_tuple(o));
+	    // Update the envbelief of the newly created node
+	    double nrm = 0;
+	    aNode.children[o].envbelief.resize(E);
+	    for (int i = 0; i < E; i++) {
+	      aNode.children[o].envbelief(i) = b.envbelief(i) * model_.getTransitionProbability(i * O + b.obs, a, i * O + o);
+	      nrm += aNode.children[o].envbelief(i);
+	    }
+	    for (int i = 0; i < E; i++) {
+	      aNode.children[o].envbelief(i) /= nrm;
+	    }
+	  } else {
+	    aNode.children.emplace(std::piecewise_construct,
+				   std::forward_as_tuple(o),
+				   std::forward_as_tuple(s1));
+	  }
+
+	  // get the reward
 	  // This stops automatically if we go out of depth
-	  futureRew = rollout(s1, depth + 1);
+	  futureRew = rollout(s, depth + 1);
 	}
 	else {
-	  ot->second.belief.push_back(s1);
+	  if (!with_exact_belief)
+	    ot->second.smplbelief.push_back(s1);
 	  // We only go deeper if needed (maxDepth_ is always at least 1).
 	  if ( depth + 1 < maxDepth_ && !model_.isTerminal(s1) ) {
 	    // Since most memory is allocated on the leaves,
@@ -522,6 +558,21 @@ namespace AIToolbox {
     template <typename M>
     const M& PAMCP<M>::getModel() const {
       return model_;
+    }
+
+    template <typename M>
+    const std::vector<double> PAMCP<M>::getEnvBelief() const {
+      std::vector<double> scores(E);
+      if (with_exact_belief) {
+	for (int i = 0; i < E; i++) {
+	  scores.at(i) = graph_.envbelief(i);
+	}
+      } else {
+	for (auto it = begin(graph_.smplbelief); it != end(graph_.smplbelief); ++it) {
+	  scores.at(model_.get_env(*it))++;
+	}
+      }
+      return scores;
     }
 
     template <typename M>

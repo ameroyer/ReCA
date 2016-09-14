@@ -240,11 +240,13 @@ std::pair<double, double> identification_score(const Model& model, AIToolbox::PO
 // PAMCP
 template<typename M>
 std::pair<double, double> identification_score(const Model& model, AIToolbox::POMDP::PAMCP<M> pamcp, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
-  std::vector<size_t> sampleBelief = pamcp.getGraph().belief;
-  std::vector<int> scores(model.getE());
-  for (auto it = begin(sampleBelief); it != end(sampleBelief); ++it) {
-    scores.at(model.get_env(*it))++;
-  }
+  std::vector<double> scores = pamcp.getEnvBelief();
+  /*
+  std::vector<double> scores(model.getE());
+  AIToolbox::POMDP::Belief eb = pamcp.getGraph().envbelief;
+  for (int i = 0; i < model.getE(); i++) {
+    scores.at(i) = eb(i);
+    }*/
   double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
   int rank = 0.;
   double value = scores.at(cluster);

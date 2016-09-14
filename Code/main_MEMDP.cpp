@@ -42,8 +42,10 @@ void mainMEMDP(M model, std::string datafile_base, std::string algo, int horizon
     testing_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
   }
   // PAMCP
-  else if (!algo.compare("pamcp")) {
-    AIToolbox::POMDP::PAMCP<decltype(model)> solver( model, beliefSize, steps, exp);
+  else if (!(algo.compare("pamcp") && algo.compare("pamcpex") && algo.compare("pomcpex"))) {
+    bool with_tree = !(algo.compare("pamcp") && algo.compare("pamcpex"));
+    bool with_exact_belief = !(algo.compare("pamcpex") && algo.compare("pomcpex"));
+    AIToolbox::POMDP::PAMCP<decltype(model)> solver( model, beliefSize, steps, exp, with_tree, with_exact_belief);
     training_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count() / 1000000.;
     start = std::chrono::high_resolution_clock::now();
     std::cout << current_time_str() << " - Starting evaluation!\n" << std::flush;
@@ -100,7 +102,7 @@ int main(int argc, char* argv[]) {
   assert(("Unvalid data mode", !(data.compare("reco") && data.compare("maze"))));
   std::string algo = ((argc > 3) ? argv[3] : "pbvi");
   std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
-  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("pamcp"))));
+  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("pamcp") && algo.compare("pomcpex") && algo.compare("pomcpex"))));
   double discount = ((argc > 4) ? std::atof(argv[4]) : 0.95);
   assert(("Unvalid discount parameter", discount > 0 && discount <= 1));
   int steps = ((argc > 5) ? std::atoi(argv[5]) : 1000000);
