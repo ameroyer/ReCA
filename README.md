@@ -124,8 +124,23 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
    * ``[-p]`` If present, normalize the transition and use Kahan summation for more precision while handling small probabilities. Use this option if AIToolbox throws an ``Input transition table does not contain valid probabilities`` error.
    * ``[-v]`` If present, enables verbose output. In verbose mode, evaluation results per environments are displayed, and the std::cerr stream is eanbled during evaluation.
 
-#### examples
-synthetic recommandations, 10 environments, 10 actions, ~100 states
+# examples
+
+#### maze solvingm 60 environments, 3 actions, ~100 states
+  * if needed, generate the data (already available on the repository)
+  ```bash
+   cd Data/
+   python prepare_maze.py --norm --zip -n 5 -s 1 -g 1 -w 0 -t 0 -e 60 --rdf
+  ```
+
+  * run the code (assuming the output directory is the default ``ROOT/Code/Models/``)
+  ```bash
+  cd ../Code/
+  ./run.sh -m pbvi -d mz -n gen_5x5_101_60 -h 20 -b 100 -c
+  ./run.sh -m pamcp -d mz -n gen_5x5_101_60 -h 10 -c	
+  ```
+
+#### synthetic recommandations, 10 environments, 10 actions, ~100 states
 
   * if needed, generate the data (already available on the repository)
   ```bash
@@ -140,7 +155,7 @@ synthetic recommandations, 10 environments, 10 actions, ~100 states
   ./run.sh -m pamcp -d rd -n 10 -k 2 -c	
   ```
 
-Foodmart recommandations, 5 environments, 22 actions, ~500 states
+#### Foodmart recommandations, 5 environments, 22 actions, ~500 states
 
   * if needed, generate the data (already available on the repository)
   ```bash
