@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
   assert(("Unvalid data mode", !(data.compare("reco") && data.compare("maze"))));
   std::string algo = ((argc > 3) ? argv[3] : "pbvi");
   std::transform(algo.begin(), algo.end(), algo.begin(), ::tolower);
-  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("pamcp") && algo.compare("pomcpex") && algo.compare("pomcpex"))));
+  assert(("Unvalid POMDP solver parameter", !(algo.compare("pbvi") && algo.compare("pomcp") && algo.compare("pamcp") && algo.compare("pomcpex") && algo.compare("pamcpex"))));
   double discount = ((argc > 4) ? std::atof(argv[4]) : 0.95);
   assert(("Unvalid discount parameter", discount > 0 && discount <= 1));
   int steps = ((argc > 5) ? std::atoi(argv[5]) : 1000000);
