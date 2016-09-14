@@ -39,6 +39,7 @@ namespace AIToolbox {
       struct BeliefNode {
 	BeliefNode() : obs(0), N(0) {}
 	BeliefNode(size_t o) : obs(o), N(0) {}
+	BeliefNode(size_t o, size_t s) : obs(o), smplbelief(1, s), N(0) {}
 	ActionNodes children;
 	SampleBelief smplbelief;
 	Belief envbelief;
@@ -451,7 +452,7 @@ namespace AIToolbox {
 	  } else {
 	    aNode.children.emplace(std::piecewise_construct,
 				   std::forward_as_tuple(o),
-				   std::forward_as_tuple(s1));
+				   std::forward_as_tuple(o, s1));
 	  }
 
 	  // get the reward
