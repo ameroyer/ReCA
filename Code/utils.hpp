@@ -242,9 +242,9 @@ template<typename M>
 std::pair<double, double> identification_score(const Model& model, AIToolbox::POMDP::PAMCP<M> pamcp, AIToolbox::POMDP::Belief b, size_t o, int cluster) {
   std::vector<double> scores = pamcp.getEnvBelief();
   /*
-  std::vector<double> scores(model.getE());
-  AIToolbox::POMDP::Belief eb = pamcp.getGraph().envbelief;
-  for (int i = 0; i < model.getE(); i++) {
+    std::vector<double> scores(model.getE());
+    AIToolbox::POMDP::Belief eb = pamcp.getGraph().envbelief;
+    for (int i = 0; i < model.getE(); i++) {
     scores.at(i) = eb(i);
     }*/
   double accuracy = ((std::max_element(scores.begin(), scores.end()) - scores.begin() == cluster) ? 1.0 : 0.0);
@@ -441,13 +441,14 @@ void evaluate_interactive(int n_sessions,
 
     // Update scores
     if (!verbose) {std::cerr.clear();}
+    // identity score can always be computed
+    identification_s.update(cluster, identity / session_length);
+    identification_precision_s.update(cluster, identity_precision / session_length);
     // Not reaching anything
     if (!model.isTerminal(state)) {
       if (verbose) {
 	std::cerr << " run " << user + 1 << " ignored: did not reach final state.";
       }
-      identification_s.update(cluster, identity / session_length);
-      identification_precision_s.update(cluster, identity_precision / session_length);
       success_s.update(cluster, 0);
       n_failures += 1;
       continue;
