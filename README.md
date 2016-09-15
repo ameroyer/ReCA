@@ -126,7 +126,7 @@ The following variables can be configured at the beginning of the ``run.sh`` scr
 
 # examples
 
-#### maze solvingm 60 environments, 3 actions, ~100 states
+#### maze solving, 60 environments, 3 actions, ~100 states
   * if needed, generate the data (already available on the repository)
   ```bash
    cd Data/
