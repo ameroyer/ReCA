@@ -1,5 +1,7 @@
 # [ R e C A ]  r e a d   m e
-![Maintenance](https://img.shields.io/badge/Maintained%3F-no-red.svg) [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE)
+
+![license](https://img.shields.io/github/license/mashape/apistatus.svg)
+
 
 
 # Installation
