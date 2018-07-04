@@ -1,4 +1,6 @@
 # [ R e C A ]  r e a d   m e
+![Maintenance](https://img.shields.io/badge/Maintained%3F-no-red.svg) [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE)
+
 
 # Installation
 
@@ -12,6 +14,8 @@
 
 #### installing AIToolbox
 Clone the [AIToolbox repository](https://github.com/Svalorzen/AI-Toolbox), then build and test the installation with the following commands
+
+**NOTE**: This was implemented with AIToolox in mid-year 2016. It is possile that more recent versions have different structures and import path mayb need to be changed.
 
 ```bash
 cd AIToolbox_root
