@@ -1,7 +1,10 @@
-# [ R e C A ]  r e a d   m e
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-no-red.svg)](https://github.com/ameroyer/ReCA)
+![license](https://img.shields.io/github/license/ameroyer/SIC.svg)
+![GitHub repo size in bytes](https://img.shields.io/github/repo-size/ameroyer/SIC.svg)
+![GitHub top language](https://img.shields.io/github/languages/top/ameroyer/SIC.svg)
+![Maintenance](https://img.shields.io/maintenance/no/2017.svg)
 
+
+# [ R e C A ]  r e a d   m e
 
 # Installation
 
