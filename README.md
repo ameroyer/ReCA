@@ -1,4 +1,7 @@
 # [ R e C A ]  r e a d   m e
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-no-red.svg)](https://github.com/ameroyer/ReCA)
+
 
 # Installation
 
