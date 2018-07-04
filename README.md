@@ -1,9 +1,5 @@
 # [ R e C A ]  r e a d   m e
 
-![license](https://img.shields.io/github/license/mashape/apistatus.svg)
-
-
-
 # Installation
 
 #### requirements
