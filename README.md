@@ -1,6 +1,6 @@
-![license](https://img.shields.io/github/license/ameroyer/SIC.svg)
-![GitHub repo size in bytes](https://img.shields.io/github/repo-size/ameroyer/SIC.svg)
-![GitHub top language](https://img.shields.io/github/languages/top/ameroyer/SIC.svg)
+![license](https://img.shields.io/github/license/ameroyer/ReCA.svg)
+![GitHub repo size in bytes](https://img.shields.io/github/repo-size/ameroyer/ReCA.svg)
+![GitHub top language](https://img.shields.io/github/languages/top/ameroyer/ReCA.svg)
 ![Maintenance](https://img.shields.io/maintenance/no/2017.svg)
 
 
